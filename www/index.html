@@ -2,6 +2,8 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="pure/pure-min.css">
 <style>
 .icons img {
   padding: 20px;
@@ -9,11 +11,18 @@
   width: 12%;
 }
 .icons {
-  width: 40%;
-  padding: 100px;
+  width: 530px;
+  padding: 100px 30px 0 100px;
 }
 .icons .row {
   display: block;
+}
+.icons img {
+  transition: transform 0.3s;
+}
+.icons img:hover {
+  transform: rotate(7deg);
+  transition: transform 1s;
 }
 body {
   display: flex;
@@ -21,74 +30,107 @@ body {
   margin: 0;
   border: 0;
   overflow: hidden;
+  height: 100%;
+}
+#frame {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
 }
 .logo {
-  padding-top: 100px;
+  padding: 100px 50px 0 100px;
 }
 .login {
-  padding-top: 100px;
+  padding-top: 170px;
 }
 .login label {
   display: inline-block;
-  width: 100px;
+  width: 80px;
+  overflow: auto;
+}
+
+@media (max-width: 1000px) {
+  body {
+    height: auto;
+    overflow: auto;
+  }
+  #frame {
+    flex-direction: column-reverse;
+  }
+  .icons {
+    width: 80%;
+  }
 }
 html {height:100%;}
 </style>
 </head>
 <body>
-<div class='icons'>
-  <div class='row'>
-    <img src='icon/2922260.png'/>
-    <img src='icon/2895129.png'/>
-    <img src='icon/2905945.png'/>
-    <img src='icon/2922420.png'/>
+<div style='width: 80px; background-color: #444;'></div>
+<div id='frame'>
+  <div class='icons'>
+    <div class='row'>
+      <img src='icon/2922260.png'/>
+      <img src='icon/2895129.png'/>
+      <img src='icon/2905945.png'/>
+      <img src='icon/2922420.png'/>
+    </div>
+    <div class='row'>
+      <img src='icon/2922451.png'/>
+      <img src='icon/2922466.png'/>
+      <img src='icon/2955540.png'/>
+      <img src='icon/2975103.png'/>
+    </div>
+    <div class='row'>
+      <img src="icon/746659.svg"/>
+      <img src="icon/886614.svg"/>
+      <img src="icon/1034626.svg"/>
+      <img src="icon/2991079.svg"/>
+    </div>
+    <div class='row'>
+      <img src="icon/1554170.svg"/>
+      <img src="icon/2094405.svg"/>
+      <img src="icon/2905947.svg"/>
+      <img src="icon/2905998.svg"/>
+    </div>
+    <div class='row'>
+      <img src="icon/2922310.svg"/>
+      <img src="icon/2922317.svg"/>
+      <img src="icon/2922395.svg"/>
+      <img src="icon/2972458.svg"/>
+    </div>
+    <div class='row'>
+      <img src="icon/2922415.svg"/>
+      <img src="icon/2922429.svg"/>
+      <img src="icon/2922436.svg"/>
+      <img src="icon/2922461.svg"/>
+    </div>
   </div>
-  <div class='row'>
-    <img src='icon/2922451.png'/>
-    <img src='icon/2922466.png'/>
-    <img src='icon/2955540.png'/>
-    <img src='icon/2975103.png'/>
-  </div>
-  <div class='row'>
-    <img src="icon/746659.svg"/>
-    <img src="icon/886614.svg"/>
-    <img src="icon/1034626.svg"/>
-    <img src="icon/2991079.svg"/>
-  </div>
-  <div class='row'>
-    <img src="icon/1554170.svg"/>
-    <img src="icon/2094405.svg"/>
-    <img src="icon/2905947.svg"/>
-    <img src="icon/2905998.svg"/>
-  </div>
-  <div class='row'>
-    <img src="icon/2922310.svg"/>
-    <img src="icon/2922317.svg"/>
-    <img src="icon/2922395.svg"/>
-    <img src="icon/2972458.svg"/>
-  </div>
-  <div class='row'>
-    <img src="icon/2922415.svg"/>
-    <img src="icon/2922429.svg"/>
-    <img src="icon/2922436.svg"/>
-    <img src="icon/2922461.svg"/>
+
+  <div class='logo'>
+    <h1 style='font-size: 90px; font-family: fantasy; margin-bottom: 10px;'>IC 1101</h1>
+    <legend>高度可定制的物联网服务中心平台</legend>
+    <legend>现场实施/服务开发/商业逻辑/数据分析的全面解决方案</legend>
+
+    <div class='login'>
+      <form class='pure-form pure-form-aligned'>
+        <fieldset>
+        <legend>登入平台</legend>
+        <div class="pure-control-group">
+            <label for="aligned-name">登录用户名</label>
+            <input type="text" id="aligned-name" placeholder="Username" />
+            <span class="pure-form-message-inline">必填</span>
+        </div>
+        <div class="pure-control-group">
+            <label for="aligned-password">密钥</label>
+            <input type="password" id="aligned-password" placeholder="Password" />
+        </div>      
+        <div class="pure-controls">
+            <button type="submit" class="pure-button pure-button-primary">登录</button>
+        </div>
+        </fieldset>
+      </form>
+    </div>
   </div>
 </div>
-
-<div class='logo'>
-  <h1 style='font-size: 70px;'>IC 1101</h1>
-  
-  <div>高度可定制的物联网服务中心</div>
-  <div>现场实施/软件开发/商业应用/数据分析的全面解决方案</div>
-
-  <div class='login'>
-    <form>
-      <label>登录用户名</label><input /><br/>
-      <label>密钥</label><input type='password'/><br/>
-      <button>确认</button>
-    </form>
-  </div>
-</div>
-
 </body>
 </html>
