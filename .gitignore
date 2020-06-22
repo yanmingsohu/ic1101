@@ -6,6 +6,7 @@ build/**
 *.lnk
 *.lib
 *.obj
+*.exe
 
 *.exp
 *.pdb

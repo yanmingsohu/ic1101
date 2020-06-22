@@ -4,6 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="pure/pure-min.css">
+<link rel="stylesheet" href="basic.css">
 <style>
 .icons img {
   padding: 20px;
@@ -24,14 +25,6 @@
   transform: rotate(7deg);
   transition: transform 1s;
 }
-body {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  border: 0;
-  overflow: hidden;
-  height: 100%;
-}
 #frame {
   display: flex;
   flex-direction: row;
@@ -50,10 +43,6 @@ body {
 }
 
 @media (max-width: 1000px) {
-  body {
-    height: auto;
-    overflow: auto;
-  }
   #frame {
     flex-direction: column-reverse;
   }
@@ -61,10 +50,9 @@ body {
     width: 80%;
   }
 }
-html {height:100%;}
 </style>
 </head>
-<body>
+<body class='fullbody'>
 <div style='width: 80px; background-color: #444;'></div>
 <div id='frame'>
   <div class='icons'>
@@ -112,25 +100,65 @@ html {height:100%;}
     <legend>现场实施/服务开发/商业逻辑/数据分析的全面解决方案</legend>
 
     <div class='login'>
-      <form class='pure-form pure-form-aligned'>
+      <form class='pure-form pure-form-aligned' id='login' action="login">
         <fieldset>
-        <legend>登入平台</legend>
-        <div class="pure-control-group">
+          <legend>登入平台</legend>
+          <div class="pure-control-group">
             <label for="aligned-name">登录用户名</label>
-            <input type="text" id="aligned-name" placeholder="Username" />
+            <input type="text" id="aligned-name" placeholder="Username" name='username'/>
             <span class="pure-form-message-inline">必填</span>
-        </div>
-        <div class="pure-control-group">
+          </div>
+          <div class="pure-control-group">
             <label for="aligned-password">密钥</label>
-            <input type="password" id="aligned-password" placeholder="Password" />
-        </div>      
-        <div class="pure-controls">
+            <input type="password" id="aligned-password" placeholder="Password" name='password'/>
+          </div>      
+          <div class="pure-controls">
+            <span class='ajax-message error-message'></span>
+          </div>
+          <div class="pure-controls">
             <button type="submit" class="pure-button pure-button-primary">登录</button>
-        </div>
+          </div>
         </fieldset>
       </form>
     </div>
   </div>
+
+  <script src="jquery/jquery-3.5.1.min.js"></script>
+  <script src="spark-md5.min.js"></script>
+  <script src="basic.js"></script>
+  <script>
+    jQuery(function($) {
+      let msg = $(".ajax-message");
+      let salt;
+
+      ic.get('salt', null, function(err, ret) {
+        if (err) return msg.text("页面初始化失败");
+        salt = ret.data;
+        msg.text("");
+        // console.log(salt)
+      });
+
+      let login = $("#login");
+      let user = login.find("[name=username]");
+      let pass = login.find("[name=password]");
+
+      login.on('before', function(e, p) {
+        var spark = new SparkMD5();
+        spark.append(user.val());
+        spark.append(pass.val());
+        spark.append(salt);
+        pass.val(spark.end());
+      });
+
+      login.on('success', function(e, d) {
+        if (d.code == 0) {
+          location.href = 'app.html';
+        }
+      });
+
+      ic.ajaxform(login);
+    });
+  </script>
 </div>
 </body>
 </html>
