@@ -1,5 +1,6 @@
 .settings
-build/**
+build/*/
+build/www
 
 *.dll
 *.db

@@ -14,12 +14,12 @@ func encPass(name string, pass string) string {
 	h.Write([]byte(name))
 	h.Write([]byte(pass))
 	h.Write([]byte(salt))
-  return hex.EncodeToString(h.Sum(nil))
+  return hex.EncodeToString(h.Sum(nil)) 
 }
 
 
-func getsalt(h brick.Http) error {
-	h.Json(HttpRet{0, "ok", salt})
+func getsalt(h brick.Http) error { 
+	h.Json(HttpRet{0, "ok", salt}) 
 	return nil
 }
 
