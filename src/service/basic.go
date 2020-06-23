@@ -46,9 +46,10 @@ func serviceList(b *brick.Brick) {
 	dserv(b, "login", 			login)
 	dserv(b, "logout",  		logout)
 	dserv(b, "salt",  			getsalt)
-	dserv(b, "whoaim",  		whoaim)
-	dserv(b, "reguser", 		reguser)
-	dserv(b, "changepass", 	changepass)
+
+	aserv(b, "whoaim",  		whoaim)
+	aserv(b, "reguser", 		reguser)
+	aserv(b, "changepass", 	changepass)
 }
 
 
