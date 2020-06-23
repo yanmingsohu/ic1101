@@ -13,23 +13,25 @@ var letterRunes = []rune("abcdef0123456789_-+=$ghijklmnopqrstuvwxyzABCDEFGHIJKLM
 
 
 type Config struct {
-	HttpPort int `yaml:"httpPort"`
-	MongoURL string `yaml:mongoURL`
+	HttpPort 		int 		`yaml:"httpPort"`
+	MongoURL 		string 	`yaml:"mongoURL"`
+	MongoDBName string 	`yaml:"mongoDBname"`
+	Salt        string  `yaml:"salt"`
 }
 
 
 type LoginUser struct {
-	Name string `yaml:username`
-	Pass string `yaml:password`
+	Name string `yaml:"username" bson:"_id"`
+	Pass string `yaml:"password" bson:"pass"`
 }
 
 
 func RandStringRunes(n int) string {
     b := make([]rune, n)
     for i := range b {
-        b[i] = letterRunes[rand.Intn(len(letterRunes))]
+        b[i] = letterRunes[ rand.Intn(len(letterRunes)) ]
     }
-    return string(b)
+    return string(b) 
 }
 
 
@@ -42,7 +44,7 @@ func InitRootUser(u *LoginUser) {
 		b, _ := ioutil.ReadAll(file)
 		if b != nil {
 			yaml.Unmarshal(b, u)
-			log.Print("Load root user SUCCESS")
+			log.Print("Load root user '", u.Name, "' SUCCESS")
 		}
 	} else {
 		u.Name = "root"
@@ -82,4 +84,6 @@ func DefaultConfig(c *Config) {
 	c.HttpPort = 7707
 	// mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
 	c.MongoURL = "mongodb://localhost:27017"
+	c.MongoDBName = "ic1101"
+	c.Salt = RandStringRunes(20)
 }

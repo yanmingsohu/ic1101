@@ -105,12 +105,12 @@
           <legend>登入平台</legend>
           <div class="pure-control-group">
             <label for="aligned-name">登录用户名</label>
-            <input type="text" id="aligned-name" placeholder="Username" name='username'/>
+            <input type="text" id="aligned-name" placeholder="4字符长度" name='username'/>
             <span class="pure-form-message-inline">必填</span>
           </div>
           <div class="pure-control-group">
             <label for="aligned-password">密钥</label>
-            <input type="password" id="aligned-password" placeholder="Password" name='password'/>
+            <input type="password" id="aligned-password" placeholder="8字符长度" name='password'/>
           </div>      
           <div class="pure-controls">
             <span class='ajax-message error-message'></span>
@@ -129,13 +129,12 @@
   <script>
     jQuery(function($) {
       let msg = $(".ajax-message");
-      let salt;
 
-      ic.get('salt', null, function(err, ret) {
-        if (err) return msg.text("页面初始化失败");
-        salt = ret.data;
+      ic.init(function(err) {
         msg.text("");
-        // console.log(salt)
+        if (err) {
+          msg.text(err.message);
+        }
       });
 
       let login = $("#login");
@@ -143,11 +142,7 @@
       let pass = login.find("[name=password]");
 
       login.on('before', function(e, p) {
-        var spark = new SparkMD5();
-        spark.append(user.val());
-        spark.append(pass.val());
-        spark.append(salt);
-        pass.val(spark.end());
+        pass.val( ic.password(user.val(), pass.val()) );
       });
 
       login.on('success', function(e, d) {

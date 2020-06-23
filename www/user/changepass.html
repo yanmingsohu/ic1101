@@ -1,0 +1,54 @@
+<div>
+  <script src="spark-md5.min.js"></script>
+
+  <form class="pure-form pure-form-stacked" 
+        id='changepassword' action='changepass'>
+    <legend>修改登录密码</legend>
+    <input type='hidden' name='username'/>
+
+    <label for="fu2">旧密码</label>
+    <input type="password" name='oldpassword' id="fu2" placeholder="最短8个字符" />
+
+    <label for="fu3">新密码</label>
+    <input type="password" name='password' id="fu3" placeholder="最短8个字符" />
+
+    <label for="repass">重复新密码</label>
+    <input type="password" id="repass" placeholder="与新密码相同" />
+
+    <div class='ajax-message'></div>
+    <button type="submit" class="pure-button pure-button-primary">确定</button>
+  </form>
+
+  <script>
+    jQuery(function($) {
+      let form = $('#changepassword');
+      let fpass = form.find("[name=password]");
+      let foldpass = form.find("[name=oldpassword]");
+      let fuser = form.find("[name=username]");
+      let realpass, realoldpass;
+
+      form.on('before', function(e, p) {
+        fuser.val(ic.username);
+        realpass = fpass.val();
+        readoldpass = foldpass.val();
+        let b = form.find("#repass").val();
+
+        if (readoldpass.length < 8) throw new Error("旧密码不足8位");
+        if (realpass.length < 8) throw new Error("新密码不足8位");
+        if (realpass != b) throw new Error("重复密码错误");
+        fpass.val(ic.password(fuser.val(), realpass));
+        foldpass.val(ic.password(fuser.val(), readoldpass));
+      });
+
+      form.on('success', revertPass);
+      form.on('error', revertPass);
+
+      ic.ajaxform(form);
+
+      function revertPass() {
+        fpass.val(realpass);
+        foldpass.val(readoldpass);
+      }
+    });
+  </script>
+</div>

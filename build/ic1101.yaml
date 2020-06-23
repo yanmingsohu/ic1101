@@ -1,4 +1,11 @@
+# 服务器监听 tcp 端口
 httpPort : 7700
 
 # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
-mongoURL : mongodb://localhost:27017
+mongoURL : mongodb://localhost:27017/
+
+# 数据库名称
+mongoDBname : ic1101
+
+# 密钥加密公钥
+salt : fiownvcxz,.iwo

@@ -10,6 +10,7 @@ import (
 
 
 func main() {
+	core.PrintLogo()
 	conf_file := "ic1101.yaml"
 	conf := core.Config{}
 

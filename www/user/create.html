@@ -1,0 +1,56 @@
+<div>
+  <script src="spark-md5.min.js"></script>
+
+  <form class="pure-form pure-form-stacked" 
+      id='create_new_user' action='reguser'>
+    <fieldset>
+      <legend>注册新用户</legend>
+      <label for='fu1'>用户名</label>
+      <input name="username" id="fu1" placeholder="最短4个字符" />
+
+      <label for="fu2">密码</label>
+      <input type="password" name='password' id="fu2" placeholder="最短8个字符" />
+
+      <label for="repass">重复密码</label>
+      <input type="password" name='' id="repass" placeholder="与密码相同" />
+
+      <label for="fu4">微信</label>
+      <input id="fu4" placeholder="微信号" name='weixin'/>
+
+      <label for="fu5">电话</label>
+      <input id="fu5" placeholder="联系电话" name='tel'/>
+
+      <label for="fu6">Email</label>
+      <input id="fu6" placeholder="电子邮件" name='email'/>
+      
+      <div class='ajax-message error-message'></div>
+      <button type="submit" class="pure-button pure-button-primary">创建用户</button>
+    </fieldset>
+  </form>
+
+  <script>
+    jQuery(function($) {
+      let create = $("#create_new_user");
+      let fpass = create.find("[name=password]");
+      let fuser = create.find("[name=username]");
+      let realpass;
+
+      create.on('before', function(e, p) {
+        realpass = fpass.val();
+        let b = create.find("#repass").val();
+        if (realpass.length < 8) throw new Error("密码不足8位");
+        if (realpass != b) throw new Error("重复密码错误");
+        fpass.val(ic.password(fuser.val(), realpass));
+      });
+
+      create.on('success', revertPass);
+      create.on('error', revertPass);
+      
+      ic.ajaxform(create);
+
+      function revertPass() {
+        fpass.val(realpass);
+      }
+    });
+  </script>
+</div>

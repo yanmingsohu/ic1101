@@ -1,6 +1,7 @@
 package brick
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -539,6 +540,14 @@ func (h *Http) GetTpl(filename string)(*template.Template, error) {
   t := tpl.lastTime.Format(time.RFC1123Z)
   h.W.Header().Set("Last-Modified", t +" GMT")
   return tpl.template, nil
+}
+
+
+//
+// 返回 http 请求上下文
+//
+func (h *Http) Ctx() context.Context {
+  return h.R.Context()
 }
 
 
