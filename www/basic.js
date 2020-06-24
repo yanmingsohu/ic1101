@@ -1,6 +1,6 @@
 jQuery(function($) {
 
-let salt;
+let salt, popo_offset = 20;
 
 let ic = window.ic = {
   get,
@@ -329,14 +329,63 @@ function deleteButton(jdel) {
 
 
 //
-// 弹出消息起泡, msg: 字符串/错误对象
+// 弹出消息气泡, msg: 字符串/错误对象
 //
 function popo(msg) {
   if (!msg) return;
+  let t = get_template('#popo_message_template');
+  let conf;
+  let height = 0;
+  let bd = $(document.body);
+  let content = t.find('.popo_message');
+  let mouseon;
+  let offset = popo_offset;
+
+  bd.append(t);
+  bd.on("popo_message_removed", on_other_removed);
+
+  setTimeout(()=>{
+    content.addClass("show");
+    content.css("bottom", (offset) +'px');
+    height = content.outerHeight() + 20;
+    popo_offset += height;
+  }, 10);
+
+  let tid = setInterval(()=>{
+    if (mouseon) return;
+    clearInterval(tid);
+    bd.off("popo_message_removed", on_other_removed);
+
+    content.stop().animate({'bottom': '-100px'}, 300, function() {
+      t.remove();
+      popo_offset -= height;
+      bd.trigger("popo_message_removed", height);
+    });
+  }, 3e3);
+
+  content.mouseenter(()=>{
+    mouseon = 1;
+  });
+
+  content.mouseleave(()=>{
+    mouseon = 0;
+  });
+
   if (msg.constructor == Error) {
-    alert(msg.message);
+    conf = ['错误', msg.message, 'error'];
+  } else if (typeof msg == "string") {
+    conf = ['消息', msg, 'info'];
   } else {
-    alert(msg);
+    conf = ['调试', JSON.stringify(msg), 'debug'];
+  }
+
+  t.find(".ti").text(conf[0]);
+  t.find(".msg").html(conf[1]);
+  content.addClass(conf[2]);
+
+  function on_other_removed(ev, mheight) {
+    offset -= mheight;
+    content.animate({'bottom': (offset) +'px'}, 1e3);
   }
 }
 
@@ -349,6 +398,7 @@ function ynDialog(msg, cb) {
   let t = get_template('#select_yn_dialog');
   $(document.body).append(t);
   t.find('.message').html(msg);
+
   setTimeout(() => {
     t.find('.select_yn_dialog').addClass("move");
   }, 10);

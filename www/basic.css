@@ -124,18 +124,15 @@ table {
 }
 
 .table_row_click {
-  border: 5px solid #999;
-  border-width: 0 5px;
+  border: 5px solid #999; border-width: 0 5px;
 }
 
 .table_row_click td {
-  background-color: #f5b636;
-  color: #1b0867;
+  background-color: #f5b636; color: #1b0867;
 }
 
 table tbody tr:hover {
-  border: 2px solid #999;
-  border-width: 0 2px;
+  border: 2px solid #999; border-width: 0 2px;
 }
 
 .html_template {
@@ -171,4 +168,37 @@ table tbody tr:hover {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
   background-color: #333; opacity: 0.2;
+}
+
+.popo_message {
+  position: fixed; bottom: 20px; right: -200px;
+  width: 200px; height: 70px;
+  display: flex; flex-direction: row; align-items: stretch;
+  background-color: #fff; padding: 10px 10px;
+  border-radius: 5px; box-shadow: 3px 3px 10px #888888;
+}
+
+.popo_message.show {
+  right: 20px; transition: right 0.5s; 
+}
+
+.popo_message .ti {
+  font-weight: bold; padding-right: 5px; border-right: 1px solid #999;
+  margin-right: 10px; font-size: 7px;
+}
+
+.popo_message .msg {
+  word-wrap: break-word; word-break: break-all;
+}
+
+.popo_message.error {
+  background-color: rgb(117, 13, 13); color: #fff;
+}
+
+.popo_message.info {
+  background-color: rgb(23, 32, 156); color: #fff;
+}
+
+.popo_message.debug {
+  background-color: rgb(21, 85, 8); color: #fff;
 }
