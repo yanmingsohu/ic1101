@@ -65,7 +65,25 @@ html {height:100%;}
 }
 
 #main_frame {
-  padding: 80px 50px; flex: 1;
+  padding: 80px 50px; flex: 1; overflow-y: auto;
+}
+
+@media (max-width: 1000px) {
+  #main_menu {
+    width: 100px;
+  }
+  #main_menu .s1 {
+    padding: 1px 15px; font-size: 9px;
+  }
+  #main_menu .s2 {
+    padding: 3px 25px; font-size: 8px;
+  }
+  #main_menu .s2:hover {
+    padding-left: 16px;
+  }
+  #main_menu .title {
+    padding-left: 10px; font-size: 15px;
+  }
 }
 
 table {
@@ -77,8 +95,12 @@ table {
 .button-error,
 .button-warning,
 .button-secondary {
-    color: white; border-radius: 4px;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  color: white; border-radius: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.button-wide {
+  width: 100px;
 }
 
 .button-primary {
@@ -114,4 +136,39 @@ table {
 table tbody tr:hover {
   border: 2px solid #999;
   border-width: 0 2px;
+}
+
+.html_template {
+  display: none;
+}
+
+.select_yn_dialog {
+  position: fixed; top: 30%; left: 20%;
+  width: 40%; height: 130px;
+  background-color: #fff; padding: 80px 120px;
+  border-radius: 15px; box-shadow: 5px 5px 15px #888888;
+  transition: top 0.5s;
+}
+
+.select_yn_dialog.move {
+  top: 31%;
+}
+
+.select_yn_dialog .pure-button-group {
+  text-align: right; margin-top: 50px;
+}
+
+@media (max-width: 800px) {
+  .select_yn_dialog {
+    left: 3px; width: 95%; padding: 30px 10px; top: 20px;
+  }
+  .select_yn_dialog.move {
+    top: 25px;
+  }
+}
+
+.mask_for_dialog {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: #333; opacity: 0.2;
 }

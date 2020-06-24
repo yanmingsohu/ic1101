@@ -9,6 +9,9 @@ let ic = window.ic = {
   password,
   loadpage,
   smartTable,
+  deleteButton,
+  popo,
+  ynDialog,
 };
 
 
@@ -37,7 +40,11 @@ function get(api, data, cb) {
     data : data,
 
     success : function(data) {
-      cb(null, data)
+      if (data.code) {
+        cb(new Error('错误:'+ data.msg));
+      } else {
+        cb(null, data)
+      }
     },
 
     error : function(req, text, err) {
@@ -85,6 +92,10 @@ function ajaxform(jdom) {
     jdom.trigger("param", param);
   });
 
+  jdom.find(":input").focus(function() {
+    msg.text('');
+  });
+
   jdom.on('param', function(event, param) {
     get(api, param, function(err, ret) {
       if (err) {
@@ -115,29 +126,41 @@ function ajaxform(jdom) {
 
 
 //
-// <table api='获取数据的接口' form='查询条件表单选择器(可选)'>
+// <table api='获取数据的接口' form='查询条件表单选择器(可选)'
+//        pageinfo='获取分页数据接口'>
 // <thead><th cn='来自数据接口中的列属性名' 
 //         rename='重命名属性' format='显示时格式化' >...
 // format: date 
 //
 // table 事件:
-//   error(event, errObj)     : 解析数据异常, 运行异常
-//   refresh_success          : 数据刷新成功
-//   select_row(event, rowData, tr_jdom): 行被选中
+//    error(event, errObj)     : 解析数据异常, 运行异常
+//    refresh_success          : 数据刷新成功
+//    select_row(event, rowData, tr_jdom): 行被选中
+//
+// table 绑定属性:
+//    refreshData() 立即刷新数据
 //
 function smartTable(jdom) {
-  let api = jdom.attr('api');
-  let form = $(jdom.attr('form'));
-  let tbody = jdom.find("tbody");
+  const api  = jdom.attr('api');
+  let form   = $(jdom.attr('form') || '<form>');
+  let tbody  = jdom.find("tbody");
   let header = [];
-  let param = { page: 0 };
-  let rows = 0;
-  let oldtr = jdom.find("tr");
+  let rows   = 0;
+  let oldtr  = jdom.find("tr");
+  let totalpage = 0;
+  let currpage = 0;
+  let pagedom;
+  let errmsg;
+  let search_filter_changed;
+
+  jdom.refreshData = refresh_data;
 
   let no_format = function(d) { return d; };
   let format_fn = {
-    'data': function(d) {
-      return new Date(d).toLocaleString();
+    'date': function(d) {
+      let t = new Date(d);
+      if (isNaN(t.getDate())) return d;
+      return t.toLocaleString();
     },
   };
 
@@ -150,15 +173,49 @@ function smartTable(jdom) {
     });
   });
 
+  let pageinfo = jdom.attr('pageinfo');
+  if (pageinfo) {
+    get(pageinfo, {}, function(err, ret) {
+      if (err) return _error(err);
+      if (ret.code) return _error(new Error(ret.msg));
+      totalpage = Math.ceil(ret.data.Count / ret.data.PageSize) || 0;
+      init_page();
+    });
+  }
+
+  form.submit(function() {
+    if (search_filter_changed) {
+      search_filter_changed = false;
+      currpage = 0;
+    }
+    refresh_data();
+    return false;
+  });
+
+  form.find(":input").change(function() {
+    search_filter_changed = true;
+  });
+
   setTimeout(refresh_data, 1);
 
+  function _error(err) {
+    if (errmsg) {
+      errmsg.text(err.message);
+    } else {
+      tbody.append("<tr><td>"+ err.message +"</td></tr>");
+    }
+    jdom.trigger('error', err);
+  }
+
   function refresh_data() {
+    let param = form.serialize();
+    param += "&page=" + currpage;
+
     get(api, param, function(err, ret) {
-      if (err) {
-        tbody.append("<tr><td>"+ err.message +"</td></tr>");
-        jdom.trigger('error', err);
-        return;
-      }
+      update_page();
+      if (err) return _error(err);
+      tbody.html('');
+      if (!ret.data) return _error(new Error("没有数据"));
       
       ret.data.forEach(function(v, i) {
         let tr = $("<tr>").appendTo(tbody);
@@ -190,10 +247,121 @@ function smartTable(jdom) {
     });
   }
 
-  return {
-    jdom,
-    refresh_data,
-  };
+  function init_page() {
+    pagedom = get_template("#page_template");
+    errmsg = pagedom.find(".error-message");
+    jdom.after(pagedom);
+    update_page();
+
+    pagedom.find('.prev').click(function() {
+      currpage--;
+      refresh_data();
+    });
+
+    pagedom.find('.next').click(function() {
+      currpage++;
+      refresh_data();
+    });
+
+    pagedom.submit(function() {
+      let ipage = pagedom.find(".currpage");
+      let pn = ipage.val()-1;
+      if (pn != currpage && pn >= 0 && pn < totalpage) {
+        currpage = pn;
+        refresh_data();
+      } else {
+        ipage.val(currpage+1);
+      }
+      return false;
+    });
+  }
+
+  function update_page() {
+    if (!pagedom) return;
+    if (currpage < 0) currpage = 0;
+    else if (currpage >= totalpage) currpage = totalpage-1;
+    pagedom.find(".currpage").val(currpage + 1);
+    pagedom.find('.prev').prop("disabled", currpage-1 < 0);
+    pagedom.find('.next').prop("disabled", currpage+1 >= totalpage);
+    errmsg.text('');
+  }
+}
+
+
+function get_template(selector) {
+  let t = $(selector).clone();
+  t.removeClass('html_template');
+  t.removeAttr("id");
+  return t;
+}
+
+//
+// <button api='删除接口' ...
+// jdel 必须绑定数据 .data('id', ...) 该参数直接递交到接口
+// 事件:
+//  delete_success(event) : 删除成功
+//  error(event, err)     : 删除时发生错误
+//
+function deleteButton(jdel) {
+  const api = jdel.attr('api');
+
+  jdel.click(function() {
+    let id = jdel.data("id");
+    if (!id) return popo(new Error(".data('id', ... 绑定参数无效"));
+    const title = ["删除选中的数据? 数据删除后将不可还原",
+      "<br/>选择 '是' 删除 <b style='color:#d04242'>", 
+      id, "</b>"].join('');
+
+    ynDialog(title, function(err, yn) {
+        if (!yn) return;
+        let parm = {'id': id};
+        get(api, parm, function(err, ret) {
+          if (err) {
+            jdel.trigger("error", err);
+            return popo(err);
+          }
+          jdel.trigger("delete_success");
+          popo(id +" 数据被删除");
+        });
+      });
+  });
+}
+
+
+//
+// 弹出消息起泡, msg: 字符串/错误对象
+//
+function popo(msg) {
+  if (!msg) return;
+  if (msg.constructor == Error) {
+    alert(msg.message);
+  } else {
+    alert(msg);
+  }
+}
+
+
+//
+// 一个 是/否 选择框
+// cb: Function(err, yes_no_bool)
+//
+function ynDialog(msg, cb) {
+  let t = get_template('#select_yn_dialog');
+  $(document.body).append(t);
+  t.find('.message').html(msg);
+  setTimeout(() => {
+    t.find('.select_yn_dialog').addClass("move");
+  }, 10);
+
+  t.find(".yes").click(function() {
+    t.hide(100, function() { t.remove() });
+    cb(null, true);
+  });
+
+  t.find(".no").click(function() {
+    t.hide(100, function() { t.remove() });
+    cb(null, false);
+  });
 }
 
 });

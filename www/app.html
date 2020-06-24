@@ -50,5 +50,28 @@
 
 <div id='main_frame'>
 </div>
+
+<form class="pure-form html_template" id='page_template'>
+  <fieldset>
+    <button class='pure-button button-primary prev' type='button'>上一页</button>
+    <input class='currpage'/>
+    <button class='pure-button button-primary next' type='button'>下一页</button>
+    <span class='error-message'></span>
+  </fieldset>
+</form>
+
+<div class='html_template' id='select_yn_dialog'>
+  <div class='mask_for_dialog'></div>
+  <div class='select_yn_dialog'>
+    <div class='message'></div>
+    <hr/>
+    <div class="pure-button-group" role="group">
+      <button class='pure-button button-primary button-wide yes' 
+              type='button'>是</button>
+      <button class='pure-button button-success button-wide no' 
+              type='button'>否</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -17,6 +17,8 @@ func installDictService(b *brick.Brick) {
   aserv(b, "dict_read",    dict_read)
   aserv(b, "dict_sets",    dict_sets)
   aserv(b, "dict_list",    dict_list)
+  aserv(b, "dict_count",   dict_count)
+  aserv(b, "dict_delete",  dict_delete)
 }
 
 
@@ -39,13 +41,34 @@ func dict_create(h brick.Http) error {
 }
 
 
+func dict_count(h brick.Http) error {
+  table := mg.Collection("dict")
+  count, _ := table.CountDocuments(h.Ctx(), bson.D{})
+  pageret := struct {
+    Count int64
+    PageSize int64
+  }{count, PageSize}
+  h.Json(HttpRet{0, "pageinfo", pageret})
+  return nil
+}
+
+
 func dict_list(h brick.Http) error {
   fo := options.Find()
   fo.SetLimit(PageSize)
   fo.SetSkip(checkpage(h))
   fo.SetProjection(bson.M{"desc":1, "cd":1, "md":1})
 
-  filter := bson.D{}
+  id := h.Get("id")
+  desc := h.Get("desc")
+  filter := bson.M{}
+  if id != "" {
+    filter["_id"] = id
+  }
+  if desc != "" {
+    filter["desc"] = desc
+  }
+  
   table := mg.Collection("dict")
   cursor, err := table.Find(h.Ctx(), filter, fo)
 
@@ -99,5 +122,18 @@ func dict_sets(h brick.Http) error {
     return errors.New("字典不存在")
   }
   h.Json(HttpRet{0, "字典已更新", id})
+  return nil
+}
+
+
+func dict_delete(h brick.Http) error {
+  id := checkstring("字典ID", h.Get("id"), 2, 20)
+  table := mg.Collection("dict")
+  _, err := table.DeleteOne(h.Ctx(), bson.D{{"_id", id}})
+  if err != nil {
+    h.Json(HttpRet{1, "字典删除错误", err})
+  } else {
+    h.Json(HttpRet{0, "字典已删除", id})
+  }
   return nil
 }

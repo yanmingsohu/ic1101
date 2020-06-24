@@ -1,41 +1,74 @@
-<div>
+<div id='dict_manager'>
   <h2>字典管理</h2>
   <hr/>
 
   <form class="pure-form pure-form-stacked" action='dict_create' 
         id='dict_create'>
     <fieldset>
-        <legend>新建空字典</legend>
-        
-        <div class="pure-g">
-          <div class="pure-u-1 pure-u-md-1-3">
-            <label for="create_dict_id">字典ID</label>
-            <input type="text" id="create_dict_id" name='id' 
-                  class="pure-u-23-24"/>
-          </div>
-
-          <div class="pure-u-1 pure-u-md-1-3">
-            <label for="create_dict_desc">字典说明</label>
-            <input type="text" id="create_dict_desc" name='desc' 
-                   class="pure-u-23-24"/>
-          </div>
-
-          <div class="pure-u-1 pure-u-md-1-3">
-            <label for="create_dict_desc">操作</label>
-            <div class="pure-button-group" role="group">
-              <button type="submit" 
-                class="pure-button button-primary">创建</button>
-              <button type="reset" 
-                class="pure-button button-secondary">清除</button>
-            </div>
-            <span class='ajax-message'></span>
-          </div>
+      <legend>新建空字典</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="create_dict_id">字典ID</label>
+          <input type="text" id="create_dict_id" name='id' 
+                class="pure-u-23-24"/>
         </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="create_dict_desc">字典说明</label>
+          <input type="text" id="create_dict_desc" name='desc' 
+                  class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="create_dict_desc">操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">创建</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除</button>
+          </div>
+          <span class='ajax-message'></span>
+        </div>
+      </div>
     </fieldset>
   </form>
 
   <h3>字典列表</h3>
-  <table class="pure-table" id='dict_table' api='dict_list'>
+  <form class="pure-form pure-form-stacked" id='dict_search_filter'>
+    <fieldset>
+      <legend>按字段过滤结果</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="">字典ID过滤</label>
+          <input type="text" name='id' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="">字典说明过滤</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="create_dict_desc">操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">查询</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除条件</button>
+            <button type="button" id='edit_dict'
+              class="pure-button button-secondary">编辑字典</button>
+            <button type="button" id='delete_dict' api='dict_delete'
+              class="pure-button button-warning">删除</button>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <table class="pure-table" id='dict_table' form='#dict_search_filter'
+         api='dict_list' pageinfo='dict_count'>
     <thead>
       <th cn='_id' rename='id'>字典ID</th> 
       <th cn='desc'>说明</th>
@@ -47,14 +80,34 @@
 
   <script>
     jQuery(function($) {
-      let create = $("#dict_create");
-      let table = $("#dict_table");
+      let root = $("#dict_manager");
+      let create = root.find("#dict_create");
+      let table = root.find("#dict_table");
+      let edit_dict = root.find('#edit_dict');
+      let delete_dict = root.find('#delete_dict');
+
       ic.ajaxform(create);
       ic.smartTable(table);
+      ic.deleteButton(delete_dict);
+      update_button(true);
 
       table.on('select_row', function(ev, v) {
-        console.log(v);
+        update_button((v || v.id) == null);
+        delete_dict.data('id', v.id);
       });
+
+      table.on('refresh_success', function() {
+        update_button(true);
+      });
+
+      delete_dict.on('delete_success', function() {
+        table.refreshData();
+      });
+
+      function update_button(dis) {
+        edit_dict.prop('disabled', dis);
+        delete_dict.prop('disabled', dis);
+      }
     });
   </script>
 </div>
