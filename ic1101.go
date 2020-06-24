@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"./src/core"
-	"./src/service"
+	"ic1101/src/core"
+	"ic1101/src/service"
 )
 
 

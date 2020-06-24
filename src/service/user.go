@@ -7,15 +7,20 @@ import (
 	"log"
 	"time"
 
-	"../../brick"
-	"../core"
+	"ic1101/brick"
+	"ic1101/src/core"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 
-type User struct {
-	Name string
-	Auth interface{}
+func installUserService(b *brick.Brick) {
+	dserv(b, "login", 			login)
+	dserv(b, "logout",  		logout)
+	dserv(b, "salt",  			getsalt)
+
+	aserv(b, "whoaim",  		whoaim)
+	aserv(b, "reguser", 		reguser)
+	aserv(b, "changepass", 	changepass)
 }
 
 
@@ -63,7 +68,7 @@ func login(h brick.Http) error {
 	pass = encPass(name, pass)
 	if pass == user.Pass {
 		//TODO: 加载权限
-		h.Session().Set("user", User{name, nil})
+		h.Session().Set("user", user)
 		table.UpdateOne(h.Ctx(), filter, 
 				bson.D{{"$set", bson.D{{"logindata", time.Now()}}}})
 		h.Json(HttpRet{0, "用户登录成功", nil})
@@ -86,7 +91,7 @@ func whoaim(h brick.Http) error {
 	if v == nil {
 		h.Json(HttpRet{1, "用户未登录", nil})
 	} else {
-		h.Json(HttpRet{0, "用户名", v.(User).Name})
+		h.Json(HttpRet{0, "用户名", v.(*core.LoginUser).Name})
 	}
 	return nil
 }
@@ -96,6 +101,13 @@ func reguser(h brick.Http) error {
 	now 	 := time.Now()
 	pass   := checkstring("密码", h.Get("password"), 8, 64)
 	name   := checkstring("用户名", h.Get("username"), 4, 64)
+	isroot := checkbool("超级用户", h.Get("rootuser"))
+
+	if isroot {
+		if !h.Session().Get("user").(*core.LoginUser).IsRoot {
+			return errors.New("只有超级用户可以创建另一个超级用户")
+		}
+	}
 
 	d := bson.D{
 		{"_id",   		name},
@@ -105,6 +117,7 @@ func reguser(h brick.Http) error {
 		{"email", 		h.Get("email")},
 		{"regdata",   now},
 		{"logindata", now},
+		{"isroot",    isroot},
 	}
 
 	table := mg.Collection("login_user")
@@ -119,7 +132,8 @@ func reguser(h brick.Http) error {
 
 
 func changepass(h brick.Http) error {
-	name   := checkstring("用户名", h.Get("username"), 4, 64)
+	// name   := checkstring("用户名", h.Get("username"), 4, 64)
+	name   := h.Session().Get("user").(*core.LoginUser).Name
 	pass   := checkstring("密码", h.Get("password"), 8, 64)
 	oldpass:= checkstring("旧密码", h.Get("oldpassword"), 8, 64)
 

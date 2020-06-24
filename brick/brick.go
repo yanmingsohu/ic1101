@@ -58,7 +58,7 @@ type Brick struct {
   templateDir     string
   log             Logger
   errorHandle     HttpErrorHandler
-}
+} 
 
 type Http struct {
   R  *http.Request
@@ -371,23 +371,25 @@ func (h *Http) Json(m interface{}) {
 }
 
 
-//
-// 返回 URI 中的参数, 参数为空返回空字符串
-//
-func (h* Http) Get(name string) string {
+func (h* Http) init_query() {
   if h.q == nil {
     q := h.R.URL.Query()
     h.q = &q
   }
+}
+
+
+//
+// 返回 URI 中的参数, 参数为空返回空字符串
+//
+func (h* Http) Get(name string) string {
+  h.init_query()
   return h.q.Get(name)
 }
 
 
 func (h* Http) Gets(name string) []string {
-  if h.q == nil {
-    q := h.R.URL.Query()
-    h.q = &q
-  }
+  h.init_query()
   return (*h.q)[name]
 }
 

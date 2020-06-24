@@ -20,12 +20,6 @@ type Config struct {
 }
 
 
-type LoginUser struct {
-	Name string `yaml:"username" bson:"_id"`
-	Pass string `yaml:"password" bson:"pass"`
-}
-
-
 func RandStringRunes(n int) string {
     b := make([]rune, n)
     for i := range b {
@@ -38,6 +32,7 @@ func RandStringRunes(n int) string {
 func InitRootUser(u *LoginUser) {
 	filename := "root-user.yaml"
 	file, _ := os.Open(filename)
+	u.IsRoot = true
 
 	if file != nil {
 		defer file.Close()

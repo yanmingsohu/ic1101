@@ -1,7 +1,7 @@
 html {height:100%;}
 
 .ajax-message {
-  font-size: 10px; color: #2323b4; min-height: 2em;
+  font-size: 10px; color: #2323b4; min-height: 2em; display: inline-block;
 } 
 
 .error-message {
@@ -66,4 +66,52 @@ html {height:100%;}
 
 #main_frame {
   padding: 80px 50px; flex: 1;
+}
+
+table {
+  width: 100%;
+}
+
+.button-primary,
+.button-success,
+.button-error,
+.button-warning,
+.button-secondary {
+    color: white; border-radius: 4px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.button-primary {
+  background: #0078e7;
+}
+
+.button-success {
+  background: rgb(28, 184, 65); 
+}
+
+.button-error {
+  background: rgb(202, 60, 60); 
+}
+
+.button-warning {
+  background: rgb(223, 117, 20);
+}
+
+.button-secondary {
+  background: rgb(66, 184, 221);
+}
+
+.table_row_click {
+  border: 5px solid #999;
+  border-width: 0 5px;
+}
+
+.table_row_click td {
+  background-color: #f5b636;
+  color: #1b0867;
+}
+
+table tbody tr:hover {
+  border: 2px solid #999;
+  border-width: 0 2px;
 }
