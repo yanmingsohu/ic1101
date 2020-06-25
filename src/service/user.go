@@ -9,7 +9,9 @@ import (
 
 	"ic1101/brick"
 	"ic1101/src/core"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 
@@ -17,10 +19,15 @@ func installUserService(b *brick.Brick) {
 	dserv(b, "login", 			login)
 	dserv(b, "logout",  		logout)
 	dserv(b, "salt",  			getsalt)
-
-	aserv(b, "whoaim",  		whoaim)
+	dserv(b, "whoaim",  		whoaim)
+	
 	aserv(b, "reguser", 		reguser)
 	aserv(b, "changepass", 	changepass)
+	aserv(b, "user_list",   user_list)
+	aserv(b, "user_update", user_update)
+
+	mg.CreateIndex("dict", &bson.D{
+		{"_id", "text"}, {"weixin", "text"}, {"tel", "text"}, {"email", "text"}})
 }
 
 
@@ -67,7 +74,7 @@ func login(h brick.Http) error {
 
 	pass = encPass(name, pass)
 	if pass == user.Pass {
-		//TODO: 加载权限
+		installAuth(h, user)
 		h.Session().Set("user", user)
 		table.UpdateOne(h.Ctx(), filter, 
 				bson.D{{"$set", bson.D{{"logindata", time.Now()}}}})
@@ -76,6 +83,23 @@ func login(h brick.Http) error {
 		h.Json(HttpRet{1, "用户登录失败", nil})
 	}
 	return nil
+}
+
+
+func installAuth(h brick.Http, user *core.LoginUser) {
+	if user.Role == "" {
+		return
+	}
+	ruels, err := getRuels(h, user.Role)
+
+	if err != nil {
+		log.Print("Install User ", user.Name, " Auth fail ", err)
+		return
+	}
+
+	for _, v := range ruels {
+		user.Auths[v] = true
+	}
 }
 
 
@@ -99,8 +123,8 @@ func whoaim(h brick.Http) error {
 
 func reguser(h brick.Http) error {
 	now 	 := time.Now()
-	pass   := checkstring("密码", h.Get("password"), 8, 64)
 	name   := checkstring("用户名", h.Get("username"), 4, 64)
+	pass   := checkstring("密码", h.Get("password"), 8, 64)
 	isroot := checkbool("超级用户", h.Get("rootuser"))
 
 	if isroot {
@@ -112,12 +136,13 @@ func reguser(h brick.Http) error {
 	d := bson.D{
 		{"_id",   		name},
 		{"pass",  		encPass(name, pass)},
-		{"wexin", 		h.Get("wexin")},
+		{"weixin", 		h.Get("weixin")},
 		{"tel",   		h.Get("tel")},
 		{"email", 		h.Get("email")},
 		{"regdata",   now},
 		{"logindata", now},
 		{"isroot",    isroot},
+		{"role",      h.Get("role")},
 	}
 
 	table := mg.Collection("login_user")
@@ -128,6 +153,46 @@ func reguser(h brick.Http) error {
 	}
 	h.Json(HttpRet{0, "用户已创建", name})
 	return nil
+}
+
+
+func user_update(h brick.Http) error {
+	id := checkstring("用户名", h.Get("username"), 4, 64)
+	user := h.Session().Get("user").(*core.LoginUser)
+
+	if !user.IsRoot {
+		roles, err := getRuels(h, user.Role)
+		if err != nil {
+			return err
+		}
+
+		for _, id := range roles {
+			if !user.Auths[id] {
+				return errors.New("当前用户无权赋予角色, 缺少权限: "+ id)
+			}
+		}
+	}
+
+	d := bson.D{
+		{"weixin", 		h.Get("weixin")},
+		{"tel",   		h.Get("tel")},
+		{"email", 		h.Get("email")},
+		{"role",      h.Get("role")},
+	}
+
+	c := Crud{h, "login_user", "用户"}
+	return c.Update(id, bson.D{{"$set", d}})
+}
+
+
+func user_list(h brick.Http) error {
+	c := Crud{h, "login_user", "用户"}
+	return c.List(func(opt *options.FindOptions) {
+		opt.SetProjection(bson.M{
+			"_id":1, "role":1, "weixin":1, "tel":1, "email":1, 
+			"isroot":1, "regdata":1, "logindata":1,
+		})
+	})
 }
 
 
@@ -151,7 +216,7 @@ func changepass(h brick.Http) error {
 	}
 
 	table.UpdateOne(h.Ctx(), filter, 
-			bson.D{{"$set", bson.D{{"pass", encPass(name, pass)}}}})
+			bson.D{{"$set", bson.D{{"pass", encPass(name, pass)}} }})
 
 	h.Json(HttpRet{0, "密码已修改", name})
 	return nil

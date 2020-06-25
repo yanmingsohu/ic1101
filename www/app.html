@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="basic.css">
 <script src="jquery/jquery-3.5.1.min.js"></script>
 <script src="basic.js"></script>
-<script src="app.js"></script>
 </head>
 
 <body class='fullbody'>
@@ -35,9 +34,8 @@
 
     <div class='s1'>用户管理</div>
       <div class='s2' href='user/create.html'>新建用户</div>
-      <div class='s2'>用户列表</div>
-      <div class='s2'>角色管理</div>
-      <div class='s2'>角色权限</div>
+      <div class='s2' href='user/user-list.html'>用户管理</div>
+      <div class='s2' href='user/role.html'>角色管理</div>
 
     <div class='s1'>系统管理</div>
       <div class='s2' href='user/changepass.html'>修改密码</div>
@@ -51,6 +49,47 @@
 <div id='main_frame'>
 </div>
 
+<script>
+jQuery(function($) {
+const body = $(document.body);
+
+ic.init(function(err) {
+  if (err) {
+    alert(err.message);
+  } else {
+    checkHash();
+  }
+});
+  
+ic.get('whoaim', null, function(err, d) {
+  if (err || d.code) {
+    alert("用户未登录, 即将跳转到登录页面");
+    location.href = 'index.html';
+  } else {
+    ic.username = d.data;
+  }
+});
+
+$('#main_menu .s2').click(function() {
+  let thiz = $(this);
+  let href = thiz.attr("href");
+  if (!href) return;
+  body.trigger("uninstall_main_page");
+  ic.loadpage(href);
+  location.hash = href;
+});
+
+function checkHash() {
+  let h = location.hash;
+  if (h[0] == '#') h = h.substr(1);
+  if (h) {
+    ic.loadpage(h);
+  }
+}
+
+});
+</script>
+
 <form class="pure-form html_template" id='page_template'>
   <fieldset>
     <button class='pure-button button-primary prev' type='button'>上一页</button>
@@ -62,7 +101,7 @@
 
 <div class='html_template' id='select_yn_dialog'>
   <div class='mask_for_dialog'></div>
-  <div class='select_yn_dialog'>
+  <div class='select_yn_dialog ic_dialog'>
     <div class='message'></div>
     <hr/>
     <div class="pure-button-group" role="group">
@@ -75,10 +114,26 @@
 </div>
 
 <div class='html_template' id='popo_message_template'>
-  <div class='popo_message'>
+  <div class='popo_message ic_dialog'>
     <div class='ti'></div>
     <div class='msg'></div>
   </div>
 </div>
+
+<div class='html_template' id='content_dialog_template'>
+  <!-- <div class='mask_for_dialog'></div> -->
+  <div class='content_dialog ic_dialog'>
+    <div class='closeframe'>
+      <a href='#'>关闭</a>
+      <button class='pure-button button-success close' 
+              type='button'>x</button>
+    </div>
+    <center class='loading' style='padding: 30px 0;'>
+      loading...
+    </center>
+    <div class='content'></div>
+  </div>
+</div>
+
 </body>
 </html>

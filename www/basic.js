@@ -1,9 +1,12 @@
 jQuery(function($) {
 
-let salt, popo_offset = 20;
+const body = $(document.body);
+const win  = $(window);
+const content_frame = $("#main_frame");
 
-let ic = window.ic = {
+const ic = window.ic = {
   get,
+  getDict,
   ajaxform,
   init,
   password,
@@ -12,16 +15,31 @@ let ic = window.ic = {
   deleteButton,
   popo,
   ynDialog,
+  contentDialog,
+  commandCrudPage,
+  getTemplate: get_template,
+};
+
+const format_fn = {
+  'date': function(d) {
+    let t = new Date(d);
+    if (isNaN(t.getDate())) return d;
+    return t.toLocaleString();
+  },
+  'yesno': function(d) {
+    return Boolean(d) ? '是':'否';
+  },
 };
 
 
 function init(cb) {
   ic.get('salt', null, function(err, ret) {
     if (err) return cb(new Error("应用初始化失败"));
-    salt = ret.data;
+    body.data('salt', ret.data);
     cb(null, ret);
     // console.log(salt)
   });
+  body.data('popo_offset', 20);
 }
 
 
@@ -29,7 +47,7 @@ function password(name, pass) {
   var spark = new SparkMD5();
   spark.append(name);
   spark.append(pass);
-  spark.append(salt);
+  spark.append(body.data('salt'));
   return spark.end();
 }
 
@@ -41,7 +59,9 @@ function get(api, data, cb) {
 
     success : function(data) {
       if (data.code) {
-        cb(new Error('错误:'+ data.msg));
+        let err = new Error('错误:'+ data.msg);
+        err.data = data.data;
+        cb(err);
       } else {
         cb(null, data)
       }
@@ -135,12 +155,15 @@ function ajaxform(jdom) {
 // table 事件:
 //    error(event, errObj)     : 解析数据异常, 运行异常
 //    refresh_success          : 数据刷新成功
-//    select_row(event, rowData, tr_jdom): 行被选中
+//    select_row(event, rowData, tr_jdom): 行被选中, rowData 已经转换
 //
 // table 绑定属性:
 //    refreshData() 立即刷新数据
+//    data('select_row') 当前选择行的数据(已经被 _convert 转换)
 //
-function smartTable(jdom) {
+// _convert: 可选的数据转换器, 必须返回数组, 默认返回 api 返回的数组
+//
+function smartTable(jdom, _convert) {
   const api  = jdom.attr('api');
   let form   = $(jdom.attr('form') || '<form>');
   let tbody  = jdom.find("tbody");
@@ -150,19 +173,14 @@ function smartTable(jdom) {
   let totalpage = 0;
   let currpage = 0;
   let pagedom;
-  let errmsg;
   let search_filter_changed;
+  let convert_data = _convert || _get_array_data;
 
   jdom.refreshData = refresh_data;
 
+  if (!api) return _error(new Error("缺少 api 属性"));
+
   let no_format = function(d) { return d; };
-  let format_fn = {
-    'date': function(d) {
-      let t = new Date(d);
-      if (isNaN(t.getDate())) return d;
-      return t.toLocaleString();
-    },
-  };
 
   jdom.find("thead th").each(function() {
     let thiz = $(this);
@@ -199,12 +217,12 @@ function smartTable(jdom) {
   setTimeout(refresh_data, 1);
 
   function _error(err) {
-    if (errmsg) {
-      errmsg.text(err.message);
-    } else {
-      tbody.append("<tr><td>"+ err.message +"</td></tr>");
-    }
+    popo(err);
     jdom.trigger('error', err);
+  }
+
+  function _get_array_data(d) {
+    return d.data;
   }
 
   function refresh_data() {
@@ -217,7 +235,7 @@ function smartTable(jdom) {
       tbody.html('');
       if (!ret.data) return _error(new Error("没有数据"));
       
-      ret.data.forEach(function(v, i) {
+      convert_data(ret).forEach(function(v, i) {
         let tr = $("<tr>").appendTo(tbody);
         tr.data("rowData", v);
         if (rows++ & 1) {
@@ -243,13 +261,13 @@ function smartTable(jdom) {
       oldtr.removeClass("table_row_click");
       tr.addClass("table_row_click");
       oldtr = tr;
+      jdom.data('select_row', value);
       jdom.trigger('select_row', value, tr);
     });
   }
 
   function init_page() {
     pagedom = get_template("#page_template");
-    errmsg = pagedom.find(".error-message");
     jdom.after(pagedom);
     update_page();
 
@@ -283,11 +301,13 @@ function smartTable(jdom) {
     pagedom.find(".currpage").val(currpage + 1);
     pagedom.find('.prev').prop("disabled", currpage-1 < 0);
     pagedom.find('.next').prop("disabled", currpage+1 >= totalpage);
-    errmsg.text('');
   }
 }
 
 
+//
+// 带有 html_template 的模板对象进行复制
+//
 function get_template(selector) {
   let t = $(selector).clone();
   t.removeClass('html_template');
@@ -301,6 +321,7 @@ function get_template(selector) {
 // 事件:
 //  delete_success(event) : 删除成功
 //  error(event, err)     : 删除时发生错误
+//  cancel(event)         : 取消删除
 //
 function deleteButton(jdel) {
   const api = jdel.attr('api');
@@ -313,7 +334,7 @@ function deleteButton(jdel) {
       id, "</b>"].join('');
 
     ynDialog(title, function(err, yn) {
-        if (!yn) return;
+        if (!yn) return jdel.trigger('cancel');
         let parm = {'id': id};
         get(api, parm, function(err, ret) {
           if (err) {
@@ -336,30 +357,29 @@ function popo(msg) {
   let t = get_template('#popo_message_template');
   let conf;
   let height = 0;
-  let bd = $(document.body);
   let content = t.find('.popo_message');
   let mouseon;
-  let offset = popo_offset;
+  let offset = body.data('popo_offset');
 
-  bd.append(t);
-  bd.on("popo_message_removed", on_other_removed);
+  content_frame.append(t);
+  body.on("popo_message_removed", on_other_removed);
 
   setTimeout(()=>{
     content.addClass("show");
     content.css("bottom", (offset) +'px');
     height = content.outerHeight() + 20;
-    popo_offset += height;
+    add_popo_offset(height);
   }, 10);
 
   let tid = setInterval(()=>{
     if (mouseon) return;
     clearInterval(tid);
-    bd.off("popo_message_removed", on_other_removed);
+    body.off("popo_message_removed", on_other_removed);
 
     content.stop().animate({'bottom': '-100px'}, 300, function() {
       t.remove();
-      popo_offset -= height;
-      bd.trigger("popo_message_removed", height);
+      add_popo_offset(-height);
+      body.trigger("popo_message_removed", height);
     });
   }, 3e3);
 
@@ -373,6 +393,9 @@ function popo(msg) {
 
   if (msg.constructor == Error) {
     conf = ['错误', msg.message, 'error'];
+    if (msg.data) {
+      conf[1] += "<div class='small'>"+ JSON.stringify(msg.data) +"</div>";
+    }
   } else if (typeof msg == "string") {
     conf = ['消息', msg, 'info'];
   } else {
@@ -387,6 +410,11 @@ function popo(msg) {
     offset -= mheight;
     content.animate({'bottom': (offset) +'px'}, 1e3);
   }
+
+  function add_popo_offset(x) {
+    let v = body.data('popo_offset');
+    body.data('popo_offset', v + x);
+  }
 }
 
 
@@ -396,7 +424,7 @@ function popo(msg) {
 //
 function ynDialog(msg, cb) {
   let t = get_template('#select_yn_dialog');
-  $(document.body).append(t);
+  content_frame.append(t);
   t.find('.message').html(msg);
 
   setTimeout(() => {
@@ -411,6 +439,162 @@ function ynDialog(msg, cb) {
   t.find(".no").click(function() {
     t.hide(100, function() { t.remove() });
     cb(null, false);
+  });
+}
+
+
+//
+// 创建一个对话框, 内容从 url 加载, 返回显示对话框内容的框架 jquery 对象
+// 事件, 通过 on() 接受:
+//   opend(event) : 窗口正确打开
+//   error(event, error) : 发生错误
+//   closing(event) : 窗口正在关闭, 此时抛出异常可终止关闭
+//   closed(event) : 窗口已经关闭
+//
+// 方法, 通过 trigger 调用:
+//   close : 立即关闭窗口
+//
+function contentDialog(url) {
+  if (!url) throw new Error("url not null");
+
+  let t = get_template("#content_dialog_template");
+  content_frame.append(t);
+  let content = t.find(".content_dialog"); 
+  let loading = t.find(".loading");
+  let close = t.find(".closeframe *");
+  resize();
+  win.resize(resize);
+  content.animate({right: 0}, 200);
+
+
+  $.ajax(url, {
+    type : 'GET',
+    success : _open_page,
+    error : function(req, text, err) {
+      let e = err || (new Error(text));
+      t.trigger('error', e);
+    },
+  });
+
+  close.click(function() {
+    try {
+      t.trigger('closing');
+      content.animate({right: -1000}, 200);
+      t.fadeOut(500, function() {
+        t.trigger('closed');
+        win.off('resize', resize);
+        t.remove();
+      });
+    } catch(err) {}
+    return false;
+  });
+
+  function resize() {
+    content.width(content_frame.outerWidth());
+    content.height(window.innerHeight);
+  }
+
+  function _open_page(html) {
+    let c = content.find('.content');
+    try {
+      loading.hide();
+      c.html(html);
+      t.trigger('opend');
+    } catch(err) {
+      c.html('<pre>'+ err.stack +"</pre>");
+      t.trigger('error', e);
+    }
+  }
+  return t;
+}
+
+
+//
+// 把 who 居中到 where, 带有 5像素 下移动画
+//
+function center(where, who) {
+  let a = [where.height(), where.width()];
+  let b = [who.outerHeight(), who.outerWidth()];
+  let off = { 
+    top : (a[0]-b[0])/2 - 5, 
+    left: (a[1]-b[1])/2 
+  };
+  who.offset(off);
+
+  setTimeout(function() {
+    off.top += 5;
+    who.animate(off, 100, 'swing');
+  }, 1);
+}
+
+
+//
+// 通常增删改查页面初始化
+// conf: {
+//   create: 创建按钮对象
+//   table : 表格对象
+//   edit  : 编辑按钮对象
+//   edit_page : 编辑子页面
+//   delete : 删除按钮对象
+//   copy_edit: function(data, targetDom) 用当前数据初始化编辑子页面
+// }
+//
+function commandCrudPage(conf) {
+  ajaxform(conf.create);
+  smartTable(conf.table);
+  deleteButton(conf.delete);
+  update_button(true);
+
+  conf.create.on('success', refreshTableData);
+  conf.delete.on('delete_success', refreshTableData);
+
+  conf.table.on('select_row', function(_, v) {
+    update_button((v || v.id) == null);
+    conf.delete.data('id', v.id);
+  });
+
+  conf.table.on('refresh_success', function() {
+    update_button(true);
+  });
+
+  conf.edit.click(function() {
+    let editpage = contentDialog(conf.edit_page);
+    editpage.on('opend', function() {
+      let data = conf.table.data('select_row');
+      conf.copy_edit(data, editpage);
+    });
+    editpage.on('closed', refreshTableData);
+  });
+
+  function refreshTableData() {
+    conf.table.refreshData();
+  }
+
+  function update_button(dis) {
+    conf.edit.prop('disabled', dis);
+    conf.delete.prop('disabled', dis);
+  }
+}
+
+
+//
+// 查字典, cb: Function(error, dictMap)
+//
+function getDict(dictId, cb) {
+  if (!dictId) throw new Error("dict ID is null");
+
+  const key = "ic1101.dict."+ dictId;
+  let cache = JSON.parse(sessionStorage.getItem(key));
+  if (cache) {
+    cb(null, cache);
+    return;
+  }
+
+  get('dict_read', {id: dictId}, function(err, ret) {
+    if (err) return cb(err);
+    let d = ret.data;
+    sessionStorage.setItem(key, JSON.stringify(d));
+    cb(null, d);
   });
 }
 

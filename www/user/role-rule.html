@@ -1,0 +1,83 @@
+<div id='role_edit_frame'>
+  <h2>权限编辑</h2>
+
+  <form class="pure-form" action='role_update' 
+        id='role_update'>
+    <fieldset>
+      <legend>角色属性</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>角色ID</label>
+          <input type="text" name='id' class="pure-u-23-24" readonly/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>角色说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">修改</button>
+          </div>
+          <span class='ajax-message'></span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>角色权限</legend>
+      <div class="pure-g" id='rule_list'>
+      </div>
+      <label style='float:right; font-size: 8px;'>
+        * 角色名称中文显示依赖 auth 字典的正确设置</label>
+    </fieldset>
+  </form>
+
+  <label class="pure-u-1 pure-u-md-1-5 html_template" 
+          id='rule_item_template'>
+    <input type="checkbox" name='r' value='x'/><span class='name'>权限1</span>
+  </label>
+
+<script>
+jQuery(function($) {
+  let root = $("#role_edit_frame");
+  let update = root.find("#role_update");
+  let setrule = root.find("#role_set_rule");
+  let rule_list = root.find('#rule_list');
+  let id = root.find("[name=id]");
+  let all_rule_inputs = {};
+
+  ic.ajaxform(update);
+  ic.ajaxform(setrule);
+
+  ic.get('auth_list', null, function(err, ret) {
+    if (err) return ic.popo(err);
+
+    ic.getDict("auth", function(err, dict) {
+      init_rule_list(ret.data, dict);
+    });
+  });
+
+  function init_rule_list(data, dict) {
+    data.forEach(function(_id) {
+      let t = ic.getTemplate('#rule_item_template');
+      t.find("[name=r]").val(_id);
+      t.find(".name").text((dict && dict[_id]) || _id);
+      rule_list.append(t);
+      all_rule_inputs[_id] = t.find("input");
+    });
+
+    ic.get("role_read_rule", {id: id.val()}, function(err, ret) {
+      if (err) return ic.popo(err);
+      ret.data.rules.forEach(function(_id) {
+        all_rule_inputs[_id].prop("checked", true);
+      });
+    });
+  }
+});
+</script>
+</div>

@@ -1,59 +1,104 @@
 <div>
   <script src="spark-md5.min.js"></script>
+  <h2>用户管理</h2>
 
   <form class="pure-form pure-form-stacked" 
       id='create_new_user' action='reguser'>
     <fieldset>
-      <legend>注册新用户</legend>
-      <label for='fu1'>用户名</label>
-      <input name="username" id="fu1" placeholder="最短4个字符" />
+      <legend class='form_title'>注册新用户</legend>
 
-      <label for="fu2">密码</label>
-      <input type="password" name='password' id="fu2" placeholder="最短8个字符" />
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for='fu1'>用户名</label>
+          <input name="username" id="fu1" 
+                 placeholder="最短4个字符" class="pure-u-23-24"/>
+        </div>
 
-      <label for="repass">重复密码</label>
-      <input type="password" name='' id="repass" placeholder="与密码相同" />
+        <div class="pure-u-1 pure-u-md-1-3 edit_not_display">
+          <label for="fu2">密码</label>
+          <input type="password" name='password' 
+                id="fu2" placeholder="最短8个字符" class="pure-u-23-24"/>
+        </div>
 
-      <label for="fu4">微信</label>
-      <input id="fu4" placeholder="微信号" name='weixin'/>
+        <div class="pure-u-1 pure-u-md-1-3 edit_not_display">
+          <label for="repass">重复密码</label>
+          <input type="password" name='' id="repass" 
+            placeholder="与密码相同" class="pure-u-23-24"/>
+        </div>
+      </div>
 
-      <label for="fu5">电话</label>
-      <input id="fu5" placeholder="联系电话" name='tel'/>
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="fu4">微信</label>
+          <input id="fu4" placeholder="微信号" name='weixin' class="pure-u-23-24"/>
+        </div>
 
-      <label for="fu6">Email</label>
-      <input id="fu6" placeholder="电子邮件" name='email'/>
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="fu5">电话</label>
+          <input id="fu5" placeholder="联系电话" name='tel' class="pure-u-23-24"/>
+        </div>
 
-      <label for="fu7" class="pure-checkbox">
-      <input type="checkbox" id="fu7" name='rootuser'/> 超级用户</label>
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label for="fu6">Email</label>
+          <input id="fu6" placeholder="电子邮件" name='email' class="pure-u-23-24"/>
+        </div>
+      </div>
+
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>角色</label>
+          <select name='role' class="pure-u-23-24"></select>
+        </div>
+      </div>
       
-      <div class='ajax-message error-message'></div>
+      <div class='edit_not_display'>
+        <label for="fu7" class="pure-checkbox">
+        <input type="checkbox" id="fu7" name='rootuser'/> 超级用户</label>
+      </div>
+
       <button type="submit" class="pure-button pure-button-primary">创建用户</button>
+      <div class='ajax-message error-message'></div>
     </fieldset>
   </form>
 
-  <script>
-    jQuery(function($) {
-      let create = $("#create_new_user");
-      let fpass = create.find("[name=password]");
-      let fuser = create.find("[name=username]");
-      let realpass;
+<script>
+jQuery(function($) {
+  let create = $("#create_new_user");
+  let fpass = create.find("[name=password]");
+  let fuser = create.find("[name=username]");
+  let realpass;
 
-      create.on('before', function(e, p) {
-        realpass = fpass.val();
-        let b = create.find("#repass").val();
-        if (realpass.length < 8) throw new Error("密码不足8位");
-        if (realpass != b) throw new Error("重复密码错误");
-        fpass.val(ic.password(fuser.val(), realpass));
-      });
+  create.on('before', function(e, p) {
+    realpass = fpass.val();
+    let b = create.find("#repass").val();
+    if (realpass.length < 8) throw new Error("密码不足8位");
+    if (realpass != b) throw new Error("重复密码错误");
+    fpass.val(ic.password(fuser.val(), realpass));
+  });
 
-      create.on('success', revertPass);
-      create.on('error', revertPass);
+  create.on('success', revertPass);
+  create.on('error', revertPass);
+  
+  ic.ajaxform(create);
+
+  ic.get("role_list", null, function(err, ret) {
+    if (err) return ic.popo(err);
+    let role_select = create.find("[name=role]");
+
+    ret.data.forEach(function(role) {
+      let text = role._id;
+      if (role.desc) text += ' ('+ role.desc +')';
       
-      ic.ajaxform(create);
-
-      function revertPass() {
-        fpass.val(realpass);
-      }
+      let opt = $("<option>");
+      opt.val(role._id);
+      opt.text(text);
+      role_select.append(opt);
     });
-  </script>
+  });
+
+  function revertPass() {
+    fpass.val(realpass);
+  }
+});
+</script>
 </div>

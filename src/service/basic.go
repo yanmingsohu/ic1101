@@ -15,6 +15,7 @@ var root = core.LoginUser{}
 var mg *core.Mongo
 var salt string
 var PageSize int64 = 10
+var auth_arr = []string{}
 
 
 //
@@ -58,6 +59,7 @@ func Install(conf *core.Config, m *core.Mongo) {
 func serviceList(b *brick.Brick) {
   installUserService(b)
   installDictService(b)
+  installAuthService(b)
 }
 
 
@@ -70,11 +72,21 @@ func dserv(b *brick.Brick, name string, h brick.HttpHandler) {
 
 // 检查登录/权限
 func aserv(b *brick.Brick, name string, handler brick.HttpHandler) {
+  auth_arr = append(auth_arr, name)
+
   b.Service("/ic/"+ name, func(h brick.Http) error {
     v := h.Session().Get("user")
     if v == nil {
       h.Json(HttpRet{100, "用户未登录", nil})
       return nil
+    }
+
+    user := v.(*core.LoginUser)
+    if !user.IsRoot {
+      if !user.Auths[name] {
+        h.Json(HttpRet{101, "用户无权限操作", nil})
+        return nil
+      }
     }
     return handler(h)
   })

@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -43,4 +44,20 @@ func ConnectMongo(config *Config)(cli *Mongo) {
   }
 
   return &Mongo{ client, db, context.TODO() }
+}
+
+
+//
+// 创建索引, 打印消息并返回
+//
+func (mg *Mongo) CreateIndex(collName string, idx *bson.D) {
+  index := mongo.IndexModel{Keys: idx}
+  idxs  := mg.Collection(collName).Indexes()
+  msg, err := idxs.CreateOne(context.Background(), index)
+
+  if err != nil {
+    log.Print("Create Index [", collName, "] Field:", err)
+  } else {
+    log.Print("Create Index [", collName, "]:", msg)
+  }
 }
