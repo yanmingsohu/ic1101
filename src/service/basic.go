@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"ic1101/brick"
 	"ic1101/src/core"
@@ -17,6 +18,7 @@ var mg *core.Mongo
 var salt string
 var PageSize int64 = 10
 var auth_arr = []string{}
+var sessionExp = 20 * time.Hour
 
 
 //
@@ -90,10 +92,11 @@ func Install(conf *core.Config, m *core.Mongo) {
   root.Pass = encPass(root.Name, root.Pass)
   root.Pass = encPass(root.Name, root.Pass)
 
-  b := brick.NewBrick(conf.HttpPort)
+  b := brick.NewBrick(conf.HttpPort, sessionExp)
   b.SetErrorHandler(httpErrorHandle)
 
   b.StaticPage("/ic/ui", "www")
+  b.Service("/ic/", notfound)
   serviceList(b)
 
   b.HttpJumpMapping("/", "/ic/ui/index.html")
@@ -105,6 +108,13 @@ func serviceList(b *brick.Brick) {
   installUserService(b)
   installDictService(b)
   installAuthService(b)
+}
+
+
+func notfound(h brick.Http) error {
+  h.W.WriteHeader(404)
+  h.Json(HttpRet{404, "Api Not found", h.R.URL.Path})
+  return nil
 }
 
 

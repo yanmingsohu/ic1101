@@ -486,8 +486,10 @@ function contentDialog(url) {
   $.ajax(url, {
     type : 'GET',
     success : _open_page,
-    error : function(req, text, err) {
-      let e = err || (new Error(text));
+    error : function(req, text, errText) {
+      let e = new Error(text +", "+ errText);
+      loading.hide();
+      content.find('.content').html(url +"<br/>"+ text +"<br/>"+ errText);
       t.trigger('error', e);
     },
   });
@@ -547,22 +549,31 @@ function center(where, who) {
 //
 // 通常增删改查页面初始化
 // conf: {
-//   create: 创建按钮对象
-//   table : 表格对象
+//   create: 该对象处理方法由 create_page 属性决定, 表单/按钮
+//   create_page: (可选的) 如果有该属性则 create 是按钮, 并在按下后打开页面
 //   edit  : 编辑按钮对象
 //   edit_page : 编辑子页面
 //   delete : 删除按钮对象
-//   copy_edit: function(data, targetDom) 用当前数据初始化编辑子页面
+//   table : 表格对象
+//   copy_edit: function(data, targetDom) : 
+//      用当前数据初始化编辑子页面, 适用于 create_page/edit_page
 // }
 //
 function commandCrudPage(conf) {
-  ajaxform(conf.create);
   smartTable(conf.table);
   deleteButton(conf.delete);
   update_button(true);
 
-  conf.create.on('success', refreshTableData);
   conf.delete.on('delete_success', refreshTableData);
+
+  if (conf.create_page) {
+    conf.create.click(function() {
+      openDialogWith(conf.create_page);
+    });
+  } else {
+    ajaxform(conf.create);
+    conf.create.on('success', refreshTableData);
+  }
 
   conf.table.on('select_row', function(_, v) {
     update_button((v || v.id) == null);
@@ -574,13 +585,17 @@ function commandCrudPage(conf) {
   });
 
   conf.edit.click(function() {
-    let editpage = contentDialog(conf.edit_page);
-    editpage.on('opend', function() {
-      let data = conf.table.data('select_row');
-      conf.copy_edit(data, editpage);
-    });
-    editpage.on('closed', refreshTableData);
+    openDialogWith(conf.edit_page);
   });
+
+  function openDialogWith(page) {
+    let dialog = contentDialog(page);
+    dialog.on('opend', function() {
+      let data = conf.table.data('select_row');
+      conf.copy_edit(data, dialog);
+    });
+    dialog.on('closed', refreshTableData);
+  }
 
   function refreshTableData() {
     conf.table.refreshData();

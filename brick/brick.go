@@ -119,9 +119,9 @@ type HttpErrorHandler func(hd *Http, err interface{})
 var file_mapping = make(map[string][]byte)
 
 //
-// 创建 Brick 的实例
+// 创建 Brick 的实例, session 对象在 sessionExp 后无效.
 //
-func NewBrick(httpPort int) *Brick {
+func NewBrick(httpPort int, sessionExp time.Duration) *Brick {
   secureCookie := securecookie.New(
     securecookie.GenerateRandomKey(32), 
     securecookie.GenerateRandomKey(16))
@@ -137,7 +137,7 @@ func NewBrick(httpPort int) *Brick {
   
     sess: sessions.New(sessions.Config{
       Cookie: "witnesssessionid",
-      Expires: time.Hour * 2,
+      Expires: sessionExp,
       Encode: secureCookie.Encode,
       Decode: secureCookie.Decode,
     }),
@@ -314,7 +314,8 @@ func (b *Brick) TemplatePage(
 
 
 //
-// 把对 location 的请求跳转到 to 上
+// 把对 location 的请求跳转到 to 上, 
+// 如果参数 location == '/', 则对没有注册过的路径的请求都会转发到 to 上.
 //
 func (b *Brick) HttpJumpMapping(location string, to string) {
   b.serveMux.HandleFunc(location, func(w http.ResponseWriter, r *http.Request) {
