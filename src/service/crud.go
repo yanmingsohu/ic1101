@@ -1,8 +1,6 @@
 package service
 
 import (
-	"ic1101/brick"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -11,7 +9,7 @@ import (
 // 用于增删改查的便捷操作
 //
 type Crud struct {
-  h         brick.Http
+  h         *Ht
   collname  string
   info      string
 }

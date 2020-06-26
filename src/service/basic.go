@@ -32,8 +32,52 @@ type HttpRet struct {
 }
 
 
+//
+// 服务接口参数包装器
+//
+type Ht struct {
+  *brick.Http
+  *ServiceGroupContext
+}
+
+
+//
+// 服务组上下文, 服务组中的所有服务都使用相同的配置
+//
+type ServiceGroupContext struct {
+  // 操作数据表的名字
+  collectionName string
+  // 服务的描述名
+  serviceName    string
+}
+
+
+//
+// 服务接口签名, 返回 error 则返回错误 json, 
+// 返回 HttpRet 则返回该对象的 json, 
+// 返回其他数据则绑定到 json.data 属性上.
+//
+type ServiceHandler func(*Ht) interface{}
+
+
 func (h *HttpRet) Error() string {
   return h.Msg.(string)
+}
+
+
+//
+// 返回当前登录用户
+//
+func (h *Ht) GetUser() *core.LoginUser {
+  return h.Session().Get("user").(*core.LoginUser)
+}
+
+
+//
+// 返回 CRUD 实例, 配置的 db 表由绑定服务接口时的 ServiceGroupContext 参数决定.
+//
+func (h *Ht) Crud() *Crud {
+  return &Crud{h, h.collectionName, h.serviceName}
 }
 
 
@@ -64,17 +108,39 @@ func serviceList(b *brick.Brick) {
 
 
 // 无授权检测
-func dserv(b *brick.Brick, name string, h brick.HttpHandler) {
+func dserv(b *brick.Brick, ctx *ServiceGroupContext, 
+           name string, service ServiceHandler) {
   // name := funcName(h)
-  b.Service("/ic/"+ name, h)
+  b.Service("/ic/"+ name, func(h brick.Http) error {
+    ht := Ht{&h, ctx}
+    ret := service(&ht)
+    
+    if ret != nil {
+      switch ret.(type) { 
+      case error:
+        return ret.(error)
+        
+      case HttpRet:
+        ht.Json(ret.(HttpRet))
+        break;
+
+      default:
+        ht.Json(HttpRet{0, "data", ret})
+        break;
+      }
+    }
+    
+    return nil
+  })
 }
 
 
 // 检查登录/权限
-func aserv(b *brick.Brick, name string, handler brick.HttpHandler) {
+func aserv(b *brick.Brick, ctx *ServiceGroupContext, 
+           name string, handler ServiceHandler) {
   auth_arr = append(auth_arr, name)
 
-  b.Service("/ic/"+ name, func(h brick.Http) error {
+  dserv(b, ctx, name, func(h *Ht) interface{} {
     v := h.Session().Get("user")
     if v == nil {
       h.Json(HttpRet{100, "用户未登录", nil})
@@ -88,6 +154,7 @@ func aserv(b *brick.Brick, name string, handler brick.HttpHandler) {
         return nil
       }
     }
+
     return handler(h)
   })
 }
@@ -153,7 +220,7 @@ func checkbool(info string, v string) bool {
 }
 
 
-func checkpage(h brick.Http) int64 {
+func checkpage(h *Ht) int64 {
   parm := h.Get("page")
   if parm == "" {
     return 0

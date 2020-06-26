@@ -16,17 +16,18 @@ import (
 
 
 func installUserService(b *brick.Brick) {
-	dserv(b, "login", 			login)
-	dserv(b, "logout",  		logout)
-	dserv(b, "salt",  			getsalt)
-	dserv(b, "whoaim",  		whoaim)
+	ctx := &ServiceGroupContext{"login_user", "用户"}
+	dserv(b, ctx, "login", 				login)
+	dserv(b, ctx, "logout",  			logout)
+	dserv(b, ctx, "salt",  				getsalt)
+	dserv(b, ctx, "whoaim",  			whoaim)
 	
-	aserv(b, "reguser", 		reguser)
-	aserv(b, "changepass", 	changepass)
-	aserv(b, "user_list",   user_list)
-	aserv(b, "user_update", user_update)
+	aserv(b, ctx, "reguser", 			reguser)
+	aserv(b, ctx, "changepass", 	changepass)
+	aserv(b, ctx, "user_list",   	user_list)
+	aserv(b, ctx, "user_update", 	user_update)
 
-	mg.CreateIndex("dict", &bson.D{
+	mg.CreateIndex("login_user", &bson.D{
 		{"_id", "text"}, {"weixin", "text"}, {"tel", "text"}, {"email", "text"}})
 }
 
@@ -40,13 +41,13 @@ func encPass(name string, pass string) string {
 }
 
 
-func getsalt(h brick.Http) error {
+func getsalt(h *Ht) interface{} {
 	h.Json(HttpRet{0, "ok", salt})
 	return nil
 }
 
 
-func login(h brick.Http) error {
+func login(h *Ht) interface{} {
 	name := h.Get("username")
 	if len(name) < 4 {
 		return errors.New("名字长度不足")
@@ -86,7 +87,7 @@ func login(h brick.Http) error {
 }
 
 
-func installAuth(h brick.Http, user *core.LoginUser) {
+func installAuth(h *Ht, user *core.LoginUser) {
 	if user.Role == "" {
 		return
 	}
@@ -103,14 +104,14 @@ func installAuth(h brick.Http, user *core.LoginUser) {
 }
 
 
-func logout(h brick.Http) error {
+func logout(h *Ht) interface{} {
 	h.Session().Delete("user")
 	h.Json(HttpRet{0, "用户登出", nil})
 	return nil
 }
 
 
-func whoaim(h brick.Http) error {
+func whoaim(h *Ht) interface{} {
 	v := h.Session().Get("user")
 	if v == nil {
 		h.Json(HttpRet{1, "用户未登录", nil})
@@ -121,7 +122,7 @@ func whoaim(h brick.Http) error {
 }
 
 
-func reguser(h brick.Http) error {
+func reguser(h *Ht) interface{} {
 	now 	 := time.Now()
 	name   := checkstring("用户名", h.Get("username"), 4, 64)
 	pass   := checkstring("密码", h.Get("password"), 8, 64)
@@ -156,7 +157,7 @@ func reguser(h brick.Http) error {
 }
 
 
-func user_update(h brick.Http) error {
+func user_update(h *Ht) interface{} {
 	id := checkstring("用户名", h.Get("username"), 4, 64)
 	user := h.Session().Get("user").(*core.LoginUser)
 
@@ -180,14 +181,12 @@ func user_update(h brick.Http) error {
 		{"role",      h.Get("role")},
 	}
 
-	c := Crud{h, "login_user", "用户"}
-	return c.Update(id, bson.D{{"$set", d}})
+	return h.Crud().Update(id, bson.D{{"$set", d}})
 }
 
 
-func user_list(h brick.Http) error {
-	c := Crud{h, "login_user", "用户"}
-	return c.List(func(opt *options.FindOptions) {
+func user_list(h *Ht) interface{} {
+	return h.Crud().List(func(opt *options.FindOptions) {
 		opt.SetProjection(bson.M{
 			"_id":1, "role":1, "weixin":1, "tel":1, "email":1, 
 			"isroot":1, "regdata":1, "logindata":1,
@@ -196,7 +195,7 @@ func user_list(h brick.Http) error {
 }
 
 
-func changepass(h brick.Http) error {
+func changepass(h *Ht) interface{} {
 	// name   := checkstring("用户名", h.Get("username"), 4, 64)
 	name   := h.Session().Get("user").(*core.LoginUser).Name
 	pass   := checkstring("密码", h.Get("password"), 8, 64)

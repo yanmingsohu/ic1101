@@ -12,31 +12,32 @@ import (
 
 
 func installAuthService(b *brick.Brick) {
-  aserv(b, "auth_list",       auth_list)
-  aserv(b, "role_count",      role_count)
-  aserv(b, "role_list",       role_list)
-  aserv(b, "role_create",     role_create)
-  aserv(b, "role_delete",     role_delete)
-  aserv(b, "role_read_rule",  role_read_rule)
-  aserv(b, "role_update",     role_update)
+  ctx := &ServiceGroupContext{"role", "角色"}
+  aserv(b, ctx, "auth_list",       auth_list)
+  aserv(b, ctx, "role_count",      role_count)
+  aserv(b, ctx, "role_list",       role_list)
+  aserv(b, ctx, "role_create",     role_create)
+  aserv(b, ctx, "role_delete",     role_delete)
+  aserv(b, ctx, "role_read_rule",  role_read_rule)
+  aserv(b, ctx, "role_update",     role_update)
 
   mg.CreateIndex("role", &bson.D{{"_id", "text"}, {"desc", "text"}})
 }
 
 
-func auth_list(h brick.Http) error {
+func auth_list(h *Ht) interface{} {
   h.Json(HttpRet{0, "auth list", auth_arr})
   return nil
 }
 
 
-func role_count(h brick.Http) error {
+func role_count(h *Ht) interface{} {
   c := Crud{h, "role", "角色"}
   return c.PageInfo()
 }
 
 
-func role_list(h brick.Http) error {
+func role_list(h *Ht) interface{} {
   c := Crud{h, "role", "角色"}
   return c.List(func(opt *options.FindOptions) {
     opt.SetProjection(bson.M{"desc":1, "cd":1, "md":1})
@@ -44,7 +45,7 @@ func role_list(h brick.Http) error {
 }
 
 
-func role_create(h brick.Http) error {
+func role_create(h *Ht) interface{} {
   d := bson.D{
     {"_id",  checkstring("角色ID", h.Get("id"), 2, 20)},
     {"desc", checkstring("角色说明", h.Get("desc"), 0, 999)},
@@ -56,14 +57,14 @@ func role_create(h brick.Http) error {
 }
 
 
-func role_delete(h brick.Http) error {
+func role_delete(h *Ht) interface{} {
   id := checkstring("角色ID", h.Get("id"), 2, 20)
   c := Crud{h, "role", "角色"}
   return c.Delete(id)
 }
 
 
-func role_update(h brick.Http) error {
+func role_update(h *Ht) interface{} {
   user := h.Session().Get("user").(*core.LoginUser)
   id := checkstring("角色ID", h.Get("id"), 2, 20)
   c := Crud{h, "role", "角色"}
@@ -87,14 +88,14 @@ func role_update(h brick.Http) error {
 }
 
 
-func role_read_rule(h brick.Http) error {
+func role_read_rule(h *Ht) interface{} {
   id := checkstring("角色ID", h.Get("id"), 2, 20)
   c := Crud{h, "role", "角色"}
   return c.Read(id, "rules")
 }
 
 
-func getRuels(h brick.Http, ruleId string) ([]string, error) {
+func getRuels(h *Ht, ruleId string) ([]string, error) {
 	filter := bson.D{{"_id", ruleId}}
 	opt    := options.FindOne()
 	ret    := bson.M{}

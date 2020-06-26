@@ -12,19 +12,20 @@ import (
 
 
 func installDictService(b *brick.Brick) {
-  aserv(b, "dict_create",     dict_create)
-  aserv(b, "dict_read",       dict_read)
-  aserv(b, "dict_update",     dict_update)
-  aserv(b, "dict_list",       dict_list)
-  aserv(b, "dict_count",      dict_count)
-  aserv(b, "dict_delete",     dict_delete)
-  aserv(b, "dict_insert_key", dict_insert_key)
+  ctx := &ServiceGroupContext{"dict", "字典"}
+  aserv(b, ctx, "dict_create",     dict_create)
+  aserv(b, ctx, "dict_read",       dict_read)
+  aserv(b, ctx, "dict_update",     dict_update)
+  aserv(b, ctx, "dict_list",       dict_list)
+  aserv(b, ctx, "dict_count",      dict_count)
+  aserv(b, ctx, "dict_delete",     dict_delete)
+  aserv(b, ctx, "dict_insert_key", dict_insert_key)
 
   mg.CreateIndex("dict", &bson.D{{"_id", "text"}, {"desc", "text"}})
 }
 
 
-func dict_create(h brick.Http) error {
+func dict_create(h *Ht) interface{} {
   d := bson.D{
     {"_id",  checkstring("字典ID", h.Get("id"), 2, 20)},
     {"desc", checkstring("字典说明", h.Get("desc"), 0, 999)},
@@ -32,26 +33,23 @@ func dict_create(h brick.Http) error {
     {"md",   ""},
   }
 
-  c := Crud{h, "dict", "字典"}
-  return c.Create(&d)
+  return h.Crud().Create(&d)
 }
 
 
-func dict_count(h brick.Http) error {
-  c := Crud{h, "dict", "字典"}
-  return c.PageInfo()
+func dict_count(h *Ht) interface{} {
+  return h.Crud().PageInfo()
 }
 
 
-func dict_list(h brick.Http) error {
-  c := Crud{h, "dict", "字典"}
-  return c.List(func(opt *options.FindOptions) {
+func dict_list(h *Ht) interface{} {
+  return h.Crud().List(func(opt *options.FindOptions) {
     opt.SetProjection(bson.M{"desc":1, "cd":1, "md":1})
   })
 }
 
 
-func dict_read(h brick.Http) error {
+func dict_read(h *Ht) interface{} {
   id     := checkstring("字典ID", h.Get("id"), 2, 20)
   table  := mg.Collection("dict")
   filter := bson.D{{"_id", id}}
@@ -68,7 +66,7 @@ func dict_read(h brick.Http) error {
 }
 
 
-func dict_insert_key(h brick.Http) error {
+func dict_insert_key(h *Ht) interface{} {
   id   := checkstring("字典ID", h.Get("id"), 2, 20)
   keys := h.Gets("k")
   vs   := h.Gets("v")
@@ -99,18 +97,16 @@ func dict_insert_key(h brick.Http) error {
 }
 
 
-func dict_update(h brick.Http) error {
+func dict_update(h *Ht) interface{} {
   id := checkstring("字典ID", h.Get("id"), 2, 20)
   up := bson.D{{"$set", 
         bson.D{{"desc", h.Get("desc")}, {"md", time.Now()}} }}
 
-  c := Crud{h, "dict", "字典"}
-  return c.Update(id, up)
+  return h.Crud().Update(id, up)
 }
 
 
-func dict_delete(h brick.Http) error {
+func dict_delete(h *Ht) interface{} {
   id := checkstring("字典ID", h.Get("id"), 2, 20)
-  c := Crud{h, "dict", "字典"}
-  return c.Delete(id)
+  return h.Crud().Delete(id)
 }
