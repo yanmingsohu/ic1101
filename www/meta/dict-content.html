@@ -52,10 +52,10 @@
           <label>操作</label>
           <div class="pure-button-group" role="group">
             <button type="submit" 
-              class="pure-button button-primary">插入</button>
+              class="pure-button button-primary">插入/更新</button>
             <button type="reset" 
               class="pure-button button-secondary">清除</button>
-            <button type="button" id='dict_key_delete' api='dict_key_delete'
+            <button type="button" id='dict_key_delete' api='dict_delete_key'
               class="pure-button button-warning">删除</button>
           </div>
           <span class='ajax-message'></span>
@@ -71,7 +71,7 @@
   <table class="pure-table" id='dict_kv_table' api='dict_read'
          form='#filter_for_table'>
     <thead>
-      <th cn='id'>键</th> <th cn='val'>值</th>
+      <th cn='id' rename='k'>键</th> <th cn='val'>值</th>
     </thead>
     <tbody></tbody>
   </table>
@@ -89,7 +89,8 @@
       remove.prop('disabled', true);
 
       table.on('select_row', function(ev, dt) {
-        remove.data('id', dt.id);
+        remove.data('id', update.find('[name=id]').val());
+        remove.data('parm', {k: dt.k});
         remove.prop('disabled', false);
       });
 

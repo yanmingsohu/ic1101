@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -149,10 +150,13 @@ func aserv(b *brick.Brick, ctx *ServiceGroupContext,
 
     user := v.(*core.LoginUser)
     if !user.IsRoot {
+      log.Print("[", user.Name, ":", name, "] No auth")
       if !user.Auths[name] {
         h.Json(HttpRet{101, "用户无权限操作", nil})
         return nil
       }
+    } else {
+      log.Print("[", user.Name, ":", name, "] ", h.Get("id"))
     }
 
     return handler(h)

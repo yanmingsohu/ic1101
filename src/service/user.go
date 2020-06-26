@@ -25,6 +25,7 @@ func installUserService(b *brick.Brick) {
 	aserv(b, ctx, "reguser", 			reguser)
 	aserv(b, ctx, "changepass", 	changepass)
 	aserv(b, ctx, "user_list",   	user_list)
+	aserv(b, ctx, "user_count",   user_count)
 	aserv(b, ctx, "user_update", 	user_update)
 
 	mg.CreateIndex("login_user", &bson.D{
@@ -50,11 +51,13 @@ func getsalt(h *Ht) interface{} {
 func login(h *Ht) interface{} {
 	name := h.Get("username")
 	if len(name) < 4 {
+		log.Print("User Login fail: ", name)
 		return errors.New("名字长度不足")
 	}
 
 	pass := h.Get("password")
 	if len(pass) < 10 {
+		log.Print("User Login fail: ", name)
 		return errors.New("密钥长度不足")
 	}
 
@@ -69,6 +72,7 @@ func login(h *Ht) interface{} {
 		err := table.FindOne(h.Ctx(), filter).Decode(user)
 		if err != nil {
 			log.Print(name, "登录失败", err)
+			log.Print("User Login fail ", name)
 			return errors.New("登录失败, 用户名或密码错误")
 		}
 	}
@@ -79,9 +83,12 @@ func login(h *Ht) interface{} {
 		h.Session().Set("user", user)
 		table.UpdateOne(h.Ctx(), filter, 
 				bson.D{{"$set", bson.D{{"logindata", time.Now()}}}})
+				
 		h.Json(HttpRet{0, "用户登录成功", nil})
+		log.Print("User Login success: ", name)
 	} else {
 		h.Json(HttpRet{1, "用户登录失败", nil})
+		log.Print("User Login fail: ", name)
 	}
 	return nil
 }
@@ -192,6 +199,11 @@ func user_list(h *Ht) interface{} {
 			"isroot":1, "regdata":1, "logindata":1,
 		})
 	})
+}
+
+
+func user_count(h *Ht) interface{} {
+	return h.Crud().PageInfo()
 }
 
 

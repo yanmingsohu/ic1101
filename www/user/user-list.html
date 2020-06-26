@@ -36,7 +36,7 @@
       <th cn='weixin'>微信</th>
       <th cn='tel'>电话</th>
       <th cn='email'>邮箱</th>
-      <th cn='isroot' format='yesno'>超级管理</th>
+      <th cn='isroot' format='yesno'>超级用户</th>
       <th cn='regdata' format='date'>注册时间</th>
       <th cn='logindata' format='date'>登录时间</th>
     </thead>
@@ -55,10 +55,10 @@ jQuery(function($) {
 
     copy_edit(data, target) {
       target.find("[name=username]").val(data.id);
-      target.find("[name=role]").val(data.role);
       target.find("[name=weixin]").val(data.weixin);
       target.find("[name=tel]").val(data.tel);
       target.find("[name=email]").val(data.email);
+      target.find("[name=role]").data('val', data.role);
     },
   });
 });

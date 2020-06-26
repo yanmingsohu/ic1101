@@ -38,6 +38,7 @@
       <div class='s2' href='user/role.html'>角色管理</div>
 
     <div class='s1'>系统管理</div>
+      <div class='s2'>日志</div>
       <div class='s2' href='user/changepass.html'>修改密码</div>
       <div class='s2'>授权</div>
       <div class='s2'>协议</div>
@@ -67,6 +68,7 @@ ic.get('whoaim', null, function(err, d) {
     location.href = 'index.html';
   } else {
     ic.username = d.data;
+    ic.popo("用户 "+ ic.username +" 已经登录");
   }
 });
 

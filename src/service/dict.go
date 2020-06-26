@@ -20,6 +20,7 @@ func installDictService(b *brick.Brick) {
   aserv(b, ctx, "dict_count",      dict_count)
   aserv(b, ctx, "dict_delete",     dict_delete)
   aserv(b, ctx, "dict_insert_key", dict_insert_key)
+  aserv(b, ctx, "dict_delete_key", dict_delete_key)
 
   mg.CreateIndex("dict", &bson.D{{"_id", "text"}, {"desc", "text"}})
 }
@@ -94,6 +95,21 @@ func dict_insert_key(h *Ht) interface{} {
   }
   h.Json(HttpRet{0, "字典已更新", id})
   return nil
+}
+
+
+func dict_delete_key(h *Ht) interface{} {
+  id  := checkstring("字典ID", h.Get("id"), 2, 20)
+  key := checkstring("属性名", h.Get("k"), 1, 99)
+
+  table  := mg.Collection("dict")
+  filter := bson.D{{"_id", id}}
+  up     := bson.D{{"$unset", bson.D{{"content."+ key, 1}} }}
+
+  if _, err := table.UpdateOne(h.Ctx(), filter, up); err != nil {
+    return err
+  }
+  return HttpRet{0, "字典已更新", id}
 }
 
 

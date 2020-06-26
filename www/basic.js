@@ -57,13 +57,19 @@ function get(api, data, cb) {
     type : 'GET',
     data : data,
 
-    success : function(data) {
-      if (data.code) {
+    success : function(data, status, jxr) {
+      if (data.code === 0) {
+        cb(null, data)
+      } else {
+        let type = jxr.getResponseHeader("content-type");
+        if (type.indexOf("json") < 0) {
+          cb(new Error("错误的应答, 不是 json. fail:"+ type));
+          return;
+        }
+
         let err = new Error('错误:'+ data.msg);
         err.data = data.data;
         cb(err);
-      } else {
-        cb(null, data)
       }
     },
 
@@ -318,6 +324,7 @@ function get_template(selector) {
 //
 // <button api='删除接口' ...
 // jdel 必须绑定数据 .data('id', ...) 该参数直接递交到接口
+// .data('parm', ...) 递交的扩展参数
 // 事件:
 //  delete_success(event) : 删除成功
 //  error(event, err)     : 删除时发生错误
@@ -329,13 +336,15 @@ function deleteButton(jdel) {
   jdel.click(function() {
     let id = jdel.data("id");
     if (!id) return popo(new Error(".data('id', ... 绑定参数无效"));
+
     const title = ["删除选中的数据? 数据删除后将不可还原",
       "<br/>选择 '是' 删除 <b style='color:#d04242'>", 
       id, "</b>"].join('');
 
     ynDialog(title, function(err, yn) {
         if (!yn) return jdel.trigger('cancel');
-        let parm = {'id': id};
+        let parm = $.extend({'id': id}, jdel.data('parm'));
+        
         get(api, parm, function(err, ret) {
           if (err) {
             jdel.trigger("error", err);
@@ -364,24 +373,13 @@ function popo(msg) {
   content_frame.append(t);
   body.on("popo_message_removed", on_other_removed);
 
-  setTimeout(()=>{
-    content.addClass("show");
-    content.css("bottom", (offset) +'px');
-    height = content.outerHeight() + 20;
-    add_popo_offset(height);
-  }, 10);
+  setTimeout(_show, 10);
+  t.click(_close);
 
   let tid = setInterval(()=>{
     if (mouseon) return;
-    clearInterval(tid);
-    body.off("popo_message_removed", on_other_removed);
-
-    content.stop().animate({'bottom': '-100px'}, 300, function() {
-      t.remove();
-      add_popo_offset(-height);
-      body.trigger("popo_message_removed", height);
-    });
-  }, 3e3);
+    _close();
+  }, 5e3);
 
   content.mouseenter(()=>{
     mouseon = 1;
@@ -405,6 +403,24 @@ function popo(msg) {
   t.find(".ti").text(conf[0]);
   t.find(".msg").html(conf[1]);
   content.addClass(conf[2]);
+
+  function _show() {
+    content.addClass("show");
+    content.css("bottom", (offset) +'px');
+    height = content.outerHeight() + 20;
+    add_popo_offset(height);
+  }
+
+  function _close() {
+    clearInterval(tid);
+    body.off("popo_message_removed", on_other_removed);
+
+    content.stop().animate({'bottom': '-100px'}, 300, function() {
+      t.remove();
+      add_popo_offset(-height);
+      body.trigger("popo_message_removed", height);
+    });
+  }
 
   function on_other_removed(ev, mheight) {
     offset -= mheight;
