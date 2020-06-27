@@ -8,19 +8,26 @@
       <legend>新建原型</legend>
       
       <div class="pure-g">
-        <div class="pure-u-1 pure-u-md-1-3">
+        <div class="pure-u-1 pure-u-md-1-2">
           <label for="create_dict_id">原型ID</label>
           <input type="text" id="create_dict_id" name='id' 
                 class="pure-u-23-24"/>
         </div>
 
-        <div class="pure-u-1 pure-u-md-1-3">
+        <div class="pure-u-1 pure-u-md-1-2">
           <label for="create_dict_desc">说明</label>
           <input type="text" id="create_dict_desc" name='desc' 
                   class="pure-u-23-24"/>
         </div>
 
-        <div class="pure-u-1 pure-u-md-1-3">
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>脚本</label>
+          <select type="text" name='script'class="pure-u-23-24">
+            <option value=''>(无)</option>
+          </select>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
           <label for="create_dict_desc">操作</label>
           <div class="pure-button-group" role="group">
             <button type="submit" 
@@ -34,7 +41,7 @@
     </fieldset>
   </form>
 
-  <form class="pure-form pure-form-stacked" id='user_search_filter'>
+  <form class="pure-form pure-form-stacked" id='dev_proto_search_filter'>
     <fieldset>
       <div class="pure-g">
         <div class="pure-u-1 pure-u-md-2-5">
@@ -70,8 +77,8 @@
     <thead>
       <th cn='_id' rename='id'>原型ID</th> 
       <th cn='desc'>说明</th>
-      <th cn='dc' format='date'>数据量</th>
-      <th cn='dd' format='date'>数据时间</th>
+      <th cn='changeid'>版本</th>
+      <th cn='script'>脚本</th>
       <th cn='cd' format='date'>创建时间</th>
       <th cn='md' format='date'>修改时间</th>
     </thead>
@@ -86,15 +93,29 @@ jQuery(function($) {
   let del = root.find("#delete_dev_proto");
   let table = root.find("#dev_proto_table");
 
+  create.on('success', function() {
+    edit.trigger("click");
+  });
+
   ic.commandCrudPage({
     create,
     edit,
-    edit_page : 'meta/edit-dev-proto.html',
+    edit_page : 'meta/dev-proto-edit.html',
     table,
     delete : del,
 
     copy_edit(data, target) {
-      // target.find("[name=username]").val(data.id);
+      if (!data) {
+        data = {
+          id    : create.find("[namd=id]").val(),
+          script: create.find("[namd=script]").val(),
+          desc  : create.find("[namd=desc]").val(),
+        };
+      } 
+      
+      target.find("[name=id]").val(data.id);
+      target.find("[name=script]").val(data.script);
+      target.find(".dev_proto_desc").val(data.desc);
     },
   });
 });

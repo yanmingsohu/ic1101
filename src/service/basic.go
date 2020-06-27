@@ -11,6 +11,8 @@ import (
 
 	"ic1101/brick"
 	"ic1101/src/core"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var root = core.LoginUser{}
@@ -84,6 +86,11 @@ func (h *Ht) Crud() *Crud {
 }
 
 
+func (h *Ht) Table() *mongo.Collection {
+  return mg.Collection(h.collectionName)
+}
+
+
 func Install(conf *core.Config, m *core.Mongo) {
   mg = m;
   salt = conf.Salt
@@ -108,6 +115,7 @@ func serviceList(b *brick.Brick) {
   installUserService(b)
   installDictService(b)
   installAuthService(b)
+  installDevProtoService(b)
 }
 
 
@@ -214,7 +222,7 @@ func httpErrorHandle(hd *brick.Http, err interface{}) {
 func checkstring(info string, s string, min int, max int) string {
   l := len(s)
   if l < min {
-    msg := fmt.Sprintf("%s %s %d %s", info, "长度必须大于", min, "个字符")
+    msg := fmt.Sprintf("%s %s %d %s", info, "长度必须大于等于", min, "个字符")
     panic(HttpRet{ Code: 2, Msg: msg, Data: []int{min, max} })
   }
   if l >= max {
@@ -244,4 +252,21 @@ func checkpage(h *Ht) int64 {
     return 0
   }
   return page * PageSize
+}
+
+
+func checkint(info string, s string, min int64, max int64) int64 {
+  r, err := strconv.ParseInt(s, 10, 32) 
+  if err != nil {
+    r = 0
+  }
+  if r < min {
+    msg := fmt.Sprintf("%s %s %d", info, "必须大于等于", min)
+    panic(HttpRet{ Code: 2, Msg: msg, Data: []int64{min, max} })
+  }
+  if r >= max {
+    msg := fmt.Sprintf("%s %s %d", info, "必须小于", max)
+    panic(HttpRet{ Code: 2, Msg: msg, Data: []int64{min, max} })
+  }
+  return r
 }

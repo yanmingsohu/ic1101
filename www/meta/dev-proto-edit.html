@@ -1,12 +1,239 @@
 <div id='update_dev_proto_content'>
   <h2>设备原型</h2>
+  <hr/>
 
-  <div class="pure-g">
-    <div class="pure-u-1-2">
-      a
+  <form class="pure-form pure-form-stacked" action='dev_proto_update' 
+        id='dev_proto_update_form'>
+    <fieldset>
+      <legend>基础信息</legend>
+
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>原型ID</label>
+          <input type="text" name='id' readonly
+                class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>原型说明</label>
+          <input type="text" name='desc' 
+                  class="pure-u-23-24 dev_proto_desc"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>脚本</label>
+          <select type="text" name='script'class="pure-u-23-24">
+            <option value=''>(无)</option>
+          </select>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">更新</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除</button>
+          </div>
+          <span class='ajax-message'></span>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <h3>扩展属性</h3><hr/>
+  <div class="pure-g pure-form" id='dev_proto_attr_update_frame'>
+    <div class="pure-u-md-3-5">
+      <legend class='not-full'>属性列表</legend>
+
+      <table class="pure-table" id='dev_proto_attr_table' 
+             api='dev_proto_attr_list' form='#dev_proto_update_form'>
+        <thead>
+          <th cn='name'>名称</th> 
+          <th cn='desc'>说明</th>
+          <th cn='type' format="format.type">类型</th>
+          <th cn='defval'>默认</th>
+          <th cn='min'>最小</th>
+          <th cn='max'>最大</th>
+          <th cn='notnull' format='yesno'>必填</th>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-    <div class="pure-u-1-2">
-      create_dev_proto
+
+    <div class="pure-u-md-2-5">
+      <form class="pure-form pure-form-stacked" 
+            action='dev_proto_attr_update' 
+            id='dev_proto_attr_update'>
+      <fieldset class="pure-u-1">
+        <legend>属性编辑器</legend>
+        <input name='id' type='hidden'/>
+
+        <div class="pure-g">
+          <div class="pure-u-1 pure-u-md-1-2">
+            <label>名称</label>
+            <input name='name' class="pure-u-23-24"/>
+          </div>
+
+          <div class="pure-u-1 pure-u-md-1-2">
+            <label>说明</label>
+            <input name='desc' class="pure-u-23-24"/>
+          </div>
+
+          <div class="pure-u-1 pure-u-md-1-2">
+            <label>类型</label>
+            <select name='type' class="pure-u-23-24"></select>
+          </div>
+
+          <div class="pure-u-1 pure-u-md-1-2 hide_on_dict hide_on_data">
+            <label>默认值</label>
+            <input type="text" name='defval' class="pure-u-23-24"/>
+          </div>
+
+          <div class="pure-u-1 pure-u-md-1-2 hide_on_dict hide_on_data">
+            <label>最小值</label>
+            <input type="text" name='min' class="pure-u-23-24" value='0'/>
+          </div>
+
+          <div class="pure-u-1 pure-u-md-1-2 hide_on_dict hide_on_data">
+            <label>最大值</label>
+            <input type="text" name='max' class="pure-u-23-24" value='255'/>
+          </div>
+          
+          <div class="pure-u-1 pure-u-md-1-2 hide show_on_dict hide_on_data">
+            <label>引用字典</label>
+            <select name='dict' class="pure-u-23-24"></select>
+          </div>
+        </div>
+
+        <label class="pure-checkbox pure-u-1 pure-u-md-1-1 hide_on_dict">
+          <input type="checkbox" name='notnull'/>
+          不能为空(必填)
+        </label>
+
+        <div class="pure-g">
+          <div class="pure-u-1 pure-u-md-1-1">
+            <label for="create_dict_desc">操作</label>
+            <div class="pure-button-group" role="group">
+              <button type="submit" 
+                class="pure-button button-primary">添加/更新</button>
+              <button type="reset" api='dev_proto_attr_delete'
+                class="pure-button button-secondary delete">删除</button>
+          </div>
+          
+          <div class="pure-u-1 pure-u-md-1-1 hide_on_dict numlength">
+            <label for="create_dict_desc">常用数字长度</label>
+            <div class="pure-button-group" role="group">
+              <button type="button" class="pure-button button-success" 
+                      v='4'>4位</button>
+              <button type="button" class="pure-button button-success" 
+                      v='8'>8位</button>
+              <button type="button" class="pure-button button-success" 
+                      v='16'>16位</button>
+              <button type="button" class="pure-button button-success" 
+                      v='32'>32位</button>
+            </div>
+            <label class="pure-checkbox pure-u-1 pure-u-md-1-1">
+              <input type="checkbox" class='has_signed'/>
+              有符号
+            </label>
+          </div>
+
+          <span class='ajax-message'></span>
+          </div>
+        </div>
+
+      </fieldset>
+      </form>
     </div>
   </div>
+
+  <h3>输入数据</h3><hr/>
+
+  <h3>输出数据</h3><hr/>
+
+<script>
+jQuery(function($) {
+  const DAT_dict = 102;
+  const DAT_date = 103;
+
+  let root = $("#update_dev_proto_content");
+  let id = root.find("[name=id]").val();
+  let attr_types = {};
+
+  ic.get("dev_proto_attr_types", null, function(err, ret) {
+    if (err) return ic.popo("页面初始化错误, "+ err.message);
+    attr_types = ret.data;
+    init_attrs_editor();
+  });
+
+
+  function init_attrs_editor() {
+    let update_proto = root.find('#dev_proto_update_form');
+    let attr_table = root.find("#dev_proto_attr_table");
+    let attr_update = root.find("#dev_proto_attr_update");
+    let attr_delete = root.find(".delete");
+    let type_select = attr_update.find("[name=type]");
+    let max = attr_update.find("[name=max]");
+    let min = attr_update.find("[name=min]");
+    let has_signed = attr_update.find(".has_signed");
+
+    ic.buildSelectOpt(type_select, attr_types);
+    ic.initDictSelect(attr_update.find("[name=dict]"));
+    ic.ajaxform(update_proto);
+
+    attr_update.find(".numlength [v]").click(function() {
+      let v = $(this).attr('v');
+      let mm = ic.numberScope(v, has_signed.prop('checked'));
+      min.val(mm.min);
+      max.val(mm.max);
+    });
+
+    type_select.change(function() {
+      switch (parseInt(type_select.val())) {
+        case DAT_dict:
+          switch_display('.show_on_dict', '.hide_on_dict');
+          break;
+        case DAT_date:
+          switch_display('.show_on_data', '.hide_on_data');
+          break;
+        default:
+          switch_display(
+            '.hide_on_dict, .hide_on_data', 
+            '.show_on_dict, .show_on_data');
+          break;
+      }
+    });
+
+    attr_table.data('format.type', function(d) {
+      return attr_types[d] || d;
+    });
+
+    ic.commandCrudPage({
+      create : attr_update,
+      edit : $("<b>"),
+      delete : attr_delete,
+      table : attr_table,
+
+      copy_edit: function(data, targetDom) {
+      },
+
+      table_convert: function(r) {
+        return r.data.attrs || [];
+      },
+    });
+
+    attr_table.on('select_row', function(_, v) {
+      attr_delete.data('id', id);
+      attr_delete.data("parm", {name: v.name});
+      attr_delete.data("what", '原型 '+ id +" 中的 "+ v.name +" 属性");
+    });
+
+    function switch_display(show_select, hide_select) {
+      attr_update.find(show_select).show();
+      attr_update.find(hide_select).hide();
+    }
+  }
+});
+</script>
 </div>

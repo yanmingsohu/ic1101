@@ -14,3 +14,4 @@
 * [Modbus](https://github.com/goburrow/modbus)
 * [MongoAPI](https://www.docs4dev.com/docs/zh/mongodb/v3.6/reference/reference-method-db.collection.updateOne.html#db.collection.updateOne)
 * [MongoRef](https://docs.mongodb.com/manual/reference/method/db.collection.insertOne/)
+* [Select2](https://select2.org/data-sources/ajax)

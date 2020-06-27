@@ -1,5 +1,6 @@
 jQuery(function($) {
 
+const API_ROOT = "/ic/";
 const body = $(document.body);
 const win  = $(window);
 const content_frame = $("#main_frame");
@@ -18,6 +19,10 @@ const ic = window.ic = {
   contentDialog,
   commandCrudPage,
   getTemplate: get_template,
+  buildSelectOpt,
+  initDictSelect,
+  select2fromApi,
+  numberScope,
 };
 
 const format_fn = {
@@ -53,7 +58,7 @@ function password(name, pass) {
 
 
 function get(api, data, cb) {
-  $.ajax("/ic/"+ api, {
+  $.ajax(API_ROOT + api, {
     type : 'GET',
     data : data,
 
@@ -156,7 +161,7 @@ function ajaxform(jdom) {
 //        pageinfo='获取分页数据接口'>
 // <thead><th cn='来自数据接口中的列属性名' 
 //         rename='重命名属性' format='显示时格式化' >...
-// format: date 
+// format: date / yesno / 在 data("format.XXX", function) 绑定方法
 //
 // table 事件:
 //    error(event, errObj)     : 解析数据异常, 运行异常
@@ -170,10 +175,10 @@ function ajaxform(jdom) {
 // _convert: 可选的数据转换器, 必须返回数组, 默认返回 api 返回的数组
 //
 function smartTable(jdom, _convert) {
-  const api  = jdom.attr('api');
-  let form   = $(jdom.attr('form') || '<form>');
-  let tbody  = jdom.find("tbody");
-  let header = [];
+  const api    = jdom.attr('api');
+  const form   = $(jdom.attr('form') || '<form>');
+  const tbody  = jdom.find("tbody");
+  const header = [];
   let rows   = 0;
   let oldtr  = jdom.find("tr");
   let totalpage = 0;
@@ -190,10 +195,23 @@ function smartTable(jdom, _convert) {
 
   jdom.find("thead th").each(function() {
     let thiz = $(this);
+    let format_name = thiz.attr('format');
+    let format_func = no_format;
+
+    if (format_name) {
+      if (format_name.startsWith("format.")) {
+        let _f = jdom.data(format_name);
+        if (typeof _f == 'function') format_func = _f;
+      } 
+      else if (format_fn[format_name]) {
+        format_func = format_fn[format_name];
+      }
+    }
+    
     header.push({
       cn : thiz.attr('cn'),
       rn : thiz.attr('rename'),
-      fm : format_fn[thiz.attr('format')] || no_format,
+      fm : format_func,
     });
   });
 
@@ -202,7 +220,7 @@ function smartTable(jdom, _convert) {
     get(pageinfo, {}, function(err, ret) {
       if (err) return _error(err);
       if (ret.code) return _error(new Error(ret.msg));
-      totalpage = Math.ceil(ret.data.Count / ret.data.PageSize) || 0;
+      totalpage = Math.ceil(ret.data.Count / ret.data.PageSize) || 1;
       init_page();
     });
   }
@@ -247,6 +265,7 @@ function smartTable(jdom, _convert) {
         if (rows++ & 1) {
           tr.addClass('pure-table-odd');
         }
+        if (v == null) return;
 
         header.forEach(function(h) {
           let td = $("<td>").appendTo(tr);
@@ -325,6 +344,7 @@ function get_template(selector) {
 // <button api='删除接口' ...
 // jdel 必须绑定数据 .data('id', ...) 该参数直接递交到接口
 // .data('parm', ...) 递交的扩展参数
+// .data('what', ...) 提示用户要删除什么, 默认为 id
 // 事件:
 //  delete_success(event) : 删除成功
 //  error(event, err)     : 删除时发生错误
@@ -336,10 +356,11 @@ function deleteButton(jdel) {
   jdel.click(function() {
     let id = jdel.data("id");
     if (!id) return popo(new Error(".data('id', ... 绑定参数无效"));
+    let what = jdel.data("what") || id;
 
     const title = ["删除选中的数据? 数据删除后将不可还原",
       "<br/>选择 '是' 删除 <b style='color:#d04242'>", 
-      id, "</b>"].join('');
+      what, "</b>"].join('');
 
     ynDialog(title, function(err, yn) {
         if (!yn) return jdel.trigger('cancel');
@@ -520,7 +541,7 @@ function contentDialog(url) {
       t.trigger('opend');
     } catch(err) {
       c.html('<pre>'+ err.stack +"</pre>");
-      t.trigger('error', e);
+      t.trigger('error', err);
     }
   }
   return t;
@@ -555,12 +576,13 @@ function center(where, who) {
 //   edit_page : 编辑子页面
 //   delete : 删除按钮对象
 //   table : 表格对象
+//   table_convert : 表格数据转换器
 //   copy_edit: function(data, targetDom) : 
 //      用当前数据初始化编辑子页面, 适用于 create_page/edit_page
 // }
 //
 function commandCrudPage(conf) {
-  smartTable(conf.table);
+  smartTable(conf.table, conf.table_convert);
   deleteButton(conf.delete);
   update_button(true);
 
@@ -627,6 +649,106 @@ function getDict(dictId, cb) {
     sessionStorage.setItem(key, JSON.stringify(d));
     cb(null, d);
   });
+}
+
+
+function initDictSelect(jselect) {
+  jselect.attr("api", "dict_list");
+  select2fromApi(jselect, function(r) {
+    if (r.data) {
+      r.data.forEach(function(d) {
+        d.id = d._id;
+        let txt = [d._id];
+        if (d.desc) {
+          txt.push(' - ', d.desc);
+        }
+        d.text = txt.join("");
+      });
+      return r.data;
+    }
+  });
+}
+
+
+//
+// <select api='' 绑定到 select2 下拉菜单, 数据来自 api, 分页.
+// data_convert: Function(json_data) 转换json数据使之有 {id, text}
+//              返回 null 则没有更多数据
+//
+// 接口应接受 page 参数用于翻页, text 用于全文检索
+//
+function select2fromApi(jselect, data_convert) {
+  const api = jselect.attr('api');
+  if (!api) return popo("api 参数无效");
+
+  jselect.select2({
+    ajax: { 
+      url: API_ROOT + api,
+      dataType: 'json',
+      quietMillis: 250,
+
+      data: function (t) {
+        return {
+          text : t.term,
+          page : t.page || 0,
+        };
+      },
+
+      processResults: function (r, q) {
+        let ret = { results: [], pagination: {more: false} };
+        let dc = data_convert(r);
+        if (dc) {
+          ret.pagination.more = true;
+          ret.results = dc;
+        }
+        return ret;
+      },
+    },
+    cache: true,
+  });
+}
+
+
+//
+// map[k] = v, k 作为 value, v 作为显示
+//
+function buildSelectOpt(jselect, map, value) {
+  for (let k in map) {
+    let opt = $("<option>");
+    opt.val(k);
+    opt.text(map[k]);
+    jselect.append(opt);
+  }
+  if (value) jselect.val(value);
+  return jselect;
+}
+
+
+function numberScope(bit, signed) {
+  let r = {min:0, max:0};
+
+  if (signed) {
+    if (bit == 32) {
+      r.min = "-2147483648";
+      r.max = "2147483647";
+    } else if (bit == 64) {
+      r.min = "-9223372036854775808";
+      r.max = "9223372036854775807";
+    } else {
+      let x = (1 << bit)>>1;
+      r.max = x-1;
+      r.min = -x;
+    }
+  } else {
+    if (bit == 64) {
+      r.max = "18446744073709552000";
+    } else if (bit == 32) {
+      r.max = 0xffffffff;
+    } else {
+      r.max = (1 << bit)-1;
+    }
+  }
+  return r;
 }
 
 });
