@@ -9,15 +9,13 @@
       
       <div class="pure-g">
         <div class="pure-u-1 pure-u-md-1-2">
-          <label for="create_dict_id">原型ID</label>
-          <input type="text" id="create_dict_id" name='id' 
-                class="pure-u-23-24"/>
+          <label>原型ID</label>
+          <input type="text" name='id' class="pure-u-23-24"/>
         </div>
 
         <div class="pure-u-1 pure-u-md-1-2">
-          <label for="create_dict_desc">说明</label>
-          <input type="text" id="create_dict_desc" name='desc' 
-                  class="pure-u-23-24"/>
+          <label>说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
         </div>
 
         <div class="pure-u-1 pure-u-md-1-2">
@@ -28,7 +26,7 @@
         </div>
 
         <div class="pure-u-1 pure-u-md-1-2">
-          <label for="create_dict_desc">操作</label>
+          <label>操作</label>
           <div class="pure-button-group" role="group">
             <button type="submit" 
               class="pure-button button-primary">创建</button>
@@ -94,6 +92,7 @@ jQuery(function($) {
   let table = root.find("#dev_proto_table");
 
   create.on('success', function() {
+    table.selectNone();
     edit.trigger("click");
   });
 
@@ -107,11 +106,11 @@ jQuery(function($) {
     copy_edit(data, target) {
       if (!data) {
         data = {
-          id    : create.find("[namd=id]").val(),
-          script: create.find("[namd=script]").val(),
-          desc  : create.find("[namd=desc]").val(),
+          id    : create.find("[name=id]").val(),
+          script: create.find("[name=script]").val(),
+          desc  : create.find("[name=desc]").val(),
         };
-      } 
+      }
       
       target.find("[name=id]").val(data.id);
       target.find("[name=script]").val(data.script);

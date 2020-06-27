@@ -226,7 +226,7 @@ jQuery(function($) {
     attr_table.on('select_row', function(_, v) {
       attr_delete.data('id', id);
       attr_delete.data("parm", {name: v.name});
-      attr_delete.data("what", '原型 '+ id +" 中的 "+ v.name +" 属性");
+      attr_delete.data("what", '原型 '+ id +' 中的 "'+ v.name +'" 属性');
     });
 
     function switch_display(show_select, hide_select) {

@@ -171,6 +171,7 @@ function ajaxform(jdom) {
 // table 绑定属性:
 //    refreshData() 立即刷新数据
 //    data('select_row') 当前选择行的数据(已经被 _convert 转换)
+//    selectNone()  取消当前选择的行
 //
 // _convert: 可选的数据转换器, 必须返回数组, 默认返回 api 返回的数组
 //
@@ -188,6 +189,7 @@ function smartTable(jdom, _convert) {
   let convert_data = _convert || _get_array_data;
 
   jdom.refreshData = refresh_data;
+  jdom.selectNone = selectNone;
 
   if (!api) return _error(new Error("缺少 api 属性"));
 
@@ -313,10 +315,16 @@ function smartTable(jdom, _convert) {
         currpage = pn;
         refresh_data();
       } else {
-        ipage.val(currpage+1);
+        ipage.val(currpage +1);
       }
       return false;
     });
+  }
+
+  function selectNone() {
+    oldtr.removeClass("table_row_click");
+    oldtr = jdom.find("tr");
+    jdom.removeData('select_row');
   }
 
   function update_page() {
@@ -335,6 +343,9 @@ function smartTable(jdom, _convert) {
 //
 function get_template(selector) {
   let t = $(selector).clone();
+  if (t.length == 0) {
+    throw new Error("错误: HTML 模板标签不存在, "+ selector);
+  }
   t.removeClass('html_template');
   t.removeAttr("id");
   return t;
@@ -599,7 +610,7 @@ function commandCrudPage(conf) {
 
   conf.table.on('select_row', function(_, v) {
     update_button((v || v.id) == null);
-    conf.delete.data('id', v.id);
+    conf.delete.data('id', v && v.id);
   });
 
   conf.table.on('refresh_success', function() {
