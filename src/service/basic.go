@@ -107,6 +107,7 @@ func Install(conf *core.Config, m *core.Mongo) {
   serviceList(b)
 
   b.HttpJumpMapping("/", "/ic/ui/index.html")
+  b.HttpJumpMapping("/favicon.ico", "/ic/ui/favicon.ico")
   b.StartHttpServer()
 }
 

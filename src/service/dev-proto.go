@@ -175,7 +175,7 @@ func dev_proto_attr_delete(h *Ht) interface{} {
   up     := bson.M{ 
     "$set"   : bson.M{ "md" : time.Now() },
     "$pull"  : bson.M{ "attrs" : bson.M{ "name": name } },
-    "$inc"   : bson.M{"changeid" : 1},
+    "$inc"   : bson.M{ "changeid" : 1 },
   }
   _, err := h.Table().UpdateOne(h.Ctx(), filter, up)
   if err != nil {
