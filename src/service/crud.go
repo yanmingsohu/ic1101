@@ -97,16 +97,26 @@ func (c *Crud) Delete(id string) error {
 // 立即更新一行数据, data 是完整的更新命令
 // md 属性总是保存更新日期
 //
-func (c *Crud) Update(id string, data interface{}) error {
+func (c *Crud) Update(id string, data interface{}, opts ...*options.UpdateOptions) error {
   table  := mg.Collection(c.collname)
   filter := bson.D{{"_id", id}}
 
-  if _, err := table.UpdateOne(c.h.Ctx(), filter, data); err != nil {
+  if _, err := table.UpdateOne(c.h.Ctx(), filter, data, opts...); err != nil {
     c.h.Json(HttpRet{1, c.info +"更新错误", err.Error()})
     return nil
   }
   c.h.Json(HttpRet{0, c.info +"已更新", id})
   return nil
+}
+
+
+//
+// 更新或插入数据
+//
+func (c *Crud) Upsert(id string, data interface{}) error {
+  opt := options.Update()
+  opt.SetUpsert(true)
+  return c.Update(id, data, opt)
 }
 
 

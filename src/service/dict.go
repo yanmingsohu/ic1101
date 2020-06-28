@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -123,4 +124,18 @@ func dict_update(h *Ht) interface{} {
 func dict_delete(h *Ht) interface{} {
   id := checkstring("字典ID", h.Get("id"), 2, 20)
   return h.Crud().Delete(id)
+}
+
+
+func hasKeyInDict(ctx context.Context, dict string, key string) (bool) {
+  res := mg.Collection(core.TableDict).FindOne(
+      ctx, bson.M{
+        "_id": dict, 
+        "content."+ key : bson.M{ "$exists": true },
+      }, options.FindOne().SetProjection(bson.M{"_id":1}))
+
+  if res.Err() != nil {
+    return false
+  }
+  return true
 }

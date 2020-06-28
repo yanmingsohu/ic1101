@@ -1,9 +1,6 @@
 package core
 
-type TableInfo struct {
-  Name string
-  Info string
-}
+const TimeFormatString = "2020-06-25T08:32:44.676+00:00"
 
 /*
 Table: login_user {
@@ -145,6 +142,7 @@ var DAT__map = map[DevAttrType]string {
 /*
 Table: device {
   _id       : "设备ID"
+  desc      : "说明"
   tid       : "原型id"
   changeid  : 引用原型的修改次数flag, 当设备小于原型则属性需要同步
   md        : 修改时间

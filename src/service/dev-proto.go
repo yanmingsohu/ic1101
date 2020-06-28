@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"ic1101/brick"
 	"ic1101/src/core"
@@ -246,4 +247,10 @@ func dev_proto_ctrl_update(h *Ht) interface{} {
 
 func dev_proto_ctrl_delete(h *Ht) interface{} {
   return __proto_remove_arr(h, "控制槽", "ctrls")
+}
+
+
+func getDevProto(ctx context.Context, id string, ret interface{}) error {
+  filter := bson.M{"_id": id}
+  return mg.Collection(core.TableDevProto).FindOne(ctx, filter).Decode(ret)
 }
