@@ -64,7 +64,7 @@ jQuery(function($) {
     if (ret && ret.data && ret.data.tid) {
       read_proto(ret.data.tid, ret.data);
     } else {
-      read_proto(form.find("[name=tid]").val(), { attr: {} });
+      read_proto(form.find("[name=tid]").val(), { attrs: {} });
     }
   });
 

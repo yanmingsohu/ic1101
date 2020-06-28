@@ -75,6 +75,7 @@
       <th cn='dc'>数据量</th>
       <th cn='dd'>数据时间</th>
       <th cn='md' format='date'>修改时间</th>
+      <th cn='cd' format='date'>创建时间</th>
     </thead>
     <tbody></tbody>
   </table>
@@ -119,7 +120,7 @@ jQuery(function($) {
         msg.text("设备已经存在");
         return;
       }
-      
+
       let dia = ic.contentDialog("device/update.html");
       dia.on('opend', function() {
         dia.find("[name=id]").val(id);

@@ -792,6 +792,10 @@ function dateTime(jinput) {
   dt.change(syncVal);
 
   let date = new Date(jinput.val());
+  if (!date.getDate()) {
+    date = new Date();
+  }
+
   let buf = [ date.getFullYear(), '-', s2(date.getMonth()+1), '-', 
               s2(date.getDate()), 'T', s2(date.getHours()), ':', 
               s2(date.getMinutes()) ];
