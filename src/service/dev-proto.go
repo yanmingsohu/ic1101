@@ -94,8 +94,18 @@ func dev_proto_update(h *Ht) interface{} {
 
 
 func dev_proto_delete(h *Ht) interface{} {
-  //TODO: 如果有设备引用原型, 则禁止删除
   id := checkstring("原型ID", h.Get("id"), 2, 20)
+  
+  cur, err := mg.Collection(core.TableDevice).Find(h.Ctx(), 
+      bson.M{"tid": id}, options.Find().SetLimit(1))
+  if err != nil {
+    return err
+  }
+
+  defer cur.Close(h.Ctx())
+  if cur.Next(h.Ctx()) {
+    return HttpRet{3, "原型被设备引用, 不能删除", id}
+  }
   return h.Crud().Delete(id)
 }
 

@@ -101,11 +101,17 @@ func (c *Crud) Update(id string, data interface{}, opts ...*options.UpdateOption
   table  := mg.Collection(c.collname)
   filter := bson.D{{"_id", id}}
 
-  if _, err := table.UpdateOne(c.h.Ctx(), filter, data, opts...); err != nil {
+  res, err := table.UpdateOne(c.h.Ctx(), filter, data, opts...)
+  if err != nil {
     c.h.Json(HttpRet{1, c.info +"更新错误", err.Error()})
     return nil
   }
-  c.h.Json(HttpRet{0, c.info +"已更新", id})
+
+  if res.UpsertedCount > 0 {
+    c.h.Json(HttpRet{0, c.info +" 已创建", id})
+  } else {
+    c.h.Json(HttpRet{0, c.info +" 已更新", id})
+  }
   return nil
 }
 
