@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"ic1101/brick"
+	"ic1101/src/core"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -12,7 +13,7 @@ import (
 
 
 func installDictService(b *brick.Brick) {
-  ctx := &ServiceGroupContext{"dict", "字典"}
+  ctx := &ServiceGroupContext{core.TableDict, "字典"}
   aserv(b, ctx, "dict_create",     dict_create)
   aserv(b, ctx, "dict_read",       dict_read)
   aserv(b, ctx, "dict_update",     dict_update)
@@ -22,7 +23,7 @@ func installDictService(b *brick.Brick) {
   aserv(b, ctx, "dict_insert_key", dict_insert_key)
   aserv(b, ctx, "dict_delete_key", dict_delete_key)
 
-  mg.CreateIndex("dict", &bson.D{{"_id", "text"}, {"desc", "text"}})
+  mg.CreateIndex(core.TableDict, &bson.D{{"_id", "text"}, {"desc", "text"}})
 }
 
 
@@ -52,13 +53,12 @@ func dict_list(h *Ht) interface{} {
 
 func dict_read(h *Ht) interface{} {
   id     := checkstring("字典ID", h.Get("id"), 2, 20)
-  table  := mg.Collection("dict")
   filter := bson.D{{"_id", id}}
   dict   := bson.M{}
   opt    := options.Find()
   opt.SetProjection(bson.M{"content":1})
 
-  if err := table.FindOne(h.Ctx(), filter).Decode(&dict); err != nil {
+  if err := h.Table().FindOne(h.Ctx(), filter).Decode(&dict); err != nil {
     h.Json(HttpRet{1, "错误", err.Error()})
     return nil
   }
@@ -72,7 +72,6 @@ func dict_insert_key(h *Ht) interface{} {
   keys := h.Gets("k")
   vs   := h.Gets("v")
 
-  table  := mg.Collection("dict")
   filter := bson.D{{"_id", id}}
 
   for i, k := range keys {
@@ -84,13 +83,13 @@ func dict_insert_key(h *Ht) interface{} {
     }
 
     up := bson.D{{"$set", bson.D{{"content."+ k, vs[i]}} }}
-    if _, err := table.UpdateOne(h.Ctx(), filter, up); err != nil {
+    if _, err := h.Table().UpdateOne(h.Ctx(), filter, up); err != nil {
       return err
     }
   }
 
   up := bson.D{{"$set", bson.D{{"md", time.Now()}} }}
-  if _, err := table.UpdateOne(h.Ctx(), filter, up); err != nil {
+  if _, err := h.Table().UpdateOne(h.Ctx(), filter, up); err != nil {
     return err
   }
   h.Json(HttpRet{0, "字典已更新", id})
@@ -102,11 +101,10 @@ func dict_delete_key(h *Ht) interface{} {
   id  := checkstring("字典ID", h.Get("id"), 2, 20)
   key := checkstring("属性名", h.Get("k"), 1, 99)
 
-  table  := mg.Collection("dict")
   filter := bson.D{{"_id", id}}
   up     := bson.D{{"$unset", bson.D{{"content."+ key, 1}} }}
 
-  if _, err := table.UpdateOne(h.Ctx(), filter, up); err != nil {
+  if _, err := h.Table().UpdateOne(h.Ctx(), filter, up); err != nil {
     return err
   }
   return HttpRet{0, "字典已更新", id}

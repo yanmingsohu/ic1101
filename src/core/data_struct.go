@@ -1,5 +1,10 @@
 package core
 
+type TableInfo struct {
+  Name string
+  Info string
+}
+
 /*
 Table: login_user {
   _id(string)  			: 用户名, 不重复
@@ -20,6 +25,8 @@ type LoginUser struct {
   IsRoot bool      	`bson:"isroot"`
   Auths map[string]bool
 }
+
+const TableLoginUser = "login_user"
 
 
 /*
@@ -42,6 +49,8 @@ type Dict struct {
   Content map[string]string `bson:"content"`
 }
 
+const TableDict = "dict"
+
 
 /*
 Table: role {
@@ -55,6 +64,8 @@ Table: role {
 type Role struct {
   Id      string `bson:"_id"`
 }
+
+const TableRule = "role"
 
 
 /*
@@ -96,6 +107,8 @@ Table: dev-proto {
 type DevProto struct {
   Id string `bson:"_id"`
 }
+
+const TableDevProto = "dev-proto"
 
 type DevAttrType int
 type DevDataType int
@@ -152,3 +165,5 @@ Table: device {
 type Device struct {
   Id string `bson:"_id"`
 }
+
+const TableDevice = "device"

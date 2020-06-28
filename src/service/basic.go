@@ -117,6 +117,7 @@ func serviceList(b *brick.Brick) {
   installDictService(b)
   installAuthService(b)
   installDevProtoService(b)
+  installDeviceService(b)
 }
 
 

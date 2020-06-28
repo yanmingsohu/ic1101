@@ -16,7 +16,7 @@ import (
 
 
 func installUserService(b *brick.Brick) {
-	ctx := &ServiceGroupContext{"login_user", "用户"}
+	ctx := &ServiceGroupContext{core.TableLoginUser, "用户"}
 	dserv(b, ctx, "login", 				login)
 	dserv(b, ctx, "logout",  			logout)
 	dserv(b, ctx, "salt",  				getsalt)
@@ -28,7 +28,7 @@ func installUserService(b *brick.Brick) {
 	aserv(b, ctx, "user_count",   user_count)
 	aserv(b, ctx, "user_update", 	user_update)
 
-	mg.CreateIndex("login_user", &bson.D{
+	mg.CreateIndex(core.TableLoginUser, &bson.D{
 		{"_id", "text"}, {"weixin", "text"}, {"tel", "text"}, {"email", "text"}})
 }
 
@@ -63,13 +63,12 @@ func login(h *Ht) interface{} {
 
 	var user *core.LoginUser
 	filter := bson.D{{"_id", name}}
-	table := mg.Collection("login_user")
 
 	if name == root.Name {
 		user = &root
 	} else {
 		user = &core.LoginUser{}
-		err := table.FindOne(h.Ctx(), filter).Decode(user)
+		err := h.Table().FindOne(h.Ctx(), filter).Decode(user)
 		if err != nil {
 			log.Print(name, "登录失败", err)
 			log.Print("User Login fail ", name)
@@ -81,7 +80,7 @@ func login(h *Ht) interface{} {
 	if pass == user.Pass {
 		installAuth(h, user)
 		h.Session().Set("user", user)
-		table.UpdateOne(h.Ctx(), filter, 
+		h.Table().UpdateOne(h.Ctx(), filter, 
 				bson.D{{"$set", bson.D{{"logindata", time.Now()}}}})
 				
 		h.Json(HttpRet{0, "用户登录成功", nil})
@@ -153,8 +152,7 @@ func reguser(h *Ht) interface{} {
 		{"role",      h.Get("role")},
 	}
 
-	table := mg.Collection("login_user")
-	_, err := table.InsertOne(h.Ctx(), d)
+	_, err := h.Table().InsertOne(h.Ctx(), d)
 	if err != nil {
 		h.Json(HttpRet{1, "用户已经存在", err.Error()})
 		return nil
@@ -214,9 +212,8 @@ func changepass(h *Ht) interface{} {
 	oldpass:= checkstring("旧密码", h.Get("oldpassword"), 8, 64)
 
 	filter := bson.D{{"_id", name}}
-	table  := mg.Collection("login_user")
 	user   := core.LoginUser{}
-	err    := table.FindOne(h.Ctx(), filter).Decode(&user)
+	err    := h.Table().FindOne(h.Ctx(), filter).Decode(&user)
 	if err != nil {
 		return err
 	}
@@ -226,7 +223,7 @@ func changepass(h *Ht) interface{} {
 		return errors.New("旧密码错误")
 	}
 
-	table.UpdateOne(h.Ctx(), filter, 
+	h.Table().UpdateOne(h.Ctx(), filter, 
 			bson.D{{"$set", bson.D{{"pass", encPass(name, pass)}} }})
 
 	h.Json(HttpRet{0, "密码已修改", name})

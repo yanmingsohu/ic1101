@@ -15,8 +15,8 @@ const INT_MIN = ^INT_MAX
 
 
 func installDevProtoService(b *brick.Brick) {
-  mg.CreateIndex("dev-proto", &bson.D{{"_id", "text"}, {"desc", "text"}})
-  ctx := &ServiceGroupContext{"dev-proto", "设备原型"}
+  mg.CreateIndex(core.TableDevProto, &bson.D{{"_id", "text"}, {"desc", "text"}})
+  ctx := &ServiceGroupContext{core.TableDevProto, "设备原型"}
 
   aserv(b, ctx, "dev_proto_create",       dev_proto_create)
   aserv(b, ctx, "dev_proto_count",        dev_proto_count)
