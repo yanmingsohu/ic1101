@@ -1,0 +1,140 @@
+<div id='device_info_edit_frame'>
+  <h2>设备属性编辑</h2>
+
+  <form class="pure-form pure-form-stacked" 
+        id='update_device' action='dev_upsert'>
+    <fieldset>
+      <legend>基本属性</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>设备ID</label>
+          <input type="text" name='id' class="pure-u-23-24" readonly/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>设备原型</label>
+          <input type="text" name='tid' class="pure-u-23-24" readonly/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>设备说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+      </div>
+
+      <legend>扩展属性</legend>
+      <div class="pure-g extends_attributes">
+      </div>
+
+      <div class="pure-u-1 pure-u-md-1-3">
+        <label>操作</label>
+        <div class="pure-button-group" role="group">
+          <button type="submit" 
+            class="pure-button button-primary">更新</button>
+        </div>
+        <span class='ajax-message error-message'></span>
+      </div>
+    </fieldset>
+  </form>
+
+  <div class="pure-u-1 pure-u-md-1-3 html_template" id='dev_attr_text_template'>
+    <label></label>
+    <input type="text" name='' class="pure-u-23-24"/>
+  </div>
+
+  <div class="pure-u-1 pure-u-md-1-3 html_template" id='dev_attr_select_template'>
+    <label></label>
+    <select type="text" name='' class="pure-u-23-24"></select>
+  </div>
+
+<script>
+jQuery(function($) {
+  const DAT_dict = 102;
+  const DAT_date = 103;
+
+  const root = $("#device_info_edit_frame");
+  const form = root.find("#update_device");
+  const id = form.find("[name=id]").val();
+  const ext = form.find(".extends_attributes");
+
+  ic.ajaxform(form);
+
+  ic.get("dev_read", {id:id}, function(err, ret) {
+    if (ret && ret.data && ret.data.tid) {
+      read_proto(ret.data.tid, ret.data);
+    } else {
+      read_proto(form.find("[name=tid]").val(), { attr: {} });
+    }
+  });
+
+  function read_proto(tid, dev) {
+    ic.get("dev_proto_read", {id: tid}, function(err, proto_ret) {
+      if (err) return ic.popo(err);
+      buildForm(dev, proto_ret.data);
+    });
+  }
+
+  function buildForm(dev, proto) {
+    proto.attrs.forEach(function(a) {
+      let tpl;
+
+      switch (parseInt(a.type)) {
+        case DAT_dict:
+          tpl = ic.getTemplate("#dev_attr_select_template");
+          initDict();
+          initTpl();
+          break;
+
+        case DAT_date:
+          tpl = ic.getTemplate("#dev_attr_text_template");
+          initTpl();
+          ic.dateTime(tpl.find('input'));
+          break;
+
+        default:
+          tpl = ic.getTemplate("#dev_attr_text_template");
+          initTpl();
+          break;
+      }
+
+      function initTpl() {
+        ext.append(tpl);
+
+        let title = a.name;
+        let msg = [];
+        if (a.desc) {
+          title += ' ('+ a.desc +")";
+        }
+        if (a.notnull) {
+          msg.push("不能为空");
+        }
+        if (a.max) {
+          msg.push("最大 "+ a.max);
+        }
+        if (a.min) {
+          msg.push("最小 "+ a.min);
+        }
+        
+        tpl.find("label").html(title);
+        let val = dev.attrs[a.name] || a.defval;
+        let f = tpl.find(":input");
+        f.val(val).attr("placeholder", msg.join(", "));
+        f.attr("name", 'a.'+ a.name);
+      }
+
+      function initDict() {
+        let select = tpl.find("select");
+        ic.get("dict_read", {id: a.dict}, function(err, ret) {
+          if (err) {
+            ic.popo(err);
+            return;
+          }
+          ic.buildSelectOpt(select, ret.data);
+        });
+      }
+    });
+  }
+});
+</script>
+</div>

@@ -23,6 +23,7 @@ const ic = window.ic = {
   initDictSelect,
   select2fromApi,
   numberScope,
+  dateTime,
 };
 
 const format_fn = {
@@ -663,6 +664,9 @@ function getDict(dictId, cb) {
 }
 
 
+//
+// 选择字典的列表
+//
 function initDictSelect(jselect) {
   jselect.attr("api", "dict_list");
   select2fromApi(jselect, function(r) {
@@ -702,7 +706,7 @@ function select2fromApi(jselect, data_convert) {
       data: function (t) {
         return {
           text : t.term,
-          page : t.page || 0,
+          page : t.page ? t.page-1 : 0,
         };
       },
 
@@ -775,6 +779,40 @@ function numberScope(bit, signed) {
     }
   }
   return r;
+}
+
+
+//
+// 文本控件转换为时间控件, 正确处理时区, 
+// 递交格式为: RFC1123 / GMT
+//
+function dateTime(jinput) {
+  let dt = $("<input type='datetime-local'>");
+  jinput.hide().after(dt);
+  dt.change(syncVal);
+
+  let date = new Date(jinput.val());
+  let buf = [ date.getFullYear(), '-', s2(date.getMonth()+1), '-', 
+              s2(date.getDate()), 'T', s2(date.getHours()), ':', 
+              s2(date.getMinutes()) ];
+  dt.val(buf.join(""));
+  copyAttr("class");
+  copyAttr("placeholder");
+  syncVal();
+
+  function copyAttr(name) {
+    dt.attr(name, jinput.attr(name));
+  }
+
+  function syncVal() {
+    let d = new Date(dt.val());
+    jinput.val(d.toGMTString());
+  }
+
+  function s2(x) {
+    if (x < 10) return '0'+ x;
+    return ''+ x;
+  }
 }
 
 });

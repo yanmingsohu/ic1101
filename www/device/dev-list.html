@@ -1,3 +1,150 @@
 <div id="dev_manager_frame">
   <h2>设备管理</h2>
+
+  <form class="pure-form pure-form-stacked" id='create_device'>
+    <fieldset>
+      <legend>新建设备</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>设备ID</label>
+          <input type="text" name='id' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>设备原型</label>
+          <select api='dev_proto_list' type="text" name='tid'class="pure-u-23-24">
+          </select>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">创建新设备</button>
+          </div>
+          <span class='ajax-message error-message'></span>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+  
+  <h3>设备列表</h3><hr/>
+  <form class="pure-form pure-form-stacked" id='dev_search_filter'>
+    <fieldset>
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-2-5">
+          <label for="">检索文本</label>
+          <input type="text" name='text' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-5">
+          <label>检索</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">查询</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除条件</button>
+          </div>
+        </div>
+          
+        <div class="pure-u-1 pure-u-md-2-5">
+          <label>编辑</label>
+          <div class="pure-button-group" role="group">
+            <button type="button" id='edit_dev'
+                class="pure-button button-secondary">设备信息</button>
+            <button type="button" id='data_dev'
+                class="pure-button button-secondary">数据</button>
+            <button type="button" id='ctrl_dev'
+                class="pure-button button-secondary">控制</button>
+            <button type="button" id='delete_dev' api='dev_delete'
+                class="pure-button button-warning">删除</button>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <table class="pure-table" id='dev_table' form='#dev_search_filter'
+         api='dev_list' pageinfo='dev_count'>
+    <thead>
+      <th cn='_id' rename='id'>设备ID</th> 
+      <th cn='tid' >原型</th> 
+      <th cn='desc'>说明</th>
+      <th cn='changeid'>版本</th>
+      <th cn='dc'>数据量</th>
+      <th cn='dd'>数据时间</th>
+      <th cn='md' format='date'>修改时间</th>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+jQuery(function($) {
+  const root = $("#dev_manager_frame");
+  const create = root.find("#create_device");
+  const proto = create.find("[name=tid]");
+  const table = root.find("#dev_table");
+  const del = root.find("#delete_dev");
+  const edit = root.find("#edit_dev");
+
+  ic.select2fromApi(proto, function(r) {
+    if (r.data) {
+      r.data.forEach(function(d) {
+        d.id = d._id;
+        d.text = d.id;
+        if (d.desc) {
+          d.text += ' - '+ d.desc;
+        }
+      });
+      return r.data;
+    }
+  });
+
+  create.submit(function() {
+    let msg = create.find(".ajax-message").text("");
+    let id = create.find("[name=id]").val();
+    let tid = proto.val();
+    if (!id) {
+      msg.text("设备ID不能小于2个字符");
+      return false;
+    }
+    if (!tid) {
+      msg.text("必须选择一个设备原型");
+      return false;
+    }
+
+    ic.get("dev_read", {"id": id}, function(err, ret) {
+      if (ret) {
+        msg.text("设备已经存在");
+        return;
+      }
+      
+      let dia = ic.contentDialog("device/update.html");
+      dia.on('opend', function() {
+        dia.find("[name=id]").val(id);
+        dia.find("[name=tid]").val(tid);
+      });
+      dia.on('closed', function() {
+        table.refreshData();
+      });
+    });
+    return false;
+  });
+
+  ic.commandCrudPage({
+    create : $("<b>"),
+    edit,
+    edit_page : 'device/update.html',
+    table,
+    delete : del,
+
+    copy_edit(data, target) {
+      target.find("[name=id]").val(data.id);
+      target.find("[name=tid]").val(data.tid);
+      target.find("[name=desc]").val(data.desc);
+    },
+  });
+});
+</script>
 </div>

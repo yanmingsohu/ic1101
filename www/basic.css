@@ -4,6 +4,10 @@ a { text-decoration:none; }
 .small { font-size: 8px; }
 table { border-radius: 3px; }
 
+select, input[type=datetime-local] {
+  padding: 0.3em 0.6em !important;
+}
+
 .pure-g table, .not-full {
   width: 96% !important;
 }

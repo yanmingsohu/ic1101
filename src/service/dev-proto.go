@@ -24,6 +24,7 @@ func installDevProtoService(b *brick.Brick) {
   aserv(b, ctx, "dev_proto_list",         dev_proto_list)
   aserv(b, ctx, "dev_proto_update",       dev_proto_update)
   aserv(b, ctx, "dev_proto_delete",       dev_proto_delete)
+  aserv(b, ctx, "dev_proto_read",         dev_proto_read)
 
   aserv(b, ctx, "dev_proto_attr_types",   dev_proto_attr_types)
   aserv(b, ctx, "dev_proto_data_types",   dev_proto_data_types)
@@ -96,6 +97,12 @@ func dev_proto_delete(h *Ht) interface{} {
   //TODO: 如果有设备引用原型, 则禁止删除
   id := checkstring("原型ID", h.Get("id"), 2, 20)
   return h.Crud().Delete(id)
+}
+
+
+func dev_proto_read(h *Ht) interface{} {
+  id := checkstring("原型ID", h.Get("id"), 2, 20)
+  return h.Crud().Read(id)
 }
 
 
