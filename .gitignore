@@ -1,6 +1,7 @@
 .settings
 build/*/
 build/www
+material/*
 
 *.dll
 *.db
