@@ -67,7 +67,7 @@ function get(api, data, cb) {
         cb(null, data)
       } else {
         let type = jxr.getResponseHeader("content-type");
-        if (type.indexOf("json") < 0) {
+        if (type && (type.indexOf("json") < 0)) {
           cb(new Error("错误的应答, 不是 json. fail:"+ type));
           return;
         }
@@ -668,11 +668,11 @@ function initDictSelect(jselect) {
   select2fromApi(jselect, function(r) {
     if (r.data) {
       r.data.forEach(function(d) {
-        d.id = d._id;
         let txt = [d._id];
         if (d.desc) {
           txt.push(' - ', d.desc);
         }
+        d.id = d._id;
         d.text = txt.join("");
       });
       return r.data;
@@ -687,6 +687,7 @@ function initDictSelect(jselect) {
 //              返回 null 则没有更多数据
 //
 // 接口应接受 page 参数用于翻页, text 用于全文检索
+// 用 trigger('change', value) 触发默认选项的加载
 //
 function select2fromApi(jselect, data_convert) {
   const api = jselect.attr('api');
@@ -716,6 +717,20 @@ function select2fromApi(jselect, data_convert) {
       },
     },
     cache: true,
+  });
+
+  jselect.on("change", function(event, value) {
+    if (!value) return;
+
+    $.get(API_ROOT + api, {text: value}, function(ret) {
+      let d = data_convert(ret);
+      let row = d && d[0];
+      if (!row) return;
+
+      jselect.html('');
+      var opt = new Option(row.text, row.id, true, true);
+      jselect.append(opt).trigger('change');
+    });
   });
 }
 

@@ -119,27 +119,27 @@
                 class="pure-button button-primary">添加/更新</button>
               <button type="reset" api='dev_proto_attr_delete'
                 class="pure-button button-secondary delete">删除</button>
-          </div>
-          
-          <div class="pure-u-1 pure-u-md-1-1 hide_on_dict numlength">
-            <label for="create_dict_desc">常用数字长度</label>
-            <div class="pure-button-group" role="group">
-              <button type="button" class="pure-button button-success" 
-                      v='4'>4位</button>
-              <button type="button" class="pure-button button-success" 
-                      v='8'>8位</button>
-              <button type="button" class="pure-button button-success" 
-                      v='16'>16位</button>
-              <button type="button" class="pure-button button-success" 
-                      v='32'>32位</button>
             </div>
-            <label class="pure-checkbox pure-u-1 pure-u-md-1-1">
-              <input type="checkbox" class='has_signed'/>
-              有符号
-            </label>
-          </div>
+          
+            <div class="pure-u-1 pure-u-md-1-1 hide_on_dict numlength">
+              <label for="create_dict_desc">常用数字长度</label>
+              <div class="pure-button-group" role="group">
+                <button type="button" class="pure-button button-success" 
+                        v='4'>4位</button>
+                <button type="button" class="pure-button button-success" 
+                        v='8'>8位</button>
+                <button type="button" class="pure-button button-success" 
+                        v='16'>16位</button>
+                <button type="button" class="pure-button button-success" 
+                        v='32'>32位</button>
+              </div>
+              <label class="pure-checkbox pure-u-1 pure-u-md-1-1">
+                <input type="checkbox" class='has_signed'/>
+                有符号
+              </label>
+            </div>
 
-          <span class='ajax-message'></span>
+            <span class='ajax-message'></span>
           </div>
         </div>
 
@@ -148,9 +148,115 @@
     </div>
   </div>
 
-  <h3>输入数据</h3><hr/>
+  <h3>数据槽 (输入)</h3><hr/>
+  <div class="pure-g pure-form" id='dev_proto_data_update_frame'>
+    <div class="pure-u-md-3-5">
+      <legend class='not-full'>数据槽列表</legend>
 
-  <h3>输出数据</h3><hr/>
+      <table class="pure-table" form='#dev_proto_update_form'
+             api='dev_proto_data_list'>
+        <thead>
+          <th cn='name'>名称</th> 
+          <th cn='desc'>说明</th>
+          <th cn='type' format="format.type">类型</th>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="pure-u-md-2-5">
+      <form class="pure-form pure-form-stacked" 
+            action='dev_proto_data_update'>
+        <fieldset class="pure-u-1">
+          <legend>数据槽编辑器</legend>
+          <input name='id' type='hidden'/>
+
+          <div class="pure-g">
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>名称</label>
+              <input name='name' class="pure-u-23-24"/>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>说明</label>
+              <input name='desc' class="pure-u-23-24"/>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>类型</label>
+              <select name='type' class="pure-u-23-24"></select>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label for="create_dict_desc">操作</label>
+              <div class="pure-button-group" role="group">
+                <button type="submit" 
+                  class="pure-button button-primary">添加/更新</button>
+                <button type="reset" api='dev_proto_data_delete'
+                  class="pure-button button-secondary delete">删除</button>
+              </div>
+            </div>
+          </div>
+
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <h3>控制槽 (输出)</h3><hr/>
+  <div class="pure-g pure-form" id='dev_proto_ctrl_update_frame'>
+    <div class="pure-u-md-3-5">
+      <legend class='not-full'>控制槽列表</legend>
+
+      <table class="pure-table" form='#dev_proto_update_form'
+             api='dev_proto_ctrl_list'>
+        <thead>
+          <th cn='name'>名称</th> 
+          <th cn='desc'>说明</th>
+          <th cn='type' format="format.type">类型</th>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="pure-u-md-2-5">
+      <form class="pure-form pure-form-stacked" 
+            action='dev_proto_ctrl_update'>
+        <fieldset class="pure-u-1">
+          <legend>控制槽编辑器</legend>
+          <input name='id' type='hidden'/>
+
+          <div class="pure-g">
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>名称</label>
+              <input name='name' class="pure-u-23-24"/>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>说明</label>
+              <input name='desc' class="pure-u-23-24"/>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>类型</label>
+              <select name='type' class="pure-u-23-24"></select>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label for="create_dict_desc">操作</label>
+              <div class="pure-button-group" role="group">
+                <button type="submit" 
+                  class="pure-button button-primary">添加/更新</button>
+                <button type="reset" api='dev_proto_ctrl_delete'
+                  class="pure-button button-secondary delete">删除</button>
+              </div>
+            </div>
+          </div>
+
+        </fieldset>
+      </form>
+    </div>
+  </div>
 
 <script>
 jQuery(function($) {
@@ -160,6 +266,7 @@ jQuery(function($) {
   let root = $("#update_dev_proto_content");
   let id = root.find("[name=id]").val();
   let attr_types = {};
+  let data_types = {};
 
   ic.get("dev_proto_attr_types", null, function(err, ret) {
     if (err) return ic.popo("页面初始化错误, "+ err.message);
@@ -167,12 +274,19 @@ jQuery(function($) {
     init_attrs_editor();
   });
 
+  ic.get("dev_proto_data_types", null, function(err, ret) {
+    if (err) return ic.popo("页面初始化错误, "+ err.message);
+    data_types = ret.data;
+    init_data_editor(root.find("#dev_proto_data_update_frame"), 'datas');
+    init_data_editor(root.find("#dev_proto_ctrl_update_frame"), 'ctrls');
+  });
+
 
   function init_attrs_editor() {
     let update_proto = root.find('#dev_proto_update_form');
     let attr_table = root.find("#dev_proto_attr_table");
     let attr_update = root.find("#dev_proto_attr_update");
-    let attr_delete = root.find(".delete");
+    let attr_delete = attr_update.find(".delete");
     let type_select = attr_update.find("[name=type]");
     let max = attr_update.find("[name=max]");
     let min = attr_update.find("[name=min]");
@@ -181,6 +295,7 @@ jQuery(function($) {
     ic.buildSelectOpt(type_select, attr_types);
     ic.initDictSelect(attr_update.find("[name=dict]"));
     ic.ajaxform(update_proto);
+    copySelectRowToFrom(attr_table, attr_update);
 
     attr_update.find(".numlength [v]").click(function() {
       let v = $(this).attr('v');
@@ -211,9 +326,9 @@ jQuery(function($) {
 
     ic.commandCrudPage({
       create : attr_update,
-      edit : $("<b>"),
+      edit   : $("<b>"),
       delete : attr_delete,
-      table : attr_table,
+      table  : attr_table,
 
       copy_edit: function(data, targetDom) {
       },
@@ -233,6 +348,50 @@ jQuery(function($) {
       attr_update.find(show_select).show();
       attr_update.find(hide_select).hide();
     }
+  }
+
+
+  function init_data_editor(_frame_root, sub_attr) {
+    const table = _frame_root.find("table");
+    const update = _frame_root.find("form");
+    const del = _frame_root.find(".delete");
+
+    ic.buildSelectOpt(update.find("[name=type]"), data_types);
+    copySelectRowToFrom(table, update);
+
+    table.data('format.type', function(d) {
+      return data_types[d] || d;
+    });
+
+    table.on('select_row', function(_, v) {
+      del.data('id', id);
+      del.data("parm", {name: v.name});
+      del.data("what", '原型 '+ id +' 中的 "'+ v.name +'"');
+    });
+
+    ic.commandCrudPage({
+      create : update,
+      edit   : $("<b>"),
+      delete : del,
+      table  : table,
+
+      copy_edit: function(data, targetDom) {
+      },
+
+      table_convert: function(r) {
+        return r.data[sub_attr] || [];
+      },
+    });
+  }
+
+
+  function copySelectRowToFrom(table, form) {
+    table.on("select_row", function(_, d) {
+      for (let name in d) {
+        let f = form.find("[name="+ name +"]").val(d[name]);
+        f.trigger("change", d[name]);
+      }
+    });
   }
 });
 </script>

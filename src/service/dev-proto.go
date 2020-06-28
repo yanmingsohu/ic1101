@@ -30,6 +30,14 @@ func installDevProtoService(b *brick.Brick) {
   aserv(b, ctx, "dev_proto_attr_list",    dev_proto_attr_list)
   aserv(b, ctx, "dev_proto_attr_update",  dev_proto_attr_update)
   aserv(b, ctx, "dev_proto_attr_delete",  dev_proto_attr_delete)
+
+  aserv(b, ctx, "dev_proto_data_list",    dev_proto_data_list)
+  aserv(b, ctx, "dev_proto_data_update",  dev_proto_data_update)
+  aserv(b, ctx, "dev_proto_data_delete",  dev_proto_data_delete)
+
+  aserv(b, ctx, "dev_proto_ctrl_list",    dev_proto_ctrl_list)
+  aserv(b, ctx, "dev_proto_ctrl_update",  dev_proto_ctrl_update)
+  aserv(b, ctx, "dev_proto_ctrl_delete",  dev_proto_ctrl_delete)
 }
 
 
@@ -112,8 +120,12 @@ func dev_proto_attr_update(h *Ht) interface{} {
 
   max  := checkint("最大值", h.Get("max"), INT_MIN, INT_MAX)
   min  := checkint("最小值", h.Get("min"), INT_MIN, INT_MAX)
-  typ  := checkint("类型", h.Get("type"), 100, 199)
+  typ  := checkint("类型", h.Get("type"), 100, 200)
   dict := h.Get("dict")
+
+  if _, has := core.DAT__map[core.DevAttrType(typ)]; !has {
+    return HttpRet{1, "无效的类型", typ}
+  }
 
   if typ == int64(core.DAT_dict) {
     if dict == "" {
@@ -136,50 +148,102 @@ func dev_proto_attr_update(h *Ht) interface{} {
     "min"     : min,
   }
 
-  filter := bson.M{ "_id" : id, "attrs.name" : name }
-  up     := bson.M{ 
-    "$set" : bson.M{ 
-      "md" : time.Now(),
-      "attrs.$" : fields,
-    },
+  up := bson.M{ 
+    "$set" : bson.M{ "md" : time.Now() },
     "$inc" : bson.M{"changeid" : 1},
   }
-
-  ur, err := h.Table().UpdateOne(h.Ctx(), filter, up)
-  if err != nil {
-    return err
-  }
-
-  if ur.MatchedCount == 0 {
-    filter := bson.M{ "_id" : id }
-    _, err = h.Table().UpdateOne(h.Ctx(), filter, bson.M{
-      "$set"  : bson.M{ "md" : time.Now() },
-      "$inc"  : bson.M{ "changeid" : 1},
-      "$push" : bson.M{ "attrs": fields },
-    })
-    if err != nil {
-      return err
-    }
-    return HttpRet{0, "属性已创建", nil}
-  }
-
-  return HttpRet{0, "属性已更新", nil}
+  return h.Crud().UpdateInnerArray(id, "attrs", "name", fields, up)
 }
 
 
 func dev_proto_attr_delete(h *Ht) interface{} {
-  id   := checkstring("原型ID", h.Get("id"), 2, 20)
-  name := checkstring("属性名称", h.Get("name"), 2, 20)
+  return __proto_remove_arr(h, "属性", "attrs")
+}
 
-  filter := bson.M{ "_id" : id, "attrs.name" : name }
+
+func __proto_remove_arr(h *Ht, info string, attrName string) interface{} {
+  id   := checkstring("原型ID", h.Get("id"), 2, 20)
+  name := checkstring(info +"名称", h.Get("name"), 2, 20)
+
+  filter := bson.M{ "_id" : id, attrName +".name" : name }
   up     := bson.M{ 
     "$set"   : bson.M{ "md" : time.Now() },
-    "$pull"  : bson.M{ "attrs" : bson.M{ "name": name } },
     "$inc"   : bson.M{ "changeid" : 1 },
+    "$pull"  : bson.M{ attrName : bson.M{ "name": name } },
   }
   _, err := h.Table().UpdateOne(h.Ctx(), filter, up)
   if err != nil {
     return err
   }
-  return HttpRet{0, "属性已删除", nil}
+  return HttpRet{0, info +"已删除", nil}
+}
+
+
+func dev_proto_data_list(h *Ht) interface{} {
+  id := checkstring("原型ID", h.Get("id"), 2, 20)
+  return h.Crud().Read(id, "datas")
+}
+
+
+func dev_proto_data_update(h *Ht) interface{} {
+  id   := checkstring("原型ID", h.Get("id"), 2, 20)
+  name := checkstring("名称", h.Get("name"), 2, 20)
+  typ  := checkint("类型", h.Get("type"), 1, 100)
+
+  if _, has := core.DDT__map[core.DevDataType(typ)]; !has {
+    return HttpRet{1, "无效的类型", typ}
+  }
+
+  fields := bson.M{
+    "name"    : name,
+    "desc"    : checkstring("说明", h.Get("desc"), 0, 99),
+    "type"    : typ,
+  }
+
+  up := bson.M{ 
+    "$set" : bson.M{ "md" : time.Now() },
+    "$inc" : bson.M{"changeid" : 1},
+  }
+
+  return h.Crud().UpdateInnerArray(id, "datas", "name", fields, up)
+}
+
+
+func dev_proto_data_delete(h *Ht) interface{} {
+  return __proto_remove_arr(h, "数据槽", "datas")
+}
+
+
+func dev_proto_ctrl_list(h *Ht) interface{} {
+  id := checkstring("原型ID", h.Get("id"), 2, 20)
+  return h.Crud().Read(id, "ctrls")
+}
+
+
+func dev_proto_ctrl_update(h *Ht) interface{} {
+  id   := checkstring("原型ID", h.Get("id"), 2, 20)
+  name := checkstring("名称", h.Get("name"), 2, 20)
+  typ  := checkint("类型", h.Get("type"), 1, 100)
+
+  if _, has := core.DDT__map[core.DevDataType(typ)]; !has {
+    return HttpRet{1, "无效的类型", typ}
+  }
+
+  fields := bson.M{
+    "name"    : name,
+    "desc"    : checkstring("说明", h.Get("desc"), 0, 99),
+    "type"    : typ,
+  }
+
+  up := bson.M{ 
+    "$set" : bson.M{ "md" : time.Now() },
+    "$inc" : bson.M{"changeid" : 1},
+  }
+
+  return h.Crud().UpdateInnerArray(id, "ctrls", "name", fields, up)
+}
+
+
+func dev_proto_ctrl_delete(h *Ht) interface{} {
+  return __proto_remove_arr(h, "控制槽", "ctrls")
 }

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -131,4 +133,47 @@ func (c *Crud) Read(id string, includeNames ...string) error {
   }
   c.h.Json(HttpRet{0, "返回"+ c.info, ret})
   return nil
+}
+
+
+//
+// 更新文档中类型为对象数组列表中的元素, listName 为对象列表的名字. 
+// attrName 是列表中的一个元素的属性名, 当找到匹配时使用 fields 更新元素;
+// 如果数组中没有匹配元素则在数组中插入新的 fields 元素.
+// id     -- 主键
+// fields -- 数组元素
+// up     -- 更新参数
+//
+func (c *Crud) UpdateInnerArray(id string, listName string, 
+      attrName string, fields bson.M, up bson.M) interface{} {
+
+  attrVal := fields[attrName].(string)
+  set_array := listName +".$"
+  filter := bson.M{ 
+    "_id" : id, 
+    listName +"."+ attrName : attrVal,
+  }
+  up["$set"].(bson.M)[set_array] = fields
+
+  log.Print("UPDATE", up)
+  ur, err := c.h.Table().UpdateOne(c.h.Ctx(), filter, up)
+  if err != nil {
+    return err
+  }
+
+  if ur.MatchedCount == 0 {
+    delete(up["$set"].(bson.M), set_array);
+    up["$push"] = bson.M{ listName : fields }
+    log.Print("INSERT", up)
+
+    filter := bson.M{ "_id" : id }
+    _, err = c.h.Table().UpdateOne(c.h.Ctx(), filter, up)
+
+    if err != nil {
+      return err
+    }
+    return HttpRet{0, attrVal +"已创建", nil}
+  }
+
+  return HttpRet{0, attrVal +"已更新", nil}
 }
