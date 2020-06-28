@@ -95,15 +95,8 @@ func dev_proto_update(h *Ht) interface{} {
 
 func dev_proto_delete(h *Ht) interface{} {
   id := checkstring("原型ID", h.Get("id"), 2, 20)
-  
-  cur, err := mg.Collection(core.TableDevice).Find(h.Ctx(), 
-      bson.M{"tid": id}, options.Find().SetLimit(1))
-  if err != nil {
-    return err
-  }
 
-  defer cur.Close(h.Ctx())
-  if cur.Next(h.Ctx()) {
+  if GetDeviceRefProto(h.Ctx(), id) {
     return HttpRet{3, "原型被设备引用, 不能删除", id}
   }
   return h.Crud().Delete(id)
@@ -267,7 +260,10 @@ func dev_proto_ctrl_delete(h *Ht) interface{} {
 }
 
 
-func getDevProto(ctx context.Context, id string, ret interface{}) error {
+//
+// 返回原型数据
+//
+func GetDevProto(ctx context.Context, id string, ret interface{}) error {
   filter := bson.M{"_id": id}
   return mg.Collection(core.TableDevProto).FindOne(ctx, filter).Decode(ret)
 }

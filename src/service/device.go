@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"ic1101/brick"
 	"ic1101/src/core"
 	"time"
@@ -47,14 +48,14 @@ func dev_upsert(h *Ht) interface{} {
   var tid string
   
   exists := bson.M{}
-  if nil == h.Table().FindOne(h.Ctx(), bson.D{{"_id", id}}).Decode(&exists) {
+  if nil == GetDevice(h.Ctx(), id, exists) {
     tid = exists["tid"].(string)
   } else {
     tid = checkstring("设备原型ID", h.Get("tid"), 2, 20)
   }
 
   proto := bson.M{}
-  if err := getDevProto(h.Ctx(), tid, proto); err != nil {
+  if err := GetDevProto(h.Ctx(), tid, proto); err != nil {
     return HttpRet{1, "不存在的设备原型 "+ tid, err}
   }
 
@@ -130,4 +131,27 @@ func dev_upsert(h *Ht) interface{} {
 func dev_delete(h *Ht) interface{} {
   //TODO: 不能删除有数据的设备, 不能删除挂接在总线上的设备
   return nil
+}
+
+
+//
+// 返回设备数据, 失败返回 error, 成功数据填入 ret 中.
+//
+func GetDevice(ctx context.Context, id string, ret interface{}) error {
+  filter := bson.M{ "_id": id }
+  return mg.Collection(core.TableDevice).FindOne(ctx, filter).Decode(ret)
+}
+
+
+//
+// 查询引用原型的设备, 至少有一个对原型的引用返回 true.
+//
+func GetDeviceRefProto(ctx context.Context, protoid string) bool {
+  cur, err := mg.Collection(core.TableDevice).Find(ctx, 
+      bson.M{"tid": protoid}, options.Find().SetLimit(1))
+  if err != nil {
+    panic(err)
+  }
+  defer cur.Close(ctx)
+  return cur.Next(ctx)
 }
