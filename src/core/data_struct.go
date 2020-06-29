@@ -331,7 +331,6 @@ Table: bus {
   _id(string)    : 总线id
   desc(string)   : 说明
   timer          : 定时器id
-  script         : 总线脚本
   cd(time)       : 创建时间
   md(time)       : 修改时间
 }
