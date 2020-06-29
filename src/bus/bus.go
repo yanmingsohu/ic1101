@@ -2,6 +2,7 @@ package bus
 
 import (
 	"errors"
+	"ic1101/src/core"
 	"sync"
 	"time"
 )
@@ -18,8 +19,14 @@ var busMutex = new(sync.RWMutex)
 type BusState int
 
 const (
-  BusStateStop  BusState = 0
-  BusStateRun   BusState = 1
+  // 总线没有启动
+  BusStateStop      BusState = 0 
+  // 正在启动
+  BusStateStartup   BusState = 1
+  // 休眠中, 等待计时器
+  BusStateSleep     BusState = 2
+  // 执行任务
+  BusStateTask      BusState = 3
 )
 
 
@@ -27,10 +34,21 @@ const (
 // 运行中的总线实例对象
 //
 type Bus interface {
-  start() error
+  start(*BusInfo) error
   stop() error
   OnData(s *Slot, r DataRecv) error
   SendMsg(s *Slot, d DataWrap) error
+  State() BusState
+}
+
+
+type BusInfo struct {
+  // 总线id
+  Id string
+  // 总线类型, 在 bus.busInfos 中
+  TypeName string
+  // 定时抓取数据的定时器
+  Tk  *core.Tick
 }
 
 
@@ -78,8 +96,8 @@ func GetBusState(id string) BusState {
   busMutex.RLock()
   defer busMutex.RUnlock()
 
-  if _, has := busInstance[id]; has {
-    return BusStateRun
+  if bus, has := busInstance[id]; has {
+    return bus.State()
   }
   return BusStateStop
 }
@@ -102,29 +120,29 @@ func GetBus(id string) (Bus, error) {
 //
 // 启动总线, 成功返回 nil, 否则返回错误
 // id       -- 总线id
-// typeName -- 总线类型, 在 busInfos 中
+// typeName -- 
 //
-func StartBus(id string, typeName string) error {
+func StartBus(info *BusInfo) error {
   busMutex.Lock()
   defer busMutex.Unlock()
   
-  if _, has := busInstance[id]; has {
-    return errors.New("总线已经启动 "+ id)
+  if _, has := busInstance[info.Id]; has {
+    return errors.New("总线已经启动 "+ info.Id)
   }
 
-  ct, has := bus_type_register[typeName]
+  ct, has := bus_type_register[info.TypeName]
   if !has {
-    return errors.New("无效的总线类型 "+ typeName)
+    return errors.New("无效的总线类型 "+ info.TypeName)
   }
 
   bus, err := ct.Create()
   if err != nil {
     return err
   }
-  if err := bus.start(); err != nil {
+  if err := bus.start(info); err != nil {
     return err
   }
-  busInstance[id] = bus
+  busInstance[info.Id] = bus
   return nil
 }
 

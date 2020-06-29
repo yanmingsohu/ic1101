@@ -21,7 +21,7 @@ func installTimerService(b *brick.Brick) {
   aserv(b, ctx, "timer_delete", timer_delete)
   aserv(b, ctx, "timer_update", timer_update)
 
-  aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
+  // aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
 }
 
 
