@@ -380,8 +380,10 @@ const TableTimer = "timer"
 // 定时器接口
 //
 type Tick interface {
-  // 该方法只能调用一次S
-  Start(f func())
+  // 该方法只能调用一次, 任务启动时调用 task(), 任务终止时调用 onStop()
+  // 多次调用该方法将抛出异常
+  Start(task func(), onStop func())
+  // 终止任务, onStop 会被调用
   Stop()
   IsRunning() bool
 }

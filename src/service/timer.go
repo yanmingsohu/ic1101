@@ -1,10 +1,12 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"ic1101/brick"
 	"ic1101/src/core"
 	"log"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,7 +23,7 @@ func installTimerService(b *brick.Brick) {
   aserv(b, ctx, "timer_delete", timer_delete)
   aserv(b, ctx, "timer_update", timer_update)
 
-  // aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
+  aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
 }
 
 
@@ -94,7 +96,7 @@ func timer_update(h *Ht) interface{} {
 // 测试: 启动一个不能停止的任务
 func timer_test(h *Ht) interface{} {
   id := checkstring("定时器ID", h.Get("id"), 2, 20)
-  tk, err := CreateTime(id)
+  tk, err := CreateSchedule(id)
   if err != nil {
     return err
   }
@@ -103,7 +105,10 @@ func timer_test(h *Ht) interface{} {
   tk.Start(func() {
     c++
     log.Print("Timer ", id, " Ticker ",  c)
+  }, func() {
+    log.Print("Timer ", id, " Stoped")
   })
+  log.Print(tk)
   return HttpRet{0, "测试线程已经启动", tk}
 }
 
@@ -117,10 +122,26 @@ type _Tick struct {
   tk      *time.Ticker
   BeginAt *time.Time
   running bool
+  onStop  func()
+  mutex   *sync.RWMutex
 }
 
 
-func (t *_Tick) Start(task func()) {
+func _NewTick(t *core.Timer) core.Tick {
+  return &_Tick{t, nil, nil, nil, false, nil, new(sync.RWMutex)}
+}
+
+
+func (t *_Tick) Start(task func(), on_stop func()) {
+  t.mutex.Lock()
+  defer t.mutex.Unlock()
+
+  if t.running {
+    panic(errors.New("定时器已经启动"))
+  }
+  t.running = true
+  t.onStop = on_stop
+
   n := time.Now()
   year := n.Year()
   // 基于当前时间计算启动时钟, 忽略的时钟部分由当前时间代替
@@ -143,35 +164,48 @@ func (t *_Tick) Start(task func()) {
 
 
 func (t *_Tick) runTask(task func()) {
-  for range t.tk.C {
-    task()
+  if t.d.Loop {
+    for range t.tk.C {
+      task()
+    }
   }
+  t.Stop()
 }
 
 
 func (t *_Tick) Stop() {
+  t.mutex.Lock()
+  defer t.mutex.Unlock()
+
+  if !t.running {
+    panic(errors.New("定时器已经停止"))
+  }
+  t.running = false
+
   if t.tk != nil {
     t.tk.Stop()
   }
 
   if t.tm != nil {
-    for {
-      if !t.tm.Stop() {
-        <-t.tm.C
-      } else {
-        break;
-      }
-    }
+    t.tm.Stop()
+  }
+
+  if t.onStop != nil {
+    t.onStop()
   }
 }
 
 
 func (t *_Tick) IsRunning() bool {
+  t.mutex.RLock()
+  defer t.mutex.RUnlock()
   return t.running
 }
 
 
 func (t *_Tick) String() string {
+  t.mutex.RLock()
+  defer t.mutex.RUnlock()
   return fmt.Sprintf("Timer [%s] start on %s Per %s", 
     t.d.Id, t.BeginAt, t.d.Duration)
 }
@@ -219,7 +253,7 @@ func _cho_time(a, b int) int {
 //
 // 创建一个计时器对象, 用于运行任务
 //
-func CreateTime(id string) (core.Tick, error) {
+func CreateSchedule(id string) (core.Tick, error) {
   filter := bson.M{ "_id" : id }
   table := mg.Collection(core.TableTimer)
   t := core.Timer{}
@@ -227,5 +261,5 @@ func CreateTime(id string) (core.Tick, error) {
   if err := table.FindOne(nil, filter).Decode(&t); err != nil {
     return nil, err
   }
-  return &_Tick{&t, nil, nil, nil, false}, nil
+  return _NewTick(&t), nil
 }
