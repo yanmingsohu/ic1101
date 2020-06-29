@@ -1,0 +1,120 @@
+<div id='timer_manager_frame'>
+  <h2>定时器管理</h2><hr/>
+
+  <form class="pure-form pure-form-stacked create" action='timer_create'>
+    <fieldset>
+      <legend>新建定时器</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>定时器ID</label>
+          <input type="text" name='id' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">创建</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除</button>
+          </div>
+          <span class='ajax-message'></span>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <h3>定时器列表</h3><hr/>
+  <form class="pure-form pure-form-stacked" id='timer_search_filter'>
+    <fieldset>
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-2-5">
+          <label for="">检索文本</label>
+          <input type="text" name='text' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-5">
+          <label>检索</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">查询</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除条件</button>
+          </div>
+        </div>
+          
+        <div class="pure-u-1 pure-u-md-2-5">
+          <label>编辑</label>
+          <div class="pure-button-group" role="group">
+            <button type="button"
+                class="pure-button button-secondary edit">编辑定时器</button>
+            <button type="button" api='timer_delete'
+                class="pure-button button-warning delete">删除</button>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <table class="pure-table" form='#timer_search_filter'
+         api='timer_list' pageinfo='timer_count'>
+    <thead>
+      <th cn='_id' rename='id'>定时器ID</th> 
+      <th cn='desc'>说明</th>
+      <th cn='duration' format='duration'>间隔</th>
+      <th cn='loop' format='yesno'>重复执行</th>
+      <th cn='delay' format='format.delay'>启动时钟</th>
+      <th cn='cd' format='date'>创建时间</th>
+      <th cn='md' format='date'>修改时间</th>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+  jQuery(function($) {
+    let root = $("#timer_manager_frame");
+    let create = root.find('.create');
+    let edit = root.find(".edit");
+    let del = root.find(".delete");
+    let table = root.find("table");
+
+    table.data("format.delay", function(d) {
+      // {"day":-1,"hour":0,"min":0,"mon":-1,"sec":0}
+      let buf = [];
+      if (d.mon >= 0) buf.push(d.mon, "月");
+      if (d.day >= 0) buf.push(d.day, "日");
+      if (d.hour >= 0) buf.push(d.hour, "时");
+      if (d.min >= 0) buf.push(d.min, "分");
+      if (d.sec >= 0) buf.push(d.sec, "秒");
+      return buf.join("") || '<无>';
+    });
+  
+    ic.commandCrudPage({
+      create,
+      edit,
+      edit_page : 'device/timer-edit.html',
+      table,
+      delete : del,
+  
+      copy_edit(data, target) {
+        for (let n in data) {
+          target.find("[name="+ n +"]").val(data[n]);
+        }
+        target.find("[name='$loop']").prop('checked', data.loop);
+
+        target.one("delay_build_over", function() {
+          ['mon', 'day', 'hour', 'min', 'sec'].forEach(function(x) {
+            target.find("[name='d."+ x +"']").val(data.delay[x] || '');
+          });
+        });
+      },
+    });
+  });
+  </script>
+</div>

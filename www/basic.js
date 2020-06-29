@@ -35,6 +35,18 @@ const format_fn = {
   'yesno': function(d) {
     return Boolean(d) ? '是':'否';
   },
+  'duration': function(d) {
+    d /= 1e6;
+    if (d < 1000) return d.toFixed(2) +"毫秒";
+    d /= 1e3;
+    if (d < 60) return d.toFixed(2) +"秒";
+    d /= 60;
+    if (d < 60) return d.toFixed(2) +"分钟";
+    d /= 60;
+    if (d < 24) return d.toFixed(2) +"小时";
+    d /= 24;
+    return d.toFixed(2) +"天";
+  },
 };
 
 

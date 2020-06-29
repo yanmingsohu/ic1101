@@ -1,0 +1,175 @@
+<div id='timer_editor_frame'>
+  <h2>定时器编辑</h2>
+
+  <form class="pure-form pure-form-stacked edit" action='timer_update'>
+    <fieldset>
+      <legend>定时器参数</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>定时器ID</label>
+          <input type="text" name='id' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-1">
+          <label>间隔</label>
+          <input type="hidden" name='duration'/>
+          <div class="pure-g">
+            <div class='pure-u-md-1-4'>
+              <select class='pure-u-23-24 day'></select>
+            </div>
+            <div class='pure-u-md-1-4'>
+              <select class='pure-u-23-24 hour'></select>
+            </div>
+            <div class='pure-u-md-1-4'>
+              <select class='pure-u-23-24 min'></select>
+            </div>
+            <div class='pure-u-md-1-4'>
+              <select class='pure-u-23-24 sec'></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-1">
+          <label>启动时钟, 不希望有延迟则全部设置为 '无'</label>
+          <div class="pure-g">
+            <div class='pure-u-md-1-5'>
+              <select class='pure-u-23-24 smon' name='d.mon'></select>
+            </div>
+            <div class='pure-u-md-1-5'>
+              <select class='pure-u-23-24 sday' name='d.day'></select>
+            </div>
+            <div class='pure-u-md-1-5'>
+              <select class='pure-u-23-24 shour' name='d.hour'></select>
+            </div>
+            <div class='pure-u-md-1-5'>
+              <select class='pure-u-23-24 smin' name='d.min'></select>
+            </div>
+            <div class='pure-u-md-1-5'>
+              <select class='pure-u-23-24 ssec' name='d.sec'></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-1">
+          <!-- name=loop 总是递交 false? 
+               checkbox 应该总是递交 'on', 浏览器 bug? -->
+          <label class="pure-checkbox">
+            <input type="checkbox" name='$loop'/> 重复执行</label>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-1">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">修改</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除</button>
+            <button type="button" 
+              class="pure-button button-secondary nodelay">无延迟</button>
+          </div>
+          <span class='ajax-message'></span>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+<script>
+jQuery(function($) {
+  const root = $("#timer_editor_frame");
+  const edit = root.find(".edit");
+  const d_day = root.find('.day').change(update_duration);
+  const d_hour = root.find('.hour').change(update_duration);
+  const d_min = root.find('.min').change(update_duration);
+  const d_sec = root.find('.sec').change(update_duration);
+  const duration = root.find("[name=duration]");
+
+  const smon = root.find(".smon");
+  const sday = root.find(".sday");
+  const shour = root.find(".shour");
+  const smin = root.find(".smin");
+  const ssec = root.find(".ssec");
+
+  ic.ajaxform(edit);
+  defaultOpt(d_day, d_hour, d_min, d_sec);
+
+  for (let i = 1; i<=31; ++i) {
+    addOpt(d_day, (i*24)+"h", i+"天");
+  }
+
+  loopOptions(d_hour, 1, 24, 'h', '小时');
+  loopOptions(d_min, 1, 60, 'm', '分钟');
+  loopOptions(d_sec, 1, 60, 's', '秒');
+  init_duration();
+  update_duration();
+
+  defaultOpt(smon, sday, shour, smin, ssec);
+  loopOptions(smon, 1, 12, '', '月');
+  loopOptions(sday, 1, 31, '', '日');
+  loopOptions(shour, 0, 23, '', '时');
+  loopOptions(smin, 0, 59, '', '分');
+  loopOptions(ssec, 0, 59, '', '秒');
+  root.trigger('delay_build_over');
+
+  root.find('.nodelay').click(function() {
+    [smon, sday, shour, smin, ssec].forEach(function(x) {
+      x.val('');
+    });
+  });
+  
+
+  function defaultOpt() {
+    for (let i=0; i<arguments.length; ++i) {
+      let op = addOpt(arguments[i],  '', "<无>");
+      op.attr('selected', 'selected');
+      op.css("color", "#999");
+    }
+  }
+
+  function loopOptions(t, begin, end, idu, txtu) {
+    for (let i = begin; i<end; ++i) {
+      addOpt(t, i + idu, i + txtu);
+    }
+  }
+
+  function update_duration() {
+    let buf = [d_day.val(), d_hour.val(), d_min.val(), d_sec.val()];
+    duration.val(buf.join("") || '0s');
+  }
+
+  function init_duration() {
+    const aday  = 24*60*60*1e3; //ms
+    const ahour = 60*60*1e3;
+    const amin  = 60*1e3;
+    let time = parseInt(duration.val()) / 1e6; //ms
+
+    let t = parseInt(time/aday);
+    if (t) d_day.val((t*24) +'h');
+    time = time % aday;
+    
+    t = parseInt(time/ahour);
+    if (t) d_hour.val(t +"h");
+    time = time % ahour;
+
+    t = parseInt(time/amin);
+    if (t) d_min.val(t +"m");
+    time = time % amin;
+
+    t = parseInt(time/1e3);
+    if (t) d_sec.val(t +"s");
+  }
+
+  function addOpt(t, id, v) {
+    let opt = $("<option>");
+    opt.val(id).text(v);
+    t.append(opt);
+    return opt;
+  }
+});
+</script>
+</div>
