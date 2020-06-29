@@ -1,5 +1,7 @@
 package core
 
+import "go.mongodb.org/mongo-driver/bson"
+
 const TimeFormatString = "2020-06-25T08:32:44.676+00:00"
 
 /*
@@ -102,7 +104,33 @@ Table: dev-proto {
 }
 */
 type DevProto struct {
-  Id string `bson:"_id"`
+  Id        string  `bson:"_id"`
+  Desc      string  `bson:"desc"`
+  ChangeId  int     `bson:"changeid"`
+  Cd        string  `bson:"cd"`
+  Md        string  `bson:"md"`
+  Script    string  `bson:"script"`
+
+  Attrs []DevProtoAttr `bson:"attrs"`
+  Datas []DevProtoData `bson:"datas"`
+  Ctrls []DevProtoData `bson:"ctrls"`
+}
+
+type DevProtoAttr struct {
+  Name    string      `bson:"name"`
+  Desc    string      `bson:"desc"`
+  Type    DevAttrType `bson:"type"`
+  Notnull bool        `bson:"notnull"`
+  Defval  string      `bson:"defval"`
+  Dict    string      `bson:"dict"`
+  Max     int64       `bson:"max"`
+  Min     int64       `bson:"min"`
+}
+
+type DevProtoData struct {
+  Name    string      `bson:"name"`
+  Desc    string      `bson:"desc"`
+  Type    DevDataType `bson:"type"`
 }
 
 const TableDevProto = "dev-proto"
@@ -154,10 +182,6 @@ Table: device {
   attrs : 属性值 {
     "属性名, 与原型对应" : string 属性值
   }
-
-  data_years : 数据年份sets {
-    "4位数字年份" : true
-  }
 }
 */
 type Device struct {
@@ -165,3 +189,71 @@ type Device struct {
 }
 
 const TableDevice = "device"
+
+
+/*
+设备数据表设计:
+
+每个设备有自己的数据表, 表名: `data@[device-id]`
+每个时间粒度有一个单独文档, 文档名称/内容:
+
+  所有年份数据:  {
+    _id : year$[data-name] (数据名)
+    v : (数据 map) {
+      Y : n年数据, (数字类型)
+      ...
+    }
+  }
+
+  当年所有月数据: {
+    _id : month$Y
+    v : {
+      1 : 1月数据 (月份是数字类型)
+      ...
+      12 : 12月数据
+    }
+  }
+
+  日数据: {
+    _id : day$Y-M
+    v : {
+      1 : x月1日数据
+      ...
+      31 : 31日数据
+    }
+  }
+
+  小时数据: {
+    _id : hour$Y-M-D
+    v : {
+      0 : 0点数据
+      ...
+      23 : 23点数据
+    }
+  }
+
+  分钟数据:  {
+    _id : minute$Y-M-D_h
+    v : {
+      0 : 0分数据
+      ...
+      59: 59分数据
+    }
+  }
+
+  秒数据:  {
+    _id : second$Y-M-D_h:m
+    v : {
+      0 : 0秒数据
+      ...
+      59: 59秒数据
+    }
+  }
+
+** 所有时间数据都没有用 0 补位
+** fmt.Print(t.Year(), int(t.Month()), t.Day(), t.Hour(), t.Minute(), t.Second())
+*/
+type DeviceData struct {
+  Id string `bson:"_id"`
+  V  bson.M `bson:"v"`
+}

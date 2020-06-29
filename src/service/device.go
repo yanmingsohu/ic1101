@@ -13,6 +13,7 @@ import (
 
 func installDeviceService(b *brick.Brick) {  
   mg.CreateIndex(core.TableDevice, &bson.D{{"_id", "text"}, {"desc", "text"}})
+  mg.CreateIndex(core.TableDevice, &bson.D{{"tid", 1}})
   ctx := &ServiceGroupContext{core.TableDevice, "设备"}
 
   aserv(b, ctx, "dev_count",    dev_count)
@@ -120,7 +121,6 @@ func dev_upsert(h *Ht) interface{} {
     d["md"] = time.Now()
   } else {
     d["cd"] = time.Now()
-    d["data_years"] = bson.M{}
     d["dd"] = ""
     d["dc"] = 0
   }
@@ -130,7 +130,8 @@ func dev_upsert(h *Ht) interface{} {
 
 func dev_delete(h *Ht) interface{} {
   //TODO: 不能删除有数据的设备, 不能删除挂接在总线上的设备
-  return nil
+  id := checkstring("设备ID", h.Get("id"), 2, 20)
+  return h.Crud().Delete(id)
 }
 
 
