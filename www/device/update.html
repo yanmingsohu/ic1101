@@ -78,6 +78,7 @@ jQuery(function($) {
   function buildForm(dev, proto) {
     proto.attrs.forEach(function(a) {
       let tpl;
+      const val = dev.attrs[a.name] || a.defval;
 
       switch (parseInt(a.type)) {
         case DAT_dict:
@@ -117,7 +118,6 @@ jQuery(function($) {
         }
         
         tpl.find("label").html(title);
-        let val = dev.attrs[a.name] || a.defval;
         let f = tpl.find(":input");
         f.val(val).attr("placeholder", msg.join(", "));
         f.attr("name", 'a.'+ a.name);
@@ -130,7 +130,7 @@ jQuery(function($) {
             ic.popo(err);
             return;
           }
-          ic.buildSelectOpt(select, ret.data);
+          ic.buildSelectOpt(select, ret.data, val);
         });
       }
     });

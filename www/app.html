@@ -19,9 +19,10 @@
   <div class='menus'>
 
     <div class='s1'>现场数据</div>
-      <div class='s2'>总线管理</div>
+      <div class='s2' href='device/bus-list.html'>总线管理</div>
       <div class='s2'>总线脚本</div>
       <div class='s2' href='device/dev-list.html'>设备管理</div>
+      <div class='s2' href='device/timer.html'>定时器</div>
 
     <div class='s1'>报表</div>
       <div class='s2'>报表</div>
@@ -38,10 +39,10 @@
       <div class='s2' href='user/create.html'>新建用户</div>
       <div class='s2' href='user/user-list.html'>用户管理</div>
       <div class='s2' href='user/role.html'>角色管理</div>
+      <div class='s2' href='user/changepass.html'>修改密码</div>
 
     <div class='s1'>系统管理</div>
       <div class='s2'>日志</div>
-      <div class='s2' href='user/changepass.html'>修改密码</div>
       <div class='s2'>授权</div>
       <div class='s2'>协议</div>
       <div class='s2' href='user/logout.html'>退出登录</div>
@@ -96,10 +97,12 @@ function checkHash() {
 
 <form class="pure-form html_template" id='page_template'>
   <fieldset>
-    <button class='pure-button button-primary prev' type='button'>上一页</button>
-    <input class='currpage'/>
-    <button class='pure-button button-primary next' type='button'>下一页</button>
-    <span class='error-message'></span>
+    <div class='pure-g'>
+      <button class='pure-button button-primary prev' type='button'>上一页</button>
+      <input class='currpage'/>
+      <button class='pure-button button-primary next' type='button'>下一页</button>
+      <span class='error-message'></span>
+    </div>
   </fieldset>
 </form>
 
