@@ -21,7 +21,7 @@ func installTimerService(b *brick.Brick) {
   aserv(b, ctx, "timer_delete", timer_delete)
   aserv(b, ctx, "timer_update", timer_update)
 
-  aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
+  // aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
 }
 
 
@@ -91,6 +91,7 @@ func timer_update(h *Ht) interface{} {
 }
 
 
+// 测试: 启动一个不能停止的任务
 func timer_test(h *Ht) interface{} {
   id := checkstring("定时器ID", h.Get("id"), 2, 20)
   tk, err := CreateTime(id)

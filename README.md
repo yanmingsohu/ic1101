@@ -25,6 +25,7 @@
 * [Select2](https://select2.org/data-sources/ajax)
 * [modbus从站模拟器](https://www.modbusdriver.com/diagslave.html)
 * [mBUS](https://github.com/karl-gustav/ams-han)
+* [Logger](https://godoc.org/go.uber.org/zap)
 
 
 # DTU

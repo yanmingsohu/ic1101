@@ -6,12 +6,12 @@
       <legend>定时器参数</legend>
       
       <div class="pure-g">
-        <div class="pure-u-1 pure-u-md-1-2">
+        <div class="pure-u-1 pure-u-md-2-5">
           <label>定时器ID</label>
-          <input type="text" name='id' class="pure-u-23-24"/>
+          <input type="text" name='id' class="pure-u-23-24" readonly/>
         </div>
 
-        <div class="pure-u-1 pure-u-md-1-2">
+        <div class="pure-u-1 pure-u-md-3-5">
           <label>说明</label>
           <input type="text" name='desc' class="pure-u-23-24"/>
         </div>
@@ -68,8 +68,6 @@
           <div class="pure-button-group" role="group">
             <button type="submit" 
               class="pure-button button-primary">修改</button>
-            <button type="reset" 
-              class="pure-button button-secondary">清除</button>
             <button type="button" 
               class="pure-button button-secondary nodelay">无延迟</button>
           </div>
@@ -78,6 +76,18 @@
       </div>
     </fieldset>
   </form>
+
+  <span style='float:right; font-size: 8px;'>
+    * 启动时钟是绝对时钟, 当系统时钟与启动时钟匹配时, 任务才被启动<br/>
+    * 当用户点击界面中的 '启动' 按钮时, 则为 <b>启动时间</b> <br/>
+    * 例1: 设置 30 分, 其他无; 启动时间 19:28:30, 则在 19:30:30 时运行任务, 
+      启动时间为 19:31:10 则在 20:30:10 时运行任务<br/>
+    * 例2: 设置 30分, 0秒, 其他无: 启动时间 19:28:30, 则在 19:30:00 时运行任务, 
+      启动时间为 19:31:10 则在 20:30:00 时运行任务<br/>
+    * 例3: 设置 12时, 0分, 0秒; 如果启动时间在12点前, 则今天12点整运行任务,
+      如果启动时间在12点后, 则明天12点整运行任务<br/>
+    * 例4: 全无; 启动后立即运行任务<br/>
+  </span>
 
 <script>
 jQuery(function($) {
@@ -109,11 +119,11 @@ jQuery(function($) {
   update_duration();
 
   defaultOpt(smon, sday, shour, smin, ssec);
-  loopOptions(smon, 1, 12, '', '月');
-  loopOptions(sday, 1, 31, '', '日');
-  loopOptions(shour, 0, 23, '', '时');
-  loopOptions(smin, 0, 59, '', '分');
-  loopOptions(ssec, 0, 59, '', '秒');
+  loopOptions(smon, 1, 13, '', '月');
+  loopOptions(sday, 1, 32, '', '日');
+  loopOptions(shour, 0, 24, '', '时');
+  loopOptions(smin, 0, 60, '', '分');
+  loopOptions(ssec, 0, 60, '', '秒');
   root.trigger('delay_build_over');
 
   root.find('.nodelay').click(function() {
