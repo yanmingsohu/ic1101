@@ -293,7 +293,7 @@ func (h *Ht) GetInt(name string, defaultVal int) int {
 
 
 //
-// 返回 bool 值
+// 返回 bool 值, 不会抛出任何异常
 //
 func (h *Ht) GetBool(name string) bool {
   return checkbool(name, h.Get(name))

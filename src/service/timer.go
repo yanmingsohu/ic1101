@@ -21,7 +21,7 @@ func installTimerService(b *brick.Brick) {
   aserv(b, ctx, "timer_delete", timer_delete)
   aserv(b, ctx, "timer_update", timer_update)
 
-  // aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
+  aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
 }
 
 
@@ -182,22 +182,26 @@ func (t *_Tick) String() string {
 func AddMinimumUnit(n, then time.Time) time.Time {
   if then.Before(n) { // 阶梯加时
     test := then.Add(time.Second)
-    if test.Before(n) {
-      test = then.Add(time.Minute)
-      if test.Before(n) {
-        test = then.Add(time.Hour)
-        if test.Before(n) {
-          test = then.AddDate(0, 0, 1)
-          if test.Before(n) {
-            test = then.AddDate(0, 1, 0)
-            if test.Before(n) {
-              test = then.AddDate(1, 0, 1)
-            }
-          }
-        }
-      }
+    if !test.Before(n) {
+      return test
     }
-    return test
+    test = then.Add(time.Minute)
+    if !test.Before(n) {
+      return test
+    }
+    test = then.Add(time.Hour)
+    if !test.Before(n) {
+      return test
+    }
+    test = then.AddDate(0, 0, 1)
+    if !test.Before(n) {
+      return test
+    }
+    test = then.AddDate(0, 1, 0)
+    if !test.Before(n) {
+      return test
+    }
+    return then.AddDate(1, 0, 0)
   }
   return then
 }
