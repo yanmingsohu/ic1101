@@ -1,8 +1,11 @@
 package core
 
-import "go.mongodb.org/mongo-driver/bson"
+import (
+	"fmt"
+	"time"
 
-const TimeFormatString = "2020-06-25T08:32:44.676+00:00"
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 /*
 Table: login_user {
@@ -18,11 +21,11 @@ Table: login_user {
 }
 */
 type LoginUser struct {
-  Name string 			`yaml:"username" bson:"_id"`
-  Pass string 			`yaml:"password" bson:"pass"`
-  Role string			 	`bson:"role"`
-  IsRoot bool      	`bson:"isroot"`
-  Auths map[string]bool
+  Name string `yaml:"username" bson:"_id"`
+  Pass string `yaml:"password" bson:"pass"`
+  Role string `bson:"role"`
+  IsRoot bool `bson:"isroot"`
+  Auths map[string]bool 
 }
 
 const TableLoginUser = "login_user"
@@ -33,8 +36,8 @@ Table: dict {
   _id(string)       : 字典(ID)名称
   desc(string)			: 说明
   content           : 字典内容
-  cd                : 创建时间
-  md  							: 修改时间
+  cd(time)          : 创建时间
+  md(time)  				: 修改时间
 }
 dict: content {
   key : value
@@ -43,8 +46,8 @@ dict: content {
 type Dict struct {
   Id 			string  					`bson:"_id"`
   Desc 		string 						`bson:"desc"`
-  Cd      string            `bson:"cd"`
-  Md      string            `bson:"md"`
+  Cd      time.Time         `bson:"cd"`
+  Md      time.Time         `bson:"md"`
   Content map[string]string `bson:"content"`
 }
 
@@ -55,8 +58,8 @@ const TableDict = "dict"
 Table: role {
   _id(string)     : 角色名
   desc(string)    : 说明
-  cd              : 创建时间
-  md              : 修改时间
+  cd(time)        : 创建时间
+  md(time)        : 修改时间
   rules([]string) : 权限列表
 }
 */
@@ -72,8 +75,8 @@ Table: dev-proto {
   _id(string)    : 原型id
   desc(string)   : 说明
   changeid       : 修改次数flag
-  cd             : 创建时间
-  md             : 修改时间
+  cd(time)       : 创建时间
+  md(time)       : 修改时间
   script(string) : '脚本名, 用于处理虚拟数据, 有接口标准'
 
   attrs : 属性信息列表 [
@@ -104,12 +107,12 @@ Table: dev-proto {
 }
 */
 type DevProto struct {
-  Id        string  `bson:"_id"`
-  Desc      string  `bson:"desc"`
-  ChangeId  int     `bson:"changeid"`
-  Cd        string  `bson:"cd"`
-  Md        string  `bson:"md"`
-  Script    string  `bson:"script"`
+  Id        string     `bson:"_id"`
+  Desc      string     `bson:"desc"`
+  ChangeId  int        `bson:"changeid"`
+  Cd        time.Time  `bson:"cd"`
+  Md        time.Time  `bson:"md"`
+  Script    string     `bson:"script"`
 
   Attrs []DevProtoAttr `bson:"attrs"`
   Datas []DevProtoData `bson:"datas"`
@@ -173,10 +176,10 @@ Table: device {
   desc      : "说明"
   tid       : "原型id"
   changeid  : 引用原型的修改次数flag, 当设备小于原型则属性需要同步
-  md        : 修改时间
-  cd        : 创建时间
+  md(time)  : 修改时间
+  cd(time)  : 创建时间
   
-  dd        : 最后数据时间
+  dd(time)  : 最后数据时间
   dc(int64) : 数据量
 
   attrs : 属性值 {
@@ -199,6 +202,7 @@ const TableDevice = "device"
 
   所有年份数据:  {
     _id : year$[data-name] (数据名)
+    l : 最后插入的数据
     v : (数据 map) {
       Y : n年数据, (数字类型)
       ...
@@ -206,7 +210,8 @@ const TableDevice = "device"
   }
 
   当年所有月数据: {
-    _id : month$Y
+    _id : month$[data-name]@Y
+    l : 最后插入的数据
     v : {
       1 : 1月数据 (月份是数字类型)
       ...
@@ -215,7 +220,8 @@ const TableDevice = "device"
   }
 
   日数据: {
-    _id : day$Y-M
+    _id : day$[data-name]@Y-M
+    l : 最后插入的数据
     v : {
       1 : x月1日数据
       ...
@@ -224,7 +230,8 @@ const TableDevice = "device"
   }
 
   小时数据: {
-    _id : hour$Y-M-D
+    _id : hour$[data-name]@Y-M-D
+    l : 最后插入的数据
     v : {
       0 : 0点数据
       ...
@@ -233,7 +240,8 @@ const TableDevice = "device"
   }
 
   分钟数据:  {
-    _id : minute$Y-M-D_h
+    _id : minute$[data-name]@Y-M-D_h
+    l : 最后插入的数据
     v : {
       0 : 0分数据
       ...
@@ -242,7 +250,8 @@ const TableDevice = "device"
   }
 
   秒数据:  {
-    _id : second$Y-M-D_h:m
+    _id : second$[data-name]@Y-M-D_h:m
+    l : 最后插入的数据
     v : {
       0 : 0秒数据
       ...
@@ -256,4 +265,124 @@ const TableDevice = "device"
 type DeviceData struct {
   Id string `bson:"_id"`
   V  bson.M `bson:"v"`
+}
+
+type TimeRange int
+
+const (
+  TimeRangeYear   TimeRange = 1
+  TimeRangeMonth  TimeRange = 2
+  TimeRangeDay    TimeRange = 3
+  TimeRangeHour   TimeRange = 4
+  TimeRangeMinute TimeRange = 5
+  TimeRangeSecond TimeRange = 6
+)
+
+var TimeRangeMap = map[TimeRange]string {
+  TimeRangeYear   : "年",
+  TimeRangeMonth  : "月",
+  TimeRangeDay    : "日",
+  TimeRangeHour   : "时",
+  TimeRangeMinute : "分",
+  TimeRangeSecond : "秒",
+}
+
+//
+// 返回数据表名
+//
+func TableDevData(devid string) string {
+  return "data@"+ devid
+}
+
+//
+// 返回数据的 id
+//
+func DevDataID(r TimeRange, dataName string, t *time.Time) string {
+  switch (r) {
+  case TimeRangeYear:
+    return "year$"+ dataName
+
+  case TimeRangeMonth:
+    return fmt.Sprintf("month$%s@%d", dataName, t.Year())
+
+  case TimeRangeDay:
+    return fmt.Sprintf("day$%s@%d-%d", dataName, t.Year(), t.Month())
+
+  case TimeRangeHour:
+    return fmt.Sprintf("hour$%s@%d-%d-%d", dataName, 
+            t.Year(), t.Month(), t.Day())
+
+  case TimeRangeMinute:
+    return fmt.Sprintf("minute$%s@%d-%d-%d_%d", dataName, 
+            t.Year(), t.Month(), t.Day(), t.Minute())
+
+  case TimeRangeSecond:
+    return fmt.Sprintf("minute$%s@%d-%d-%d_%d:%d", dataName, 
+            t.Year(), t.Month(), t.Day(), t.Minute(), t.Second())
+            
+  default:
+    panic("无效的时间范围")
+  }
+}
+
+
+/*
+Table: bus {
+  _id(string)    : 总线id
+  desc(string)   : 说明
+  timer          : 定时器id
+  script         : 总线脚本
+  cd(time)       : 创建时间
+  md(time)       : 修改时间
+}
+*/
+type Bus struct {
+  Id string `bson:"_id"`
+}
+
+const TableBus = "bus"
+
+
+/*
+Table: timer {
+  _id(string)      : 定时器 id
+  desc(string)     : 说明
+  duration         : 时间间隔
+  loop(bool)       : 重复执行/执行一次
+  cd(time)         : 创建时间
+  md(time)         : 修改时间
+
+  delay : 启动时间, -1表示忽略 {
+    mon : 月, day : 日, hour: 时, min: 分, sec: 秒
+  }
+}
+*/
+type Timer struct {
+  Id        string        `bson:"_id"`
+  Desc      string        `bson:"desc"`
+  Duration  time.Duration `bson:"duration"`
+  Loop      bool          `bson:"loop"`
+  // 当时钟相符时才启动任务, 
+  // 并且基于当前时间以最小单位向后推进时钟
+  Delay     TimerDelay    `bson:"delay"`
+}
+
+type TimerDelay struct {
+  Mon  int `bson:"mon"`
+  Day  int `bson:"day"`
+  Hour int `bson:"hour"`
+  Min  int `bson:"min"`
+  Sec  int `bson:"sec"`
+}
+
+const TableTimer = "timer"
+
+//
+// 定时器接口
+//
+type Tick interface {
+  // 该方法只能调用一次S
+  Start(f func())
+  Stop()
+  IsRunning() bool
 }

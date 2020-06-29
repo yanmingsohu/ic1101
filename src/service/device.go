@@ -55,28 +55,27 @@ func dev_upsert(h *Ht) interface{} {
     tid = checkstring("设备原型ID", h.Get("tid"), 2, 20)
   }
 
-  proto := bson.M{}
-  if err := GetDevProto(h.Ctx(), tid, proto); err != nil {
-    return HttpRet{1, "不存在的设备原型 "+ tid, err}
+  proto := core.DevProto{}
+  if err := GetDevProto(h.Ctx(), tid, &proto); err != nil {
+    return HttpRet{1, "不存在的设备原型 "+ tid, err.Error()}
   }
 
   dev_attrs := bson.M{}
-  proto_attrs := proto["attrs"].(bson.A)
 
-  for _, item := range proto_attrs {
-    attrName := item.(bson.M)["name"].(string)
+  for _, item := range proto.Attrs {
+    attrName := item.Name
     attrVal := h.Get("a."+ attrName)
-    typeid := core.DevAttrType(item.(bson.M)["type"].(int64))
 
     if attrVal == "" {
-      if item.(bson.M)["notnull"].(bool) {
+      if item.Notnull {
         return HttpRet{2, "参数 '"+ attrName +"' 不能为空", attrName}
       } else {
+        dev_attrs[attrName] = nil
         continue;
       }
     }
 
-    switch (typeid) {
+    switch (item.Type) {
     case core.DAT_date:
       time, err := time.Parse(time.RFC1123, attrVal);
       if err != nil {
@@ -86,34 +85,32 @@ func dev_upsert(h *Ht) interface{} {
       break;
 
     case core.DAT_dict:
-      if !hasKeyInDict(h.Ctx(), item.(bson.M)["dict"].(string), attrVal) {
+      if !hasKeyInDict(h.Ctx(), item.Dict, attrVal) {
         return HttpRet{3, "字典值不在字典中 "+ attrVal, attrVal}
       }
       dev_attrs[attrName] = attrVal
       break;
 
     case core.DAT_number:
-      min := item.(bson.M)["min"].(int64)
-      max := item.(bson.M)["max"].(int64)
-      dev_attrs[attrName] = checkint(attrName, attrVal, min, max)
+      dev_attrs[attrName] = 
+          checkint(attrName, attrVal, item.Min, item.Max)
       break;
 
     case core.DAT_string:
-      min := item.(bson.M)["min"].(int)
-      max := item.(bson.M)["max"].(int)
-      dev_attrs[attrName] = checkstring(attrName, attrVal, min, max)
+      dev_attrs[attrName] = 
+          checkstring(attrName, attrVal, int(item.Min), int(item.Max))
       break;
 
     default:
-      return HttpRet{3, "无效的参数类型", typeid}
+      return HttpRet{3, "无效的参数类型", item.Type}
     }
   }
   
   d := bson.M{
     "_id"       : id,
     "desc"      : desc,
-    "tid"       : proto["_id"],
-    "changeid"  : proto["changeid"],
+    "tid"       : proto.Id,
+    "changeid"  : proto.ChangeId,
     "md"        : "",
     "attrs"     : dev_attrs,
   }

@@ -65,32 +65,6 @@ type ServiceGroupContext struct {
 type ServiceHandler func(*Ht) interface{}
 
 
-func (h *HttpRet) Error() string {
-  return h.Msg.(string)
-}
-
-
-//
-// 返回当前登录用户
-//
-func (h *Ht) GetUser() *core.LoginUser {
-  return h.Session().Get("user").(*core.LoginUser)
-}
-
-
-//
-// 返回 CRUD 实例, 配置的 db 表由绑定服务接口时的 ServiceGroupContext 参数决定.
-//
-func (h *Ht) Crud() *Crud {
-  return &Crud{h, h.collectionName, h.serviceName}
-}
-
-
-func (h *Ht) Table() *mongo.Collection {
-  return mg.Collection(h.collectionName)
-}
-
-
 func Install(conf *core.Config, m *core.Mongo) {
   mg = m;
   salt = conf.Salt
@@ -118,6 +92,7 @@ func serviceList(b *brick.Brick) {
   installAuthService(b)
   installDevProtoService(b)
   installDeviceService(b)
+  installTimerService(b)
 }
 
 
@@ -271,4 +246,55 @@ func checkint(info string, s string, min int64, max int64) int64 {
     panic(HttpRet{ Code: 2, Msg: msg, Data: []int64{min, max} })
   }
   return r
+}
+
+
+
+func (h *HttpRet) Error() string {
+  return h.Msg.(string)
+}
+
+
+//
+// 返回当前登录用户
+//
+func (h *Ht) GetUser() *core.LoginUser {
+  return h.Session().Get("user").(*core.LoginUser)
+}
+
+
+//
+// 返回 CRUD 实例, 配置的 db 表由绑定服务接口时的 ServiceGroupContext 参数决定.
+//
+func (h *Ht) Crud() *Crud {
+  return &Crud{h, h.collectionName, h.serviceName}
+}
+
+
+func (h *Ht) Table() *mongo.Collection {
+  return mg.Collection(h.collectionName)
+}
+
+
+//
+// 如果参数不存在或解析错误返回 defaultVal, 否则返回参数的 int 值
+//
+func (h *Ht) GetInt(name string, defaultVal int) int {
+  v := h.Get(name)
+  if "" == v {
+    return defaultVal
+  }
+  i, err := strconv.Atoi(v) 
+  if err != nil {
+    return defaultVal
+  }
+  return i
+}
+
+
+//
+// 返回 bool 值
+//
+func (h *Ht) GetBool(name string) bool {
+  return checkbool(name, h.Get(name))
 }
