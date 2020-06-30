@@ -23,6 +23,17 @@ var auth_arr = []string{}
 var sessionExp = 20 * time.Hour
 
 
+func serviceList(b *brick.Brick) {
+  installUserService(b)
+  installDictService(b)
+  installAuthService(b)
+  installDevProtoService(b)
+  installDeviceService(b)
+  installTimerService(b)
+  installBusService(b)
+}
+
+
 //
 // Code 定义:
 //    0: 无错误
@@ -83,16 +94,6 @@ func Install(conf *core.Config, m *core.Mongo) {
   b.HttpJumpMapping("/", "/ic/ui/index.html")
   b.HttpJumpMapping("/favicon.ico", "/ic/ui/favicon.ico")
   b.StartHttpServer()
-}
-
-
-func serviceList(b *brick.Brick) {
-  installUserService(b)
-  installDictService(b)
-  installAuthService(b)
-  installDevProtoService(b)
-  installDeviceService(b)
-  installTimerService(b)
 }
 
 

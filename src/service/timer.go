@@ -14,7 +14,7 @@ import (
 )
 
 func installTimerService(b *brick.Brick) {
-  mg.CreateIndex(core.TableDevice, &bson.D{{"_id", "text"}, {"desc", "text"}})
+  mg.CreateIndex(core.TableTimer, &bson.D{{"_id", "text"}, {"desc", "text"}})
   ctx := &ServiceGroupContext{core.TableTimer, "定时器"}
 
   aserv(b, ctx, "timer_count",  timer_count)
@@ -23,7 +23,7 @@ func installTimerService(b *brick.Brick) {
   aserv(b, ctx, "timer_delete", timer_delete)
   aserv(b, ctx, "timer_update", timer_update)
 
-  aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
+  // aserv(b, ctx, "timer_test", timer_test) // 测试用, 注释掉
 }
 
 
@@ -178,7 +178,8 @@ func (t *_Tick) Stop() {
   defer t.mutex.Unlock()
 
   if !t.running {
-    panic(errors.New("定时器已经停止"))
+    // panic(errors.New("定时器已经停止"))
+    return
   }
   t.running = false
 
@@ -262,4 +263,12 @@ func CreateSchedule(id string) (core.Tick, error) {
     return nil, err
   }
   return _NewTick(&t), nil
+}
+
+
+//
+// 如果定时器存在返回 true
+//
+func hasTimer(id string) bool {
+  return mg.HasOne(core.TableTimer, id)
 }

@@ -61,3 +61,20 @@ func (mg *Mongo) CreateIndex(collName string, idx *bson.D) {
     log.Print("Create Index [", collName, "]:", msg)
   }
 }
+
+
+//
+// 用 _id 检索 collName 表, 至少有一行数据返回 true
+//
+func (mg *Mongo) HasOne(collName string, id string) bool {
+  coll := mg.Collection(collName)
+  opt  := options.Find().SetLimit(1)
+  ctx  := context.Background()
+
+  cur, err := coll.Find(ctx, bson.M{"_id":id}, opt)
+  if err != nil {
+    return false
+  }
+  defer cur.Close(ctx)
+  return cur.Next(ctx)
+}
