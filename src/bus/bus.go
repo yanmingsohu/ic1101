@@ -20,24 +20,43 @@ type BusState int
 
 const (
   // 总线没有启动
-  BusStateStop      BusState = 0 
+  BusStateStop      BusState = iota 
   // 正在启动
-  BusStateStartup   BusState = 1
+  BusStateStartup   BusState = iota 
   // 休眠中, 等待计时器
-  BusStateSleep     BusState = 2
+  BusStateSleep     BusState = iota 
   // 执行任务
-  BusStateTask      BusState = 3
+  BusStateTask      BusState = iota 
 )
 
+//
+// 槽的类型
+//
+type SlotType int
+
+const (
+  // 无效值
+  SlotInvaild SlotType = iota
+  // 数据槽
+  SlotData    SlotType = iota
+  // 控制槽
+  SlotCtrl    SlotType = iota
+)
 
 //
 // 运行中的总线实例对象
 //
 type Bus interface {
-  start(*BusInfo) error
-  stop() error
-  OnData(s *Slot, r DataRecv) error
-  SendMsg(s *Slot, d DataWrap) error
+  // 启动总线, 失败返回 error
+  start() error
+
+  // 停止总线, 该方法返回后, 总线一定是停止的
+  stop()
+
+  // 发送控制指令, 发送失败返回 error
+  SendCtrl(s Slot, d DataWrap) error
+
+  // 返回总线状态
   State() BusState
 }
 
@@ -48,14 +67,23 @@ type BusInfo struct {
   // 总线类型, 在 bus.busInfos 中
   TypeName string
   // 定时抓取数据的定时器
-  Tk  *core.Tick
+  Tk core.Tick
+  // 数据接收器
+  Recv DataRecv
+  // 数据插槽配置, {插槽: 数据名}
+  SlotConf []Slot
 }
 
 
 //
 // 总线数据/控制槽
 //
-type Slot struct {
+type Slot interface {
+  // 返回插槽的唯一标识名称, 该标识是对 slot 描述的完整序列化
+  // 与 BusCreator 中的 ParseSlot 对应.
+  // 总线实例需要判断 '数据/控制' 类型
+  String() string
+  Type() SlotType
 }
 
 
@@ -63,7 +91,26 @@ type Slot struct {
 // 总线创建接口
 //
 type BusCreator interface {
-  Create() (Bus, error)
+  SlotParser
+
+  // 创建总线实例
+  Create(*BusInfo) (Bus, error)
+  
+  // 总线的显示名称
+  Name() string
+}
+
+
+//
+// 用于解析 slot, 数据槽格式包含 '数据/控制' 的描述
+//
+type SlotParser interface {
+  // 通过字符串 (序列化的slot) 解析 slot 实例, 失败返回 error
+  // 每种总线都有自己的 slot 格式
+  ParseSlot(s string) (Slot, error)
+
+  // 返回可读的对端口的描述字符串, 格式无效返回 error
+  SlotDesc(s string) (string, error)
 }
 
 
@@ -85,7 +132,7 @@ type DataRecv interface {
   //
   // 接受总线发送的数据
   //
-  OnData(t *time.Time, d *DataWrap)
+  OnData(slot Slot, time *time.Time, data DataWrap)
 }
 
 
@@ -135,11 +182,11 @@ func StartBus(info *BusInfo) error {
     return errors.New("无效的总线类型 "+ info.TypeName)
   }
 
-  bus, err := ct.Create()
+  bus, err := ct.Create(info)
   if err != nil {
     return err
   }
-  if err := bus.start(info); err != nil {
+  if err := bus.start(); err != nil {
     return err
   }
   busInstance[info.Id] = bus
@@ -158,9 +205,22 @@ func StopBus(id string) error {
   if !has {
     return errors.New("总线没有启动 "+ id)
   }
-  if err := bus.stop(); err != nil {
-    return err
-  }
+  bus.stop()
   delete(busInstance, id)
   return nil
+}
+
+
+//
+// 返回对应总线类型的数据槽解析器
+//
+func GetSlotParser(typeName string) (SlotParser, error) {
+  busMutex.RLock()
+  defer busMutex.RUnlock()
+
+  ct, has := bus_type_register[typeName]
+  if !has {
+    return nil, errors.New("不存在的总线类型 "+ typeName)
+  }
+  return ct, nil
 }

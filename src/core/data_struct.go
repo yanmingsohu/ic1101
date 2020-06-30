@@ -333,10 +333,35 @@ Table: bus {
   timer          : 定时器id
   cd(time)       : 创建时间
   md(time)       : 修改时间
+  type           : 总线类型(不可改)
+  status         : 状态
+
+  data_slot : {
+    "slot_id" : 数据槽配置, 复制自 'dev-proto.datas' { 
+      dev_id, data_name, data_type,
+    }
+  }
+
+  ctrl_slot : {
+    "slot_id" : 复制自 'dev-proto.ctrls' {
+      dev_id, data_name, data_type,
+    }
+  }
 }
 */
 type Bus struct {
-  Id string `bson:"_id"`
+  Id      string             `bson:"_id"`
+  Desc    string             `bson:"desc"`
+  Timer   string             `bson:"timer"`
+  Type    string             `bson:"type"`
+  Datas   map[string]BusSlot `bson:"data_slot"`
+  Ctrls   map[string]BusSlot `bson:"ctrl_slot"`
+}
+
+type BusSlot struct {
+  Dev     string      `bson:"dev_id"`
+  Name    string      `bson:"data_name"`
+  Type    DevDataType `bson:"data_type"`
 }
 
 const TableBus = "bus"
