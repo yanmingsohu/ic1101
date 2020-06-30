@@ -174,7 +174,8 @@ function ajaxform(jdom) {
 //        pageinfo='获取分页数据接口'>
 // <thead><th cn='来自数据接口中的列属性名' 
 //         rename='重命名属性' format='显示时格式化' >...
-// format: date / yesno / 在 data("format.XXX", function) 绑定方法
+// format: date / yesno / 在 data("format.XXX", function ColConv) 绑定方法
+//    Function ColConv(value) return other-value
 //
 // table 事件:
 //    error(event, errObj)     : 解析数据异常, 运行异常
@@ -605,6 +606,8 @@ function center(where, who) {
 //      用当前数据初始化编辑子页面, 适用于 create_page/edit_page
 // }
 //
+// table 附加事件: button_disabled(event, bool)
+//
 function commandCrudPage(conf) {
   smartTable(conf.table, conf.table_convert);
   deleteButton(conf.delete);
@@ -650,6 +653,7 @@ function commandCrudPage(conf) {
   function update_button(dis) {
     conf.edit.prop('disabled', dis);
     conf.delete.prop('disabled', dis);
+    conf.table.trigger("button_disabled", dis);
   }
 }
 
@@ -709,6 +713,23 @@ function select2fromApi(jselect, data_convert) {
   const api = jselect.attr('api');
   if (!api) return popo("api 参数无效");
 
+  if (!data_convert) {
+    // 默认转换器, 取返回数据中的 ret.data, 
+    // 并且绑定 id/text, id=_id, text = _id + desc
+    data_convert = function(ret) {
+      if (ret && ret.data && ret.data.forEach) {
+        ret.data.forEach(function(d) {
+          let txt = d._id;
+          if (d.desc) txt += ' - '+ d.desc;
+          d.id = d._id;
+          d.text = txt;
+        });
+        // console.log("data_convert", ret);
+        return ret.data;
+      }
+    };
+  }
+
   jselect.select2({
     ajax: { 
       url: API_ROOT + api,
@@ -735,9 +756,16 @@ function select2fromApi(jselect, data_convert) {
     cache: true,
   });
 
+  if (jselect.val()) {
+    set_value(jselect.val());
+  }
+
   jselect.on("change", function(event, value) {
     if (!value) return;
+    set_value(value);
+  });
 
+  function set_value(value) {
     $.get(API_ROOT + api, {text: value}, function(ret) {
       let d = data_convert(ret);
       let row = d && d[0];
@@ -747,7 +775,7 @@ function select2fromApi(jselect, data_convert) {
       var opt = new Option(row.text, row.id, true, true);
       jselect.append(opt).trigger('change');
     });
-  });
+  }
 }
 
 

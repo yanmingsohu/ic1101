@@ -1,0 +1,78 @@
+<div id='bus_configuration_frame'>
+  <h2>配置总线</h2><hr/>
+
+  <form class="pure-form pure-form-stacked" 
+        id='update_bus' action='bus_update'>
+    <fieldset>
+      <legend>基本属性</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>总线ID</label>
+          <input type="text" name='id' class="pure-u-23-24" readonly/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>定时器</label>
+          <select api='timer_list' type="text" 
+                 name='timer' class="pure-u-23-24"></select>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>总线类型</label>
+          <input type="text" name='typeName' class="pure-u-23-24" readonly/>
+          <input type="hidden" name='type' class="pure-u-23-24" readonly/>
+        </div>
+      </div>
+
+      <h3>总线与设备关联</h3><hr/>
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-3-5">
+          <legend class='not-full'>数据槽</legend>
+          <table class="pure-table" id='bus_slot_table' form='#update_bus'
+                api='bus_slot_list' pageinfo=''>
+            <thead>
+              <th cn=''>总线端口</th> 
+              <th cn=''>端口说明</th>
+              <th cn=''>设备</th>
+              <th cn=''>设备槽</th>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-2-5 bus_config_with_type">
+
+        </div>
+      </div>
+
+      <div class="pure-u-1 pure-u-md-1-3">
+        <label>操作</label>
+        <div class="pure-button-group" role="group">
+          <button type="submit" 
+            class="pure-button button-primary">更新</button>
+        </div>
+        <span class='ajax-message error-message'></span>
+      </div>
+    </fieldset>
+  </form>
+
+<script>
+jQuery(function($) {
+  const root = $("#bus_configuration_frame");
+  const timer = root.find("[name=timer]");
+  const update = root.find("#update_bus");
+  const conf_page = root.find(".bus_config_with_type");
+  const type = root.find("[name=type]").val();
+
+  ic.select2fromApi(timer);
+  root.trigger('load_form_var');
+  ic.ajaxform(update);
+});
+</script>
+</div>

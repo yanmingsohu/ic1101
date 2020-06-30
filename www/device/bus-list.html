@@ -1,3 +1,160 @@
 <div id='bus_manager_frame'>
-  <h2>总线管理</h2>
+  <h2>总线管理</h2><hr/>
+
+  <form class="pure-form pure-form-stacked" id='create_bus'
+        action='bus_create'>
+    <fieldset>
+      <legend>新建总线</legend>
+      
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>总线ID</label>
+          <input type="text" name='id' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>定时器</label>
+          <select api='timer_list' type="text" name='timer' class="pure-u-23-24">
+          </select>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>总线类型</label>
+          <select api='bus_types' type="text" name='type' class="pure-u-23-24">
+          </select>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">创建总线</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除</button>
+          </div>
+          <span class='ajax-message error-message'></span>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <h3>总线列表</h3><hr/>
+  <form class="pure-form pure-form-stacked" id='bus_search_filter'>
+    <fieldset>
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-2-5">
+          <label for="">检索文本</label>
+          <input type="text" name='text' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-5">
+          <label>检索</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">查询</button>
+            <button type="reset" 
+              class="pure-button button-secondary">清除条件</button>
+          </div>
+        </div>
+          
+        <div class="pure-u-1 pure-u-md-2-5">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="button" id='edit_bus'
+                class="pure-button button-secondary">配置总线</button>
+            <button type="button" id='start_bus'
+                class="pure-button button-success">启动</button>
+            <button type="button" id='stop_bus'
+                class="pure-button button-error">停止</button>
+            <button type="button" id='delete_bus' api='bus_delete'
+                class="pure-button button-warning">删除</button>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <table class="pure-table" id='bus_table' form='#bus_search_filter'
+         api='bus_list' pageinfo='bus_count'>
+    <thead>
+      <th cn='_id' rename='id'>总线ID</th> 
+      <th cn='desc'>说明</th>
+      <th cn='timer'>定时器</th>
+      <th cn='type' format='format.type'>类型</th>
+      <th cn='status' format="format.status">状态</th>
+      <th cn='md' format='date'>修改时间</th>
+      <th cn='cd' format='date'>创建时间</th>
+    </thead>
+    <tbody></tbody>
+  </table>
+  
+<script>
+jQuery(function($) {
+  const root = $("#bus_manager_frame");
+  const create = root.find("#create_bus");
+  const edit = root.find("#edit_bus");
+  const table = root.find("#bus_table");
+  const del = root.find("#delete_bus");
+  const start = root.find("#start_bus");
+  const stop = root.find("#stop_bus");
+  let types = {};
+
+  ic.select2fromApi(root.find("[name=timer]"));
+  table.data("format.status", bus_status);
+  table.data("format.type", types_conv);
+
+  table.on("button_disabled", function(_, dis) {
+    start.prop('disabled', dis);
+    stop.prop('disabled', dis);
+  });
+
+  ic.get("bus_types", null, function(err, ret) {
+    if (err) {
+      return ic.popo(err);
+    } else {
+      ic.buildSelectOpt(root.find("[name=type]"), ret.data);
+      types = ret.data;
+    }
+    init_crud();
+  });
+
+  function init_crud() {
+    ic.commandCrudPage({
+      create,
+      edit,
+      edit_page : 'device/bus-update.html',
+      table,
+      delete : del,
+
+      copy_edit(data, target) {
+        target.find("[name=typeName]").val( types[data.type] );
+        for (var n in data) {
+          target.find("[name='"+ n +"']").val(data[n]);
+        }
+        target.one("load_form_var", function() {
+          target.find("[name=timer]").trigger("change", data.timer);
+        });
+      },
+    });
+  }
+
+  function types_conv(s) {
+    return types[s] || s;
+  }
+
+  function bus_status(s) {
+    switch (s) {
+      case 0: return "停止"
+      case 1: return "正在启动"
+      case 2: return "已启动, 休眠中"
+      case 3: return "已启动, 执行任务中"
+    }
+  }
+});
+</script>
 </div>
