@@ -10,7 +10,7 @@ import (
 //
 // 运行中的总线实例
 //
-var busInstance = map[string]Bus{}
+var busInstance = map[string]*BusInfo{}
 var busMutex = new(sync.RWMutex)
 
 //
@@ -21,13 +21,27 @@ type BusState int
 const (
   // 总线没有启动
   BusStateStop      BusState = iota 
-  // 正在启动
   BusStateStartup   BusState = iota 
-  // 休眠中, 等待计时器
   BusStateSleep     BusState = iota 
-  // 执行任务
   BusStateTask      BusState = iota 
+  BusStateShutdown  BusState = -1 
 )
+
+func (s BusState) String() string {
+  switch s {
+  case BusStateStop:
+    return "停止"
+  case BusStateStartup:
+    return "正在启动"
+  case BusStateSleep:
+    return "休眠中, 等待计时器"
+  case BusStateTask:
+    return "执行任务"
+  case BusStateShutdown:
+    return "关闭中"
+  }
+  return "无效"
+}
 
 //
 // 槽的类型
@@ -35,43 +49,178 @@ const (
 type SlotType int
 
 const (
-  // 无效值
   SlotInvaild SlotType = iota
-  // 数据槽
   SlotData    SlotType = iota
-  // 控制槽
   SlotCtrl    SlotType = iota
 )
+
+func (t SlotType) String() string {
+  switch (t) {
+  case SlotData:
+    return "数据槽"
+  case SlotCtrl:
+    return "控制槽"
+  }
+  return "无效"
+}
 
 //
 // 运行中的总线实例对象
 //
 type Bus interface {
-  // 启动总线, 失败返回 error
+  // 启动总线, 用于初始化数据, 失败返回 error
   start() error
-
+  // 传送一次数据
+  sync_data(*BusInfo, *time.Time) error
   // 停止总线, 该方法返回后, 总线一定是停止的
   stop()
-
   // 发送控制指令, 发送失败返回 error
-  SendCtrl(s Slot, d DataWrap) error
-
-  // 返回总线状态
-  State() BusState
+  send_ctrl(s Slot, d DataWrap, t *time.Time) error
 }
 
 
 type BusInfo struct {
   // 总线id
-  Id string
+  id string
   // 总线类型, 在 bus.busInfos 中
-  TypeName string
+  typeName string
   // 定时抓取数据的定时器
-  Tk core.Tick
-  // 数据接收器
-  Recv DataRecv
+  tk core.Tick
+  // 消息接收器
+  event BusEvent
+
+  st BusState
+  bs Bus
+
   // 数据插槽配置, {插槽: 数据名}
-  SlotConf []Slot
+  datas []Slot
+  ctrls []ctrl_slot
+}
+
+
+type ctrl_slot struct {
+  slot Slot
+  tk   core.Tick
+  data DataWrap
+}
+
+
+//
+// 创建一个用于启动总线的数据对象
+//
+// id  -- 总线id
+// typ -- 总线类型
+// tk  -- 总线数据定时器, 如果该定时器停止, 则所有相关任务都会停止, 总线退出
+// ev  -- 事件接收器
+//
+func NewInfo(id string, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error) {
+  if id == "" {
+    return nil, errors.New("id 不能为空")
+  }
+  if !HasTypeName(typ) {
+    return nil, errors.New("无效的总线类型")
+  }
+  if tk == nil {
+    return nil, errors.New("必须提供定时器")
+  }
+  if tk.IsRunning() {
+    return nil, errors.New("不能是已经启动的定时器")
+  }
+  if ev == nil {
+    return nil, errors.New("必须提供事件监听器")
+  }
+  return &BusInfo{id, typ, tk, ev, BusStateStartup, 
+      nil, make([]Slot, 10), make([]ctrl_slot, 10)}, nil
+}
+
+
+//
+// 添加一个数据接口, 总线运行后从该接口取出数据发送到事件监听器
+//
+func (i *BusInfo) AddData(s Slot) error {
+  if i.st != BusStateStartup {
+    return errors.New("总线已经启动, 不能修改状态")
+  }
+  i.datas = append(i.datas, s)
+  return nil
+}
+
+
+func (i *BusInfo) AddCtrl(s Slot, tk core.Tick, value DataWrap) error {
+  if i.st != BusStateStartup {
+    return errors.New("总线已经启动, 不能修改状态")
+  }
+  if tk.IsRunning() {
+    return errors.New("不能是已经启动的定时器")
+  }
+  i.ctrls = append(i.ctrls, ctrl_slot{s, tk, value})
+  return nil
+}
+
+
+func (i *BusInfo) start(b Bus) error {
+  if i.st != BusStateStartup {
+    return errors.New("总线已经启动")
+  }
+  if err := b.start(); err != nil {
+    i.st = BusStateStop
+    return err
+  }
+  i.bs = b
+
+  for _, ctrl := range i.ctrls {
+    i._ctrl_thread(&ctrl)
+  }
+
+  i.st = BusStateSleep
+  i.tk.Start(func() {
+    i.st = BusStateTask
+    t := time.Now()
+    b.sync_data(i, &t)
+    i.st = BusStateSleep
+  }, func() {
+    i.stop()
+  })
+  return nil
+}
+
+
+func (i *BusInfo) stop() {
+  if i.st <= BusStateStop {
+    return
+  }
+  defer i.event.OnStopped()
+  i.st = BusStateShutdown
+
+  for _, ctrl := range i.ctrls {
+    if ctrl.tk.IsRunning() {
+      ctrl.tk.Stop()
+    }
+  }
+
+  if i.tk.IsRunning() {
+    i.tk.Stop()
+  }
+  if i.bs != nil {
+    i.bs.stop()
+  }
+  i.st = BusStateStop
+}
+
+
+func (i *BusInfo) _ctrl_thread(c *ctrl_slot) {
+  c.tk.Start(func() {
+    t := time.Now()
+    i.bs.send_ctrl(c.slot, c.data, &t)
+    i.event.OnCtrlSended(c.slot, &t)
+  }, func() {
+    i.event.OnCtrlExit(c.slot)
+  })
+}
+
+
+func (i *BusInfo) state() BusState {
+  return i.st
 }
 
 
@@ -94,10 +243,8 @@ type Slot interface {
 //
 type BusCreator interface {
   SlotParser
-
   // 创建总线实例
   Create(*BusInfo) (Bus, error)
-  
   // 总线的显示名称
   Name() string
 }
@@ -110,7 +257,6 @@ type SlotParser interface {
   // 通过字符串 (序列化的slot) 解析 slot 实例, 失败返回 error
   // 每种总线都有自己的 slot 格式
   ParseSlot(s string) (Slot, error)
-
   // 返回可读的对端口的描述字符串, 格式无效返回 error
   SlotDesc(s string) (string, error)
 }
@@ -129,13 +275,17 @@ type DataWrap interface {
 
 
 //
-// 数据接收器接口
+// 消息接收器接口
 //
-type DataRecv interface {
-  //
-  // 接受总线发送的数据
-  //
+type BusEvent interface {
+  // 接受总线发送的数据, [该方法由总线调用]
   OnData(slot Slot, time *time.Time, data DataWrap)
+  // 总线上所有任务都终止了, 该方法被调用
+  OnStopped()
+  // 一个控制命令已经发出后该方法被调用
+  OnCtrlSended(s Slot, t *time.Time)
+  // 一个控制槽已经终止任务该方法被调用
+  OnCtrlExit(s Slot)
 }
 
 
@@ -146,8 +296,8 @@ func GetBusState(id string) BusState {
   busMutex.RLock()
   defer busMutex.RUnlock()
 
-  if bus, has := busInstance[id]; has {
-    return bus.State()
+  if info, has := busInstance[id]; has {
+    return info.state()
   }
   return BusStateStop
 }
@@ -156,12 +306,12 @@ func GetBusState(id string) BusState {
 //
 // 返回运行中的总线
 //
-func GetBus(id string) (Bus, error) {
+func GetBus(id string) (*BusInfo, error) {
   busMutex.RLock()
   defer busMutex.RUnlock()
 
-  if bus, has := busInstance[id]; has {
-    return bus, nil
+  if info, has := busInstance[id]; has {
+    return info, nil
   }
   return nil, errors.New(id +" 引用的总线不存在")
 }
@@ -169,30 +319,28 @@ func GetBus(id string) (Bus, error) {
 
 //
 // 启动总线, 成功返回 nil, 否则返回错误
-// id       -- 总线id
-// typeName -- 
 //
-func StartBus(info *BusInfo) error {
+func StartBus(info *BusInfo) (error) {
   busMutex.Lock()
   defer busMutex.Unlock()
   
-  if _, has := busInstance[info.Id]; has {
-    return errors.New("总线已经启动 "+ info.Id)
+  if _, has := busInstance[info.id]; has {
+    return errors.New("总线已经启动 "+ info.id)
   }
 
-  ct, has := bus_type_register[info.TypeName]
+  ct, has := bus_type_register[info.typeName]
   if !has {
-    return errors.New("无效的总线类型 "+ info.TypeName)
+    return errors.New("无效的总线类型 "+ info.typeName)
   }
 
   bus, err := ct.Create(info)
   if err != nil {
     return err
   }
-  if err := bus.start(); err != nil {
+  if err := info.start(bus); err != nil {
     return err
   }
-  busInstance[info.Id] = bus
+  busInstance[info.id] = info
   return nil
 }
 
@@ -204,11 +352,11 @@ func StopBus(id string) error {
   busMutex.Lock()
   defer busMutex.Unlock()
 
-  bus, has := busInstance[id]
+  info, has := busInstance[id]
   if !has {
     return errors.New("总线没有启动 "+ id)
   }
-  bus.stop()
+  info.stop()
   delete(busInstance, id)
   return nil
 }

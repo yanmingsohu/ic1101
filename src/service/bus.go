@@ -23,10 +23,13 @@ func installBusService(b *brick.Brick) {
   aserv(b, ctx, "bus_create", bus_create)
   aserv(b, ctx, "bus_update", bus_update)
   
-  aserv(b, ctx, "bus_types",        bus_types)
   aserv(b, ctx, "bus_slot_list",    bus_slot_list)
   aserv(b, ctx, "bus_slot_update",  bus_slot_update)
   aserv(b, ctx, "bus_slot_delete",  bus_slot_delete)
+
+  dserv(b, ctx, "bus_types",  bus_types)
+  aserv(b, ctx, "bus_stop",   bus_stop)
+  aserv(b, ctx, "bus_start",  bus_start)
 }
 
 
@@ -239,4 +242,62 @@ func bus_slot_delete(h *Ht) interface{} {
 
 func GetBus(id string, ctx context.Context, ret interface{}) error {
   return mg.GetOne(core.TableBus, ctx, id, ret)
+}
+
+
+func bus_stop(h *Ht) interface{} {
+  id := checkstring("总线ID", h.Get("id"), 2, 20)
+  if err := bus.StopBus(id); err != nil {
+    return err
+  }
+  return HttpRet{0, "总线已终止", nil}
+}
+
+
+func bus_start(h *Ht) interface{} {
+  id := checkstring("总线ID", h.Get("id"), 2, 20)
+  if bus.GetBusState(id) != bus.BusStateStop {
+    return errors.New("总线已经运行")
+  }
+
+  findbus := core.Bus{}
+  if err := GetBus(id, h.Ctx(), &findbus); err != nil {
+    return err
+  }
+
+  tk, err := CreateSchedule(findbus.Timer)
+  if err != nil {
+    return err
+  }
+
+  event := &bus_event{}
+  info, err := bus.NewInfo(findbus.Id, findbus.Type, tk, event)
+  if err != nil {
+    return err
+  }
+  err = bus.StartBus(info)
+  if err != nil {
+    return err
+  }
+  return HttpRet{0, "总线已启动", nil}
+}
+
+
+type bus_event struct {
+}
+
+
+func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
+}
+
+
+func (r *bus_event) OnStopped() {
+}
+
+
+func (r *bus_event) OnCtrlSended(s bus.Slot, t *time.Time) {
+}
+
+
+func (r *bus_event) OnCtrlExit(s bus.Slot) {
 }
