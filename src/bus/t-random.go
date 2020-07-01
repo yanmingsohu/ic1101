@@ -1,13 +1,40 @@
 package bus
 
 import (
+	"errors"
+	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
 
 func init() {
   InstallBus("random", &bus_random_ct{})
+}
+
+
+func _parse_random_slot(s string) (*bus_random_sl, error) {
+  var t int
+  var port int
+  var tp SlotType
+
+  n, err := fmt.Sscanf(s, "%c#%d", &t, &port)
+  if err != nil {
+    return nil, err
+  }
+  if n != 2 {
+    return nil, errors.New("无效的slot格式")
+  }
+  switch (t) {
+  case 'D':
+    tp = SlotData
+  case 'C':
+    tp = SlotCtrl
+  default:
+    return nil, errors.New("无效的类型字符")
+  }
+  return &bus_random_sl{port, tp}, nil
 }
 
 
@@ -27,23 +54,40 @@ func (*bus_random_ct) Create(i *BusInfo) (Bus, error) {
 
 // 接受任何字符串作为 slot
 func (*bus_random_ct) ParseSlot(s string) (Slot, error) {
-  return &bus_random_sl{s, SlotData}, nil
+  return _parse_random_slot(s)
 }
 
 
 func (*bus_random_ct) SlotDesc(s string) (string, error) {
-  return "虚拟端口 "+ s, nil
+  slot, err := _parse_random_slot(s)
+  if err != nil {
+    return "", err
+  }
+  return slot.Desc(), nil
 }
 
 
 type bus_random_sl struct {
-  id string
+  port int
   tp SlotType
 }
 
 
 func (s *bus_random_sl) String() string {
-  return s.id
+  if s.tp == SlotData {
+    return "D#"+ strconv.Itoa(s.port)
+  } else {
+    return "C#"+ strconv.Itoa(s.port)
+  }
+}
+
+
+func (s *bus_random_sl) Desc() string {
+  if s.tp == SlotData {
+    return "虚拟数据 "+ strconv.Itoa(s.port)
+  } else {
+    return "虚拟控制 "+ strconv.Itoa(s.port)
+  }
 }
 
 

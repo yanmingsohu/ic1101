@@ -83,6 +83,8 @@ type Slot interface {
   // 与 BusCreator 中的 ParseSlot 对应.
   // 总线实例需要判断 '数据/控制' 类型
   String() string
+  // 返回对插槽的可读文本
+  Desc() string
   Type() SlotType
 }
 
@@ -122,6 +124,7 @@ type DataWrap interface {
   Int64()   int64
   String()  string
   Float()   float32
+  Bool()    bool
 }
 
 

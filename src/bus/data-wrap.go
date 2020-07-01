@@ -28,6 +28,11 @@ func (r *IntData) String() string {
 }
 
 
+func (r *IntData) Bool() bool {
+  return r.D != 0
+}
+
+
 type Int64Data struct {
   D int64
 }
@@ -53,6 +58,11 @@ func (r *Int64Data) String() string {
 }
 
 
+func (r *Int64Data) Bool() bool {
+  return r.D != 0
+}
+
+
 type FloatData struct {
   D float32
 }
@@ -75,6 +85,11 @@ func (r *FloatData) Float() float32 {
 
 func (r *FloatData) String() string {
   return strconv.FormatFloat(float64(r.D), 'f', 10, 32)
+}
+
+
+func (r *FloatData) Bool() bool {
+  return r.D != 0
 }
 
 
@@ -112,4 +127,19 @@ func (r *StringData) Float() float32 {
 
 func (r *StringData) String() string {
   return r.D
+}
+
+
+func (r *StringData) Bool() bool {
+  switch r.D {
+  case "on", "ON":
+    return true
+  case "off", "OFF":
+    return false
+  }
+  b, err := strconv.ParseBool(r.D)
+  if err != nil {
+    return false
+  }
+  return b
 }
