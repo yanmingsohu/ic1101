@@ -292,7 +292,7 @@ function smartTable(jdom, _convert) {
 
         header.forEach(function(h) {
           let td = $("<td>").appendTo(tr);
-          td.text(h.fm( v[h.cn] ));
+          td.html(h.fm( v[h.cn] ));
           if (h.rn) {
             v[h.rn] = v[h.cn];
           }
@@ -452,7 +452,16 @@ function popo(msg) {
   if (msg.constructor == Error) {
     conf = ['错误', msg.message, 'error'];
     if (msg.data) {
-      conf[1] += "<div class='small'>"+ JSON.stringify(msg.data) +"</div>";
+      let buf = ["<div class='small'>"];
+      if (typeof msg.data == 'string') {
+        buf.push(msg.data);
+      } else {
+        for (let n in msg.data) {
+          buf.push(n, ": ", msg.data[n], ", ");
+        }
+      }
+      buf.push("</div>");
+      conf[1] += buf.join("");
     }
   } else if (typeof msg == "string") {
     conf = ['消息', msg, 'info'];

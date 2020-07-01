@@ -396,14 +396,14 @@ func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
       "value"     : c.Value,
       "start_t"   : c.t.StartTime(),
       "inter_t"   : c.t.Duration(),
-      "state"     : "等待发送",
+      "status"    : "等待发送",
     }
   }
 
   state := i.State()
   all := bson.M{ // last_t not change
     "_id"     : r.id,
-    "state"   : state.String(),
+    "status"  : state.String(),
     "start_t" : r.main_tk.StartTime(),
     "inter_t" : r.main_tk.Duration(),
     "data"    : data,
@@ -417,7 +417,7 @@ func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
 
 
 func (r *bus_event) update_bus(c context.Context, s bus.BusState) {
-  up := bson.M{"$set" : bson.M{ "state" : s }}
+  up := bson.M{"$set" : bson.M{ "status" : s }}
   filter := bson.M{"_id": r.id}
   if _, err := r.for_bus.UpdateOne(c, filter, up); err != nil {
     log.Println("Update bus fail,", err)
@@ -436,7 +436,7 @@ func (r *bus_event) update_bstate(c context.Context, up bson.M) {
 
 func (r *bus_event) OnStopped() {
   r.update_bus(r.ctx, bus.BusStateStop)
-  r.update_bstate(r.ctx, bson.M{ "state": bus.BusStateStop.String() })
+  r.update_bstate(r.ctx, bson.M{ "status": bus.BusStateStop.String() })
 }
 
 
@@ -453,7 +453,7 @@ func (r *bus_event) OnCtrlSended(s bus.Slot, t *time.Time) {
 func (r *bus_event) OnCtrlExit(s bus.Slot) {
   key := "ctrl."+ s.String()
   up := bson.M{
-    "$set" : bson.M{ key +".state" : bus.BusStateStop.String() },
+    "$set" : bson.M{ key +".status" : bus.BusStateStop.String() },
   }
   r.update_bstate(r.ctx, up)
 }
@@ -476,9 +476,9 @@ func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
 func _wrap(t core.DevDataType, v interface{}) (bus.DataWrap, error) {
   switch t {
   case core.DDT_int:
-    return &bus.IntData{v.(int)}, nil
+    return &bus.Int64Data{v.(int64)}, nil
   case core.DDT_float:
-    return &bus.FloatData{v.(float32)}, nil
+    return &bus.Float64Data{v.(float64)}, nil
   case core.DDT_string:
     return &bus.StringData{v.(string)}, nil
   case core.DDT_sw:

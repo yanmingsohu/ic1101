@@ -93,6 +93,36 @@ func (r *FloatData) Bool() bool {
 }
 
 
+type Float64Data struct {
+  D float64
+}
+
+
+func (r *Float64Data) Int() int {
+  return int(r.D)
+}
+
+
+func (r *Float64Data) Int64() int64 {
+  return int64(r.D)
+}
+
+
+func (r *Float64Data) Float() float32 {
+  return float32(r.D)
+}
+
+
+func (r *Float64Data) String() string {
+  return strconv.FormatFloat(float64(r.D), 'f', 10, 32)
+}
+
+
+func (r *Float64Data) Bool() bool {
+  return r.D != 0
+}
+
+
 type StringData struct {
   D string
 }

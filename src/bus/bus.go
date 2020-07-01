@@ -130,7 +130,7 @@ func NewInfo(id string, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error)
     return nil, errors.New("必须提供事件监听器")
   }
   return &BusInfo{id, typ, tk, ev, BusStateStartup, 
-      nil, make([]Slot, 10), make([]ctrl_slot, 10)}, nil
+      nil, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10)}, nil
 }
 
 

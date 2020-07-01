@@ -189,7 +189,7 @@ func FindProtoDataByName(a []DevProtoData, name string) (*DevProtoData, error) {
 func (t DevDataType) Parse(s string) (interface{}, error) {
   switch t {
   case DDT_int:
-    return strconv.ParseInt(s, 10, 64)
+    return strconv.ParseInt(s, 10, 32)
   case DDT_float:
     return strconv.ParseFloat(s, 32)
   case DDT_string:
@@ -492,7 +492,7 @@ type Tick interface {
 
 Table: bus_ldata {
   _id(string) : 总线状态数据 id, 与总线 id 一致
-  state       : 运行状态可读字符串 *
+  status      : 运行状态可读字符串 *
   
   last_t      : 最后采集数据时间 **
   start_t     : 首次采集时间
@@ -520,7 +520,7 @@ Table: bus_ldata {
       value : 初始化发送数据, 之后不变
       count : 计数器 **
 
-      state   : 运行状态可读字符串 *
+      status  : 运行状态可读字符串 *
       last_t  : 最后一次发送时间 **
       start_t : 首次发送时间
       inter_t : 发送间隔时间
