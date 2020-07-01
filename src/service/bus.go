@@ -6,9 +6,11 @@ import (
 	"ic1101/brick"
 	"ic1101/src/bus"
 	"ic1101/src/core"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -27,9 +29,11 @@ func installBusService(b *brick.Brick) {
   aserv(b, ctx, "bus_slot_update",  bus_slot_update)
   aserv(b, ctx, "bus_slot_delete",  bus_slot_delete)
 
-  dserv(b, ctx, "bus_types",  bus_types)
-  aserv(b, ctx, "bus_stop",   bus_stop)
-  aserv(b, ctx, "bus_start",  bus_start)
+  dserv(b, ctx, "bus_types", bus_types)
+
+  aserv(b, ctx, "bus_stop",       bus_stop)
+  aserv(b, ctx, "bus_start",      bus_start)
+  aserv(b, ctx, "bus_last_data",  bus_last_data)
 }
 
 
@@ -240,8 +244,10 @@ func bus_slot_delete(h *Ht) interface{} {
 }
 
 
-func GetBus(id string, ctx context.Context, ret interface{}) error {
-  return mg.GetOne(core.TableBus, ctx, id, ret)
+func bus_last_data(h *Ht) interface{} {
+  id := checkstring("总线ID", h.Get("id"), 2, 20)
+  c  := Crud{h, core.TableBusData, "总线实时数据"}
+  return c.Read(id)
 }
 
 
@@ -271,33 +277,219 @@ func bus_start(h *Ht) interface{} {
   }
 
   event := &bus_event{}
+  event.init(id, tk, h)
   info, err := bus.NewInfo(findbus.Id, findbus.Type, tk, event)
   if err != nil {
     return err
   }
+
+  sp , err := bus.GetSlotParser(findbus.Type)
+  if err != nil {
+    return err
+  }
+
+  for _, d := range findbus.Datas {
+    ds, err := sp.ParseSlot(d.SlotID)
+    if err != nil {
+      return err
+    }
+    if err := info.AddData(ds); err != nil {
+      return err
+    }
+    event.push_data(d, ds)
+  }
+
+  for _, c := range findbus.Ctrls {
+    cs, err := sp.ParseSlot(c.SlotID)
+    if err != nil {
+      return err
+    }
+    w , err := _wrap(c.Type, c.Value)
+    if err != nil {
+      return err
+    }
+    ctk, err := CreateSchedule(c.Timer)
+    if err != nil {
+      return err
+    }
+    if err := info.AddCtrl(cs, ctk, w); err != nil {
+      return err
+    }
+    event.push_ctrl(c, cs, ctk)
+  }
+
   err = bus.StartBus(info)
   if err != nil {
     return err
   }
+  event.update(info, h)
   return HttpRet{0, "总线已启动", nil}
 }
 
 
-type bus_event struct {
+type w_data_slot struct {
+  core.BusSlot
+  s bus.Slot
 }
 
 
-func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
+type w_ctrl_slot struct {
+  core.BusCtrl
+  s bus.Slot
+  t core.Tick
+}
+
+
+type bus_event struct {
+  id        string
+  datas     map[string]*w_data_slot
+  ctrls     map[string]*w_ctrl_slot
+  main_tk   core.Tick
+  coll      *mongo.Collection
+  for_bus   *mongo.Collection
+  ctx       context.Context
+}
+
+
+func (r *bus_event) init(id string, tk core.Tick, h *Ht) {
+  r.id = id
+  r.datas = make(map[string]*w_data_slot)
+  r.ctrls = make(map[string]*w_ctrl_slot)
+  r.main_tk = tk
+  r.coll = mg.Collection(core.TableBusData)
+  r.for_bus = h.Table()
+  r.ctx = context.Background()
+}
+
+
+func (r *bus_event) push_data(d core.BusSlot, s bus.Slot) {
+  r.datas[d.SlotID] = &w_data_slot{d, s}
+}
+
+
+func (r *bus_event) push_ctrl(c core.BusCtrl, s bus.Slot, t core.Tick) {
+  r.ctrls[c.SlotID] = &w_ctrl_slot{c, s, t}
+}
+
+
+func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
+  data := bson.M{}
+  for _, d := range r.datas {
+    data[d.SlotID] = bson.M{ // value/count not change
+      "slot_id"   : d.SlotID,
+      "slot_desc" : d.SlotDesc,
+      "dev_id"    : d.Dev,
+      "data_name" : d.Name,
+      "data_type" : d.Type.String(),
+    }
+  }
+
+  ctrl := bson.M{}
+  for _, c := range r.ctrls { // count/last_t not change
+    ctrl[c.SlotID] = bson.M{
+      "slot_id"   : c.SlotID,
+      "slot_desc" : c.SlotDesc,
+      "dev_id"    : c.Dev,
+      "data_name" : c.Name,
+      "data_type" : c.Type.String(),
+
+      "value"     : c.Value,
+      "start_t"   : c.t.StartTime(),
+      "inter_t"   : c.t.Duration(),
+      "state"     : "等待发送",
+    }
+  }
+
+  state := i.State()
+  all := bson.M{ // last_t not change
+    "_id"     : r.id,
+    "state"   : state.String(),
+    "start_t" : r.main_tk.StartTime(),
+    "inter_t" : r.main_tk.Duration(),
+    "data"    : data,
+    "ctrl"    : ctrl,
+  }
+
+  up := bson.M{ "$set" : all }
+  r.update_bstate(h.Ctx(), up)
+  r.update_bus(h.Ctx(), state)
+}
+
+
+func (r *bus_event) update_bus(c context.Context, s bus.BusState) {
+  up := bson.M{"$set" : bson.M{ "state" : s }}
+  filter := bson.M{"_id": r.id}
+  if _, err := r.for_bus.UpdateOne(c, filter, up); err != nil {
+    log.Println("Update bus fail,", err)
+  }
+}
+
+
+func (r *bus_event) update_bstate(c context.Context, up bson.M) {
+  filter := bson.M{"_id": r.id}
+  opt := options.Update().SetUpsert(true)
+  if _, err := r.coll.UpdateOne(c, filter, up, opt); err != nil {
+    log.Println("Update bus-state fail,", err)
+  }
 }
 
 
 func (r *bus_event) OnStopped() {
+  r.update_bus(r.ctx, bus.BusStateStop)
+  r.update_bstate(r.ctx, bson.M{ "state": bus.BusStateStop.String() })
 }
 
 
 func (r *bus_event) OnCtrlSended(s bus.Slot, t *time.Time) {
+  key := "ctrl."+ s.String()
+  up := bson.M{
+    "$inc" : bson.M{ key +".count": 1 },
+    "$set" : bson.M{ key +".last_t" : t },
+  }
+  r.update_bstate(r.ctx, up)
 }
 
 
 func (r *bus_event) OnCtrlExit(s bus.Slot) {
+  key := "ctrl."+ s.String()
+  up := bson.M{
+    "$set" : bson.M{ key +".state" : bus.BusStateStop.String() },
+  }
+  r.update_bstate(r.ctx, up)
+}
+
+
+func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
+  key := "data."+ s.String()
+  up := bson.M{
+    "$inc" : bson.M{ key +".count": 1 },
+    "$set" : bson.M{ 
+      "last_t" : t,
+      key +".value" : d.String(),
+    },
+  }
+  r.update_bstate(r.ctx, up)
+  //TODO: 发送数据到设备数据表
+}
+
+
+func _wrap(t core.DevDataType, v interface{}) (bus.DataWrap, error) {
+  switch t {
+  case core.DDT_int:
+    return &bus.IntData{v.(int)}, nil
+  case core.DDT_float:
+    return &bus.FloatData{v.(float32)}, nil
+  case core.DDT_string:
+    return &bus.StringData{v.(string)}, nil
+  case core.DDT_sw:
+    return &bus.BoolData{v.(bool)}, nil
+  case core.DDT_virtual:
+    return &bus.StringData{v.(string)}, nil
+  }
+  return nil, errors.New("无效的类型")
+}
+
+
+func GetBus(id string, ctx context.Context, ret interface{}) error {
+  return mg.GetOne(core.TableBus, ctx, id, ret)
 }

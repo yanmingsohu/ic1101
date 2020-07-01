@@ -143,3 +143,45 @@ func (r *StringData) Bool() bool {
   }
   return b
 }
+
+
+type BoolData struct {
+  D bool
+}
+
+
+func (r *BoolData) Int() int {
+  if r.D {
+    return 1
+  }
+  return 0
+}
+
+
+func (r *BoolData) Int64() int64 {
+  if r.D {
+    return 1
+  }
+  return 0
+}
+
+
+func (r *BoolData) Float() float32 {
+  if r.D {
+    return 1
+  }
+  return 0
+}
+
+
+func (r *BoolData) String() string {
+  if r.D {
+    return "true"
+  }
+  return "false"
+}
+
+
+func (r *BoolData) Bool() bool {
+  return r.D 
+}

@@ -118,6 +118,16 @@ jQuery(function($) {
     });
   });
 
+  start.click(function() {
+    let d = table.data('select_row');
+    ic.get("bus_start", {id: d.id}, on_task_back);
+  });
+
+  stop.click(function() {
+    let d = table.data('select_row');
+    ic.get("bus_stop", {id: d.id}, on_task_back);
+  });
+
   ic.get("bus_types", null, function(err, ret) {
     if (err) {
       return ic.popo(err);
@@ -146,6 +156,14 @@ jQuery(function($) {
         });
       },
     });
+  }
+
+  function on_task_back(err, ret) {
+    if (err) return ic.popo(err);
+    ic.popo(ret.msg);
+    setTimeout(function() {
+      table.refreshData();
+    }, 1e3);
   }
 
   function types_conv(s) {

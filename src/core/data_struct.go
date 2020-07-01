@@ -202,6 +202,14 @@ func (t DevDataType) Parse(s string) (interface{}, error) {
   return nil, errors.New("无效的类型")
 }
 
+func (t DevDataType) String() string {
+  return DDT__map[t]
+}
+
+func (t DevAttrType) String() string {
+  return DAT__map[t]
+}
+
 
 /*
 Table: device {
@@ -368,7 +376,7 @@ Table: bus {
   cd(time)       : 创建时间
   md(time)       : 修改时间
   type           : 总线类型(不可改)
-  status         : 状态
+  status(int)    : 状态
 
   data_slot : {
     "slot_id" : { 
@@ -470,4 +478,57 @@ type Tick interface {
   // 终止任务, onStop 会被调用
   Stop()
   IsRunning() bool
+  // 返回间隔时间
+  Duration() time.Duration
+  // 返回首次启动时间, 该方法必须在启动后调用, 否则返回 nil
+  StartTime() *time.Time
 }
+
+
+/*
+总线最后状态表, 实时变更
+  * 在启动/退出时改变
+  ** 每次数据改变
+
+Table: bus_ldata {
+  _id(string) : 总线状态数据 id, 与总线 id 一致
+  state       : 运行状态可读字符串 *
+  
+  last_t      : 最后采集数据时间 **
+  start_t     : 首次采集时间
+  inter_t     : 采集时间间隔
+
+  data : {
+    'slot_id' : {
+      slot_id
+      slot_desc
+      dev_id 
+      data_name
+      data_type : 类型可读字符串
+      value : 最新数据 **
+      count : 计数器 **
+    }
+  }
+
+  ctrl : {
+    'slot_id' : {
+      slot_id
+      slot_desc
+      dev_id 
+      data_name
+      data_type : 类型可读字符串
+      value : 初始化发送数据, 之后不变
+      count : 计数器 **
+
+      state   : 运行状态可读字符串 *
+      last_t  : 最后一次发送时间 **
+      start_t : 首次发送时间
+      inter_t : 发送间隔时间
+    }
+  }
+*/
+type BusLastData struct {
+  Id string `bson:"_id"`
+}
+
+const TableBusData = "bus_ldata"

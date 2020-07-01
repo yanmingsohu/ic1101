@@ -212,6 +212,16 @@ func (t *_Tick) String() string {
 }
 
 
+func (t *_Tick) Duration() time.Duration {
+  return t.d.Duration
+}
+
+
+func (t *_Tick) StartTime() *time.Time {
+  return t.BeginAt
+}
+
+
 //
 // 保证 then 在 n 的时间之后, 依次增加 秒/分/时 等, 并返回时间
 //

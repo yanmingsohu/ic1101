@@ -118,7 +118,7 @@ func NewInfo(id string, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error)
     return nil, errors.New("id 不能为空")
   }
   if !HasTypeName(typ) {
-    return nil, errors.New("无效的总线类型")
+    return nil, errors.New("无效的总线类型 "+ typ)
   }
   if tk == nil {
     return nil, errors.New("必须提供定时器")
@@ -219,7 +219,7 @@ func (i *BusInfo) _ctrl_thread(c *ctrl_slot) {
 }
 
 
-func (i *BusInfo) state() BusState {
+func (i *BusInfo) State() BusState {
   return i.st
 }
 
@@ -297,7 +297,7 @@ func GetBusState(id string) BusState {
   defer busMutex.RUnlock()
 
   if info, has := busInstance[id]; has {
-    return info.state()
+    return info.State()
   }
   return BusStateStop
 }
