@@ -163,7 +163,11 @@ function ajaxform(jdom) {
 
   function gotError(err) {
     setErrorFlag(true);
-    msg.text(err.message);
+    if (msg.length) {
+      msg.text(err.message);
+    } else {
+      popo(err);
+    }
     jdom.trigger("error", err);
   }
 }
@@ -205,7 +209,9 @@ function smartTable(jdom, _convert) {
   jdom.refreshData = refresh_data;
   jdom.selectNone = selectNone;
 
-  if (!api) return _error(new Error("缺少 api 属性"));
+  if (!api) {
+    return _error(new Error("缺少 api 属性"));
+  }
 
   let no_format = function(d) { return d; };
 
@@ -259,6 +265,7 @@ function smartTable(jdom, _convert) {
   function _error(err) {
     popo(err);
     jdom.trigger('error', err);
+    console.error(jdom, err);
   }
 
   function _get_array_data(d) {
@@ -369,7 +376,7 @@ function get_template(selector) {
 // <button api='删除接口' ...
 // jdel 必须绑定数据 .data('id', ...) 该参数直接递交到接口
 // .data('parm', ...) 递交的扩展参数
-// .data('what', ...) 提示用户要删除什么, 默认为 id
+// .data('what', ...) 提示用户要删除什么的消息字符串, 默认提示为 id
 // 事件:
 //  delete_success(event) : 删除成功
 //  error(event, err)     : 删除时发生错误
@@ -397,7 +404,13 @@ function deleteButton(jdel) {
             return popo(err);
           }
           jdel.trigger("delete_success");
-          popo(id +" 数据被删除");
+          if (ret.msg) {
+            let txt = ret.msg;
+            if (ret.data) txt += "<br/>"+ ret.data;
+            popo(txt);
+          } else {
+            popo(id +" 数据被删除");
+          }
         });
       });
   });
@@ -416,7 +429,8 @@ function popo(msg) {
   let mouseon;
   let offset = body.data('popo_offset');
 
-  content_frame.append(t);
+  // content_frame.append(t); // 子页面会遮挡弹出消息
+  body.append(t);
   body.on("popo_message_removed", on_other_removed);
 
   setTimeout(_show, 10);
@@ -707,7 +721,8 @@ function initDictSelect(jselect) {
 //              返回 null 则没有更多数据
 //
 // 接口应接受 page 参数用于翻页, text 用于全文检索
-// 用 trigger('change', value) 触发默认选项的加载
+// 用 trigger('change', value) 触发默认选项的加载, 
+// 一旦数据加载完成, 触发 change_over(event, data) 事件
 //
 function select2fromApi(jselect, data_convert) {
   const api = jselect.attr('api');
@@ -773,7 +788,8 @@ function select2fromApi(jselect, data_convert) {
 
       jselect.html('');
       var opt = new Option(row.text, row.id, true, true);
-      jselect.append(opt).trigger('change');
+      jselect.append(opt);
+      jselect.trigger("change_over", row);
     });
   }
 }
@@ -789,7 +805,7 @@ function buildSelectOpt(jselect, map, value) {
     opt.text(map[k]);
     jselect.append(opt);
   }
-  if (value) jselect.val(value);
+  if (value) jselect.val(value).trigger("change");
   return jselect;
 }
 

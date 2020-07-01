@@ -78,3 +78,17 @@ func (mg *Mongo) HasOne(collName string, id string) bool {
   defer cur.Close(ctx)
   return cur.Next(ctx)
 }
+
+
+func (mg *Mongo) GetOne(collName string, ctx context.Context, 
+    id string, ret interface{}) error {
+      
+  res := mg.Collection(collName).FindOne(ctx, bson.M{ "_id": id })
+  if res.Err() != nil {
+    res.Err()
+  }
+  if err := res.Decode(ret); err != nil {
+    return err
+  }
+  return nil
+}

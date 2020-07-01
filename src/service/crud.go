@@ -84,12 +84,17 @@ func (c* Crud) List(set_options func(*options.FindOptions)) error {
 //
 func (c *Crud) Delete(id string) error {
   table := mg.Collection(c.collname)
-  _, err := table.DeleteOne(c.h.Ctx(), bson.D{{"_id", id}})
+  res, err := table.DeleteOne(c.h.Ctx(), bson.D{{"_id", id}})
+  
   if err != nil {
     c.h.Json(HttpRet{1, c.info +"删除错误", err.Error()})
-  } else {
-    c.h.Json(HttpRet{0, c.info +"已删除", id})
   }
+  if res.DeletedCount < 1 {
+    c.h.Json(HttpRet{1, c.info +"数据不存在", nil})
+    return nil
+  }
+
+  c.h.Json(HttpRet{0, c.info +"已删除", id})
   return nil
 }
 
@@ -104,6 +109,11 @@ func (c *Crud) Update(id string, data interface{}, opts ...*options.UpdateOption
   res, err := table.UpdateOne(c.h.Ctx(), filter, data, opts...)
   if err != nil {
     c.h.Json(HttpRet{1, c.info +"更新错误", err.Error()})
+    return nil
+  }
+
+  if res.MatchedCount < 1 {
+    c.h.Json(HttpRet{1, c.info +"数据不存在", nil})
     return nil
   }
 

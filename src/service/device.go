@@ -31,8 +31,7 @@ func dev_count(h *Ht) interface{} {
 
 func dev_list(h *Ht) interface{} {
   return h.Crud().List(func(opt *options.FindOptions) {
-    opt.SetProjection(bson.M{
-      "desc":1, "tid":1, "changeid":1, "md":1, "cd":1, "dd":1, "dc":1 })
+    opt.SetProjection(bson.M{ "attrs":0 })
   }) 
 }
 

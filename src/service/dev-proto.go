@@ -26,8 +26,8 @@ func installDevProtoService(b *brick.Brick) {
   aserv(b, ctx, "dev_proto_delete",       dev_proto_delete)
   aserv(b, ctx, "dev_proto_read",         dev_proto_read)
 
-  aserv(b, ctx, "dev_proto_attr_types",   dev_proto_attr_types)
-  aserv(b, ctx, "dev_proto_data_types",   dev_proto_data_types)
+  dserv(b, ctx, "dev_proto_attr_types",   dev_proto_attr_types)
+  dserv(b, ctx, "dev_proto_data_types",   dev_proto_data_types)
 
   aserv(b, ctx, "dev_proto_attr_list",    dev_proto_attr_list)
   aserv(b, ctx, "dev_proto_attr_update",  dev_proto_attr_update)
@@ -213,7 +213,7 @@ func dev_proto_data_update(h *Ht) interface{} {
 
   up := bson.M{ 
     "$set" : bson.M{ "md" : time.Now() },
-    "$inc" : bson.M{"changeid" : 1},
+    "$inc" : bson.M{ "changeid" : 1 },
   }
 
   return h.Crud().UpdateInnerArray(id, "datas", "name", fields, up)

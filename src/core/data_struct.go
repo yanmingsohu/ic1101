@@ -1,7 +1,9 @@
 package core
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -169,6 +171,37 @@ var DAT__map = map[DevAttrType]string {
   DAT_date      : "日期",
 }
 
+//
+// 在列表中寻找匹配的数据名称并返回该对象
+//
+func FindProtoDataByName(a []DevProtoData, name string) (*DevProtoData, error) {
+  for _, d := range a {
+    if d.Name == name {
+      return &d, nil
+    }
+  }
+  return nil, errors.New("在原型中找不到数据/控制槽: "+ name)
+}
+
+//
+// 按数据类型转换数据并返回
+//
+func (t DevDataType) Parse(s string) (interface{}, error) {
+  switch t {
+  case DDT_int:
+    return strconv.ParseInt(s, 10, 64)
+  case DDT_float:
+    return strconv.ParseFloat(s, 32)
+  case DDT_string:
+    return s, nil
+  case DDT_sw:
+    return strconv.ParseBool(s)
+  case DDT_virtual:
+    return s, nil
+  }
+  return nil, errors.New("无效的类型")
+}
+
 
 /*
 Table: device {
@@ -188,7 +221,8 @@ Table: device {
 }
 */
 type Device struct {
-  Id string `bson:"_id"`
+  Id      string `bson:"_id"`
+  ProtoId string `bson:"tid"`
 }
 
 const TableDevice = "device"
@@ -337,14 +371,27 @@ Table: bus {
   status         : 状态
 
   data_slot : {
-    "slot_id" : 数据槽配置, 复制自 'dev-proto.datas' { 
-      dev_id, data_name, data_type,
+    "slot_id" : { 
+      slot_id,
+      slot_desc
+      dev_id, 
+      data_name, 
+      data_type,
+      data_desc,
     }
   }
 
   ctrl_slot : {
-    "slot_id" : 复制自 'dev-proto.ctrls' {
-      dev_id, data_name, data_type,
+    "slot_id" : {
+      slot_id,
+      slot_desc
+      dev_id, 
+      data_name, 
+      data_type,
+      data_desc,
+
+      timer : 控制定时器, 定时发数
+      value : 发送的数据
     }
   }
 }
@@ -355,13 +402,25 @@ type Bus struct {
   Timer   string             `bson:"timer"`
   Type    string             `bson:"type"`
   Datas   map[string]BusSlot `bson:"data_slot"`
-  Ctrls   map[string]BusSlot `bson:"ctrl_slot"`
+  Ctrls   map[string]BusCtrl `bson:"ctrl_slot"`
 }
 
 type BusSlot struct {
-  Dev     string      `bson:"dev_id"`
-  Name    string      `bson:"data_name"`
-  Type    DevDataType `bson:"data_type"`
+  SlotID    string      `bson:"slot_id"   json:"slot_id"`
+  SlotDesc  string      `bson:"slot_desc" json:"slot_desc"`
+  Dev       string      `bson:"dev_id"    json:"dev_id"`
+  Name      string      `bson:"data_name" json:"data_name"`
+  Type      DevDataType `bson:"data_type" json:"data_type"`
+}
+
+type BusCtrl struct {
+  SlotID    string      `bson:"slot_id"   json:"slot_id"`
+  SlotDesc  string      `bson:"slot_desc" json:"slot_desc"`
+  Dev       string      `bson:"dev_id"    json:"dev_id"`
+  Name      string      `bson:"data_name" json:"data_name"`
+  Type      DevDataType `bson:"data_type" json:"data_type"`
+  Timer     string      `bson:"timer"     json:"timer"`
+  Value     interface{} `bson:"value"     json:"value"`
 }
 
 const TableBus = "bus"

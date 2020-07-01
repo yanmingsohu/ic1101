@@ -1,5 +1,10 @@
 <div id='bus_configuration_frame'>
   <h2>配置总线</h2><hr/>
+  <script>
+    // 协议配置/初始化函数需要挂接到这里
+    // 格式 busConf[TYPE] = {data:function(jroot), ctrl:function(jroot)}
+    window.busConf = {}
+  </script>
 
   <form class="pure-form pure-form-stacked" 
         id='update_bus' action='bus_update'>
@@ -12,7 +17,7 @@
           <input type="text" name='id' class="pure-u-23-24" readonly/>
         </div>
 
-        <div class="pure-u-1 pure-u-md-1-3">
+        <div class="pure-u-1 pure-u-md-1-2">
           <label>说明</label>
           <input type="text" name='desc' class="pure-u-23-24"/>
         </div>
@@ -28,51 +33,321 @@
           <input type="text" name='typeName' class="pure-u-23-24" readonly/>
           <input type="hidden" name='type' class="pure-u-23-24" readonly/>
         </div>
-      </div>
 
-      <h3>总线与设备关联</h3><hr/>
-      <div class="pure-g">
-        <div class="pure-u-1 pure-u-md-3-5">
-          <legend class='not-full'>数据槽</legend>
-          <table class="pure-table" id='bus_slot_table' form='#update_bus'
-                api='bus_slot_list' pageinfo=''>
-            <thead>
-              <th cn=''>总线端口</th> 
-              <th cn=''>端口说明</th>
-              <th cn=''>设备</th>
-              <th cn=''>设备槽</th>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="pure-u-1 pure-u-md-1-3">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">更新</button>
+          </div>
+          <span class='ajax-message error-message'></span>
         </div>
-
-        <div class="pure-u-1 pure-u-md-2-5 bus_config_with_type">
-
-        </div>
-      </div>
-
-      <div class="pure-u-1 pure-u-md-1-3">
-        <label>操作</label>
-        <div class="pure-button-group" role="group">
-          <button type="submit" 
-            class="pure-button button-primary">更新</button>
-        </div>
-        <span class='ajax-message error-message'></span>
       </div>
     </fieldset>
   </form>
+
+  <h3>总线与设备关联</h3><hr/>
+  <div class="pure-g slot_data_config">
+    <div class="pure-u-1 pure-u-md-3-5 pure-form">
+      <legend class='not-full'>数据槽列表</legend>
+      <table class="pure-table" id='bus_slot_table' 
+            form='#update_bus_data_slot'
+            api='bus_slot_list' pageinfo=''>
+        <thead>
+          <th cn='slot_id'>总线端口</th> 
+          <th cn='slot_desc'>端口说明</th>
+          <th cn='dev_id'>设备</th>
+          <th cn='data_name'>数据名</th>
+          <th cn='data_type' format="format.datatype">数据类型</th>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-2-5">
+      <form class="pure-form pure-form-stacked" 
+            id='update_bus_data_slot' action='bus_slot_update'>
+        <input type='hidden' name='id'/>
+        <input type='hidden' name='isdata' value='1'/>
+        <fieldset>
+          <legend>关联设备</legend>
+          <div class="pure-g">
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>设备ID</label>
+              <select name='dev_id' 
+                class="pure-u-23-24" api='dev_list'></select>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>设备数据名</label>
+              <select name='data_name' 
+                class="pure-u-23-24" api='dev_proto_data_list'></select>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>关联总线</legend>
+          <div class="pure-g bus_config_with_type"></div>
+        </fieldset>
+        <fieldset>
+          <legend class='not-full'>操作</legend>
+          <div class="pure-button-group" role="group">
+            <button type="submit" api='bus_slot_create'
+                  class="pure-button button-secondary">更新槽</button>
+            <button type="reset"
+                  class="pure-button button-secondary">清除</button>
+            <button type="button" api='bus_slot_delete'
+                  class="pure-button button-warning delete_slot">删除</button>
+            <span class='ajax-message error-message pure-u-1'></span>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+<hr/><!-- &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& -->
+
+  <div class="pure-g slot_ctrl_config">
+    <div class="pure-u-1 pure-u-md-3-5 pure-form">
+      <legend class='not-full'>控制槽列表</legend>
+      <table class="pure-table" id='bus_slot_table' 
+            form='#update_bus_ctrl_slot'
+            api='bus_slot_list' pageinfo=''>
+        <thead>
+          <th cn='slot_id'>总线端口</th> 
+          <th cn='slot_desc'>端口说明</th>
+          <th cn='dev_id'>设备</th>
+          <th cn='data_name'>控制名</th>
+          <th cn='timer'>定时器</th>
+          <th cn='value'>发送参数</th>
+          <th cn='data_type' format="format.datatype">参数类型</th>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-2-5">
+      <form class="pure-form pure-form-stacked" 
+            id='update_bus_ctrl_slot' action='bus_slot_update'>
+        <input type='hidden' name='id'/>
+        <input type='hidden' name='isdata' value='0'/>
+        <fieldset>
+          <legend>关联设备</legend>
+          <div class="pure-g">
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>设备ID</label>
+              <select name='dev_id' 
+                class="pure-u-23-24" api='dev_list'></select>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>设备控制名</label>
+              <select name='data_name' 
+                class="pure-u-23-24" api='dev_proto_ctrl_list'></select>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>定时器</label>
+              <select name='ctrl_timer' 
+                class="pure-u-23-24" api='timer_list'></select>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-1-2">
+              <label>控制参数 <b class='show_datatype' style='font-size:10px;'></b></label>
+              <input type="text" name='value' class="pure-u-23-24"/>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>关联总线</legend>
+          <div class="pure-g bus_config_with_type"></div>
+        </fieldset>
+        <fieldset>
+          <legend class='not-full'>操作</legend>
+          <div class="pure-button-group" role="group">
+            <button type="submit" api='bus_slot_create'
+                  class="pure-button button-secondary">更新槽</button>
+            <button type="reset"
+                  class="pure-button button-secondary">清除</button>
+            <button type="button" api='bus_slot_delete'
+                  class="pure-button button-warning delete_slot">删除</button>
+            <span class='ajax-message error-message pure-u-1'></span>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <!-- 各个总线类型的配置子画面模板, 模板中必须有 name='slot_id' 的表单 -->
+
+  <div class='html_template pure-u-1 pure-u-md-2-3' type='random'>
+    <select class="pure-u-23-24" name='slot_id'></select>
+    <script>
+      busConf['random'] = {
+        build(jroot, vp, tp) {
+          let sel = jroot.find("select");
+          for (let i=0; i<10; ++i) {
+            let opt = $("<option>").val(vp + i).text(tp + i);
+            sel.append(opt);
+          }
+        },
+        initData(jroot) {
+          this.build(jroot, "D#", "虚拟数据");
+        },
+        initCtrl(jroot) {
+          this.build(jroot, "C#", "虚拟控制");
+        },
+        setVal(jroot, v) {
+          jroot.find('select').val(v);
+        },
+      }
+    </script>
+  </div>
 
 <script>
 jQuery(function($) {
   const root = $("#bus_configuration_frame");
   const timer = root.find("[name=timer]");
   const update = root.find("#update_bus");
-  const conf_page = root.find(".bus_config_with_type");
   const type = root.find("[name=type]").val();
+  const id = root.find("[name=id]").val();
+  const conf_funcs = busConf[type];
+  let data_types = {};
 
   ic.select2fromApi(timer);
   root.trigger('load_form_var');
   ic.ajaxform(update);
+
+  if (!conf_funcs) {
+    ic.popo("页面初始化失败, 没有类型配置函数 "+ type);
+    return;
+  }
+
+  ic.get("dev_proto_data_types", null, function(err, ret) {
+    if (err) return ic.popo(err);
+    data_types = ret.data;
+    init_slot_config(root.find(".slot_data_config"));
+    init_slot_config(root.find(".slot_ctrl_config"));
+  });
+
+
+  function format_data_type(d) {
+    return data_types[d] || d;
+  }
+
+  function init_slot_config(slotroot) {
+    const table = slotroot.find("table");
+    const create = slotroot.find("form");
+    const del = slotroot.find(".delete_slot");
+    const dev_list = slotroot.find("[name=dev_id]");
+    const data_name_list = slotroot.find("[name=data_name]");
+    const isdata = parseInt( slotroot.find("[name=isdata]").val() );
+    const conf_root = ic.getTemplate(".html_template[type='"+ type +"']");
+    const show_type = slotroot.find(".show_datatype");
+    const timer_list = slotroot.find("[name=ctrl_timer]");
+    const data_val = slotroot.find("[name=value]");
+    let data_type_mapping = {};
+    let data_name;
+
+    const conf_bus = slotroot.find(".bus_config_with_type");
+    conf_bus.append(conf_root);
+    if (isdata) {
+      conf_funcs.initData(conf_root);
+    } else {
+      conf_funcs.initCtrl(conf_root);
+    }
+
+    table.on("select_row", on_table_select);
+    table.data("format.datatype", format_data_type);
+    dev_list.on("change", on_dev_list_changed);
+    dev_list.on("change_over", on_dev_list_change_over);
+    data_name_list.change(on_change_dataname_list);
+    ic.select2fromApi(dev_list);
+
+    ic.commandCrudPage({
+      create,
+      table,
+      delete : del,
+
+      edit : $("<b>"),
+      edit_page : '',
+      table_convert,
+      copy_edit(data, target) {},
+    });
+
+    if (timer_list.length) {
+      ic.select2fromApi(timer_list);
+    }
+
+
+    function on_dev_list_changed() {
+      let dat = dev_list.select2("data")
+      let tid = dat && dat[0] && dat && dat[0].tid;
+      if (tid) {
+        update_data_names(tid);
+      }
+    }
+
+
+    function on_dev_list_change_over(_, row) {
+      update_data_names(row.tid, data_name);
+    }
+
+
+    function on_table_select(_, v) {
+      del.data("id", id);
+      del.data("parm", {'slot_id': v.slot_id, 'isdata': isdata});
+      del.data("what", v.slot_desc +' ('+ v.slot_id +")");
+      data_name = v.data_name;
+      dev_list.trigger('change', v.dev_id);
+      timer_list.trigger('change', v.timer);
+      data_val.val(v.value);
+      conf_funcs.setVal(conf_root, v.slot_id);
+    }
+
+
+    function table_convert(ret) {
+      if (ret.data) {
+        let arr = [];
+        for (let n in ret.data) {
+          arr.push(ret.data[n]);
+        }
+        arr.sort(function(a, b) {
+          if (a > b) return 1;
+          if (a < b) return -1;
+          return 0;
+        });
+        return arr;
+      }
+    }
+
+
+    function update_data_names(protoId, selectdOpt) {
+      data_name_list.html("");
+      let api = data_name_list.attr("api");
+      data_type_mapping = {};
+
+      ic.get(api, {"id": protoId}, function(err, ret) {
+        if (err) return ic.popo(err);
+        let map = {};
+        let list = isdata ? ret.data.datas : ret.data.ctrls;
+
+        list.forEach(function(d) {
+          let txt = d.name;
+          if (d.desc) txt += ' - '+ d.desc;
+          map[d.name] = txt;
+          data_type_mapping[d.name] = d.type;
+        });
+        ic.buildSelectOpt(data_name_list, map, selectdOpt);
+      });
+    }
+
+
+    function on_change_dataname_list() {
+      let name = data_name_list.val();
+      show_type.text(format_data_type( data_type_mapping[name] ));
+    }
+  }
 });
 </script>
 </div>
