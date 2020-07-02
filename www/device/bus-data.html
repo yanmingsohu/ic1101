@@ -27,21 +27,24 @@
 .data_table .header {
   height: 50px;
 }
+.data_table [k=slot_desc] {
+  font-weight: bold;
+}
 </style>
 
   <table class='data_table'>
     <tbody>
       <tr><th>总线ID</th><td k='_id'></td>
-          <th>状态</th><td k='status'></td>
-          <td colspan='7'></td></tr>
+          <th>状态</th><td k='status' colspan='3'></td>
+          <td colspan='5'></td></tr>
 
       <tr><th>首次采集时间</th><td k='start_t' conv='time'></td>
-          <th>采集间隔</th><td k='inter_t' conv='duration'></td>
-          <td colspan='7'></td></tr>
+          <th>采集间隔</th><td k='inter_t' conv='duration' colspan='3'></td>
+          <td colspan='5'></td></tr>
 
       <tr><th>最后采集时间</th><td k='last_t' conv='time'></td>
-          <th>页面刷新时间</th><td k='page_t'></td>
-          <td colspan='7'></td></tr>
+          <th>页面刷新时间</th><td k='page_t' colspan='3'></td>
+          <td colspan='5'></td></tr>
     </tbody>
 
     <tbody>

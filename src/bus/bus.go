@@ -341,7 +341,7 @@ func GetBus(id string) (*BusInfo, error) {
   if info, has := busInstance[id]; has {
     return info, nil
   }
-  return nil, errors.New(id +" 引用的总线不存在")
+  return nil, errors.New(id +" 引用的总线没有运行")
 }
 
 

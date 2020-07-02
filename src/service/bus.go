@@ -322,13 +322,12 @@ func bus_last_data(h *Ht) interface{} {
   c  := Crud{h, core.TableBusData, "总线实时数据"}
   ret, err := c.DRead(id)
   if err != nil {
-    return err
+    return HttpRet{3, "没有总线实时数据", err.Error()}
   }
   b , err := bus.GetBus(id)
-  if err != nil {
-    return err
+  if err == nil {
+    ret["logs"] = b.GetLog()
   }
-  ret["logs"] = b.GetLog()
   return HttpRet{0, c.info, ret}
 }
 
