@@ -14,6 +14,7 @@ func main() {
 	conf_file := "ic1101.yaml"
 	conf := core.Config{}
 
+	core.SetupLogger()
 	core.DefaultConfig(&conf)
 	err := core.ReadConfig(&conf, conf_file)
 

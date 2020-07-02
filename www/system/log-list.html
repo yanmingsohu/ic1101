@@ -1,0 +1,75 @@
+<div id='log_list_frame'>
+  <h2>日志</h2><hr/>
+
+  <div class="pure-g">
+    <div class="pure-u-21-24">
+      <table class="pure-table" id='log_table' form=''
+            api='log_file_list'>
+        <thead>
+          <th cn='name'>日志名</th> 
+          <th cn='size' format='format.size'>文件大小</th>
+          <th cn='time' format='date'>最后更新时间</th>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="pure-u-3-24">
+      <button type="button" id='open_log' style='position: fixed;'
+              class="pure-button button-secondary">打开日志</button>
+    </div>
+  </div>
+
+<script>
+jQuery(function($) {
+  const root = $("#log_list_frame");
+  const table = root.find("#log_table");
+  const open = root.find("#open_log");
+  let row = {};
+
+  table.data("format.size", formatSize);
+  ic.smartTable(table, function(r) {
+    r.data.sort(function(a, b) {
+      if (a.time > b.time) return -1;
+      if (a.time < b.time) return 1;
+      return 0;
+    });
+    return r.data;
+  });
+
+  table.on('select_row', function(_, d) {
+    row = d;
+    open.prop("disabled", false);
+  });
+
+  table.on('refresh_success', function() {
+    open.prop("disabled", true);
+  });
+
+  open.click(function() {
+    let c = ic.contentDialog("system/log-content.html");
+    c.on("opend", function() {
+      c.find("[name=file]").val(row.name);
+    });
+    c.on("closed", function() {
+      table.refreshData();
+    });
+  });
+
+  function formatSize(s) {
+    if (s < 1024) {
+      return s +"Byte";
+    }
+    s /= 1024;
+    if (s < 1024) {
+      return s.toFixed(2) +"KB";
+    }
+    s /= 1024;
+    if (s < 1024) {
+      return s.toFixed(2) +"MB";
+    }
+    s /= 1024;
+    return s.toFixed(2) +"GB";
+  }
+});
+</script>
+</div>

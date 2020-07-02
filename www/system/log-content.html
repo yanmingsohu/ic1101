@@ -1,0 +1,18 @@
+<div id='log_content_frame'>
+  <h2>日志</h2><hr/>
+  <pre style='font-size: 10px'></pre>
+  <input type='hidden' name='file'/>
+
+<script>
+jQuery(function($) {
+  const root = $("#log_content_frame");
+  const txt = root.find("pre");
+  const file = root.find("[name=file]").val();
+
+  ic.get("log_load_file", {f:file}, function(err, ret) {
+    if (ret) txt.html(ret);
+    else if (err) txt.html(err.message);
+  });
+});
+</script>
+</div>

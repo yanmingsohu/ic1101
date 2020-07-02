@@ -84,7 +84,7 @@ function get(api, data, cb) {
       } else {
         let type = jxr.getResponseHeader("content-type");
         if (type && (type.indexOf("json") < 0)) {
-          cb(new Error("错误的应答, 不是 json. fail:"+ type));
+          cb(new Error("错误的应答, 不是 json. fail:"+ type), data);
           return;
         }
 

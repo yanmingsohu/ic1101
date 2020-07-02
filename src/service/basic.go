@@ -31,6 +31,7 @@ func serviceList(b *brick.Brick) {
   installDeviceService(b)
   installTimerService(b)
   installBusService(b)
+  installLogService(b)
 }
 
 

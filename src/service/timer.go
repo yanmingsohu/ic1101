@@ -73,6 +73,9 @@ func timer_update(h *Ht) interface{} {
   if err != nil {
     return err
   }
+  if dur < time.Second {
+    return errors.New("定时器间隔时间必须大于1秒")
+  }
 
   delay := core.TimerDelay{
     Mon  : h.GetInt("d.mon", -1),
@@ -138,6 +141,9 @@ func (t *_Tick) Start(task func(), on_stop func()) {
 
   if t.running {
     panic(errors.New("定时器已经启动"))
+  }
+  if t.d.Duration < time.Second {
+    panic(errors.New("定时器间隔时间必须大于1秒"))
   }
   t.running = true
   t.onStop = on_stop
