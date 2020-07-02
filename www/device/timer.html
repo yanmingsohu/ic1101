@@ -110,7 +110,9 @@
 
         target.one("delay_build_over", function() {
           ['mon', 'day', 'hour', 'min', 'sec'].forEach(function(x) {
-            target.find("[name='d."+ x +"']").val(data.delay[x] || '');
+            let v = data.delay[x];
+            if (isNaN(v)) v = '';
+            target.find("[name='d."+ x +"']").val(v);
           });
         });
       },
