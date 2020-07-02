@@ -515,7 +515,8 @@ Table: bus_ldata {
   }
 
   ctrl : {
-    'slot_id' : {
+    // 这个键的组合允许同一个控制槽对应不同的值
+    'slot_id+value' : {
       slot_id
       slot_desc
       dev_id 

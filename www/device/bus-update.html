@@ -301,7 +301,7 @@ jQuery(function($) {
 
     function on_table_select(_, v) {
       del.data("id", id);
-      del.data("parm", {'slot_id': v.slot_id, 'isdata': isdata});
+      del.data("parm", v);
       del.data("what", v.slot_desc +' ('+ v.slot_id +")");
       data_name = v.data_name;
       dev_list.trigger('change', v.dev_id);

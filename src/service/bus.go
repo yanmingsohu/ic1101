@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"ic1101/brick"
 	"ic1101/src/bus"
 	"ic1101/src/core"
@@ -256,16 +257,22 @@ func bus_slot_update(h *Ht) interface{} {
       return HttpRet{6, "定时器无效 "+ timer_id, timer_id}
     }
 
-    value, err := pd.Type.Parse( h.Get("value") )
+    value_str := h.Get("value")
+    value, err := pd.Type.Parse(value_str)
     if err != nil {
       return HttpRet{5, "无法解析参数", err}
     }
 
     slot_conf["timer"] = timer_id
     slot_conf["value"] = value
-    set["ctrl_slot."+ slot_id] = slot_conf
+    set[_ctrl_slot_key(slot_id, value_str)] = slot_conf
   }
   return h.Crud().Update(id, bson.M{ "$set": set })
+}
+
+
+func _ctrl_slot_key(slotid, value string) string {
+  return fmt.Sprintf("ctrl_slot.%s+%s", slotid, value)
 }
 
 
@@ -282,7 +289,8 @@ func bus_slot_delete(h *Ht) interface{} {
   if isdata {
     key = "data_slot."+ slot_id
   } else {
-    key = "ctrl_slot."+ slot_id
+    // key = "ctrl_slot."+ slot_id
+    key = _ctrl_slot_key(slot_id, h.Get("value"))
   }
   
   up := bson.M{
@@ -299,7 +307,7 @@ func bus_slot_delete(h *Ht) interface{} {
   }
   
   if r.MatchedCount < 1 {
-    return errors.New("数据不存在")
+    return HttpRet{3, "数据不存在", key}
   }
   if isdata {
     return HttpRet{0, "数据槽已删除", slot_id}

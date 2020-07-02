@@ -110,7 +110,6 @@ jQuery(function($) {
   const start = root.find("#start_bus");
   const stop = root.find("#stop_bus");
   const runtime = root.find("#bus_runtime");
-  const on_table_dis = [start, stop, runtime];
   let types = {};
 
   ic.select2fromApi(root.find("[name=timer]"));
@@ -118,12 +117,7 @@ jQuery(function($) {
   table.data("format.type", types_conv);
   start.click(call_serv_button('bus_start', ()=>{runtime.click()}));
   stop.click(call_serv_button('bus_stop'));
-
-  table.on("button_disabled", function(_, dis) {
-    on_table_dis.forEach(function(button) {
-      button.prop('disabled', dis);
-    });
-  });
+  table.on("button_disabled", sw_buttons_state);
 
   runtime.click(function() {
     let dia = ic.contentDialog("device/bus-data.html");
@@ -164,6 +158,19 @@ jQuery(function($) {
         });
       },
     });
+  }
+
+  function sw_buttons_state(_, dis) {
+    let d = table.data('select_row');
+    let st = d ? d.status : -1;
+    if (dis) {
+      start.prop('disabled', dis);
+      stop.prop('disabled', dis);
+    } else {
+      start.prop('disabled', (st>0));
+      stop.prop('disabled', (st==0));
+    }
+    runtime.prop('disabled', dis);
   }
 
   function call_serv_button(api, cb) {
