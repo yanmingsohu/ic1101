@@ -34,6 +34,51 @@ func installBusService(b *brick.Brick) {
   aserv(b, ctx, "bus_stop",       bus_stop)
   aserv(b, ctx, "bus_start",      bus_start)
   aserv(b, ctx, "bus_last_data",  bus_last_data)
+
+  restart_bus()
+}
+
+
+// 系统重启后, 重启正在运行的总线
+func restart_bus() {
+  log.Println("[[[Restart BUS...")
+  filter := bson.M{ "status" : bson.M{"$gt" : bus.BusStateStop} }
+  ctx := context.Background()
+  cur, err := mg.Collection(core.TableBus).Find(ctx, filter,
+      options.Find().SetProjection(bson.M{"_id":1, "status":1, "desc":1}))
+  if err != nil {
+    log.Println("]]]Restart BUS fail,", err)
+    return
+  }
+
+  count := 0
+  for {
+    if !cur.Next(ctx) {
+      break
+    }
+    b := core.Bus{}
+    if err = cur.Decode(&b); err != nil {
+      log.Println("> Restart BUS fail,", err)
+      return
+    }
+
+    if b.Status > 0 {
+      if err := _bus_start(ctx, b.Id); err != nil {
+        log.Println("> Bus start fail", err)
+        update_state(ctx, b.Id, bus.BusStateFailStart)
+      } else {
+        log.Println("> Bus started", b.Id, b.Desc)
+        count++
+      }
+    } else {
+      log.Println("> Bus stopped", b.Id, b.Desc)
+    }
+  }
+  if count > 0 {
+    log.Println("]]]All Bus restarted.")
+  } else {
+    log.Println("]]]No Bus need restart.")
+  }
 }
 
 
@@ -267,7 +312,16 @@ func bus_slot_delete(h *Ht) interface{} {
 func bus_last_data(h *Ht) interface{} {
   id := checkstring("总线ID", h.Get("id"), 2, 20)
   c  := Crud{h, core.TableBusData, "总线实时数据"}
-  return c.Read(id)
+  ret, err := c.DRead(id)
+  if err != nil {
+    return err
+  }
+  b , err := bus.GetBus(id)
+  if err != nil {
+    return err
+  }
+  ret["logs"] = b.GetLog()
+  return HttpRet{0, c.info, ret}
 }
 
 
@@ -276,6 +330,7 @@ func bus_stop(h *Ht) interface{} {
   if err := bus.StopBus(id); err != nil {
     return err
   }
+  update_state(h.Ctx(), id, bus.BusStateStop)
   return HttpRet{0, "总线已终止", nil}
 }
 
@@ -285,9 +340,16 @@ func bus_start(h *Ht) interface{} {
   if bus.GetBusState(id) != bus.BusStateStop {
     return errors.New("总线已经运行")
   }
+  if err := _bus_start(h.Ctx(), id); err != nil {
+    update_state(h.Ctx(), id, bus.BusStateFailStart)
+    return err;
+  }
+  return HttpRet{0, "总线已启动", nil}
+}
 
+func _bus_start(ctx context.Context, id string) error {
   findbus := core.Bus{}
-  if err := GetBus(id, h.Ctx(), &findbus); err != nil {
+  if err := GetBus(id, ctx, &findbus); err != nil {
     return err
   }
 
@@ -297,7 +359,7 @@ func bus_start(h *Ht) interface{} {
   }
 
   event := &bus_event{}
-  event.init(id, tk, h)
+  event.init(id, tk)
   info, err := bus.NewInfo(findbus.Id, findbus.Type, tk, event)
   if err != nil {
     return err
@@ -342,8 +404,8 @@ func bus_start(h *Ht) interface{} {
   if err != nil {
     return err
   }
-  event.update(info, h)
-  return HttpRet{0, "总线已启动", nil}
+  event.update(ctx, info)
+  return nil
 }
 
 
@@ -371,13 +433,11 @@ type bus_event struct {
 }
 
 
-func (r *bus_event) init(id string, tk core.Tick, h *Ht) {
+func (r *bus_event) init(id string, tk core.Tick) {
   r.id = id
   r.datas = make(map[string]*w_data_slot)
   r.ctrls = make(map[string]*w_ctrl_slot)
   r.main_tk = tk
-  r.coll = mg.Collection(core.TableBusData)
-  r.for_bus = h.Table()
   r.ctx = context.Background()
 }
 
@@ -392,7 +452,7 @@ func (r *bus_event) push_ctrl(c core.BusCtrl, s bus.Slot, t core.Tick) {
 }
 
 
-func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
+func (r *bus_event) update(ctx context.Context, i *bus.BusInfo) {
   data := bson.M{}
   for _, d := range r.datas {
     data[d.SlotID] = bson.M{ // value/count not change
@@ -401,6 +461,7 @@ func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
       "dev_id"    : d.Dev,
       "data_name" : d.Name,
       "data_type" : d.Type.String(),
+      "data_desc" : d.Desc,
     }
   }
 
@@ -412,6 +473,7 @@ func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
       "dev_id"    : c.Dev,
       "data_name" : c.Name,
       "data_type" : c.Type.String(),
+      "data_desc" : c.Desc,
 
       "value"     : c.Value,
       "start_t"   : c.t.StartTime(),
@@ -431,32 +493,40 @@ func (r *bus_event) update(i *bus.BusInfo, h *Ht) {
   }
 
   up := bson.M{ "$set" : all }
-  r.update_bstate(h.Ctx(), up)
-  r.update_bus(h.Ctx(), state)
+  update_bus_ldata(ctx, r.id, up)
+  update_bus(ctx, r.id, state)
 }
 
 
-func (r *bus_event) update_bus(c context.Context, s bus.BusState) {
+func update_bus(c context.Context, id string, s bus.BusState) {
   up := bson.M{"$set" : bson.M{ "status" : s }}
-  filter := bson.M{"_id": r.id}
-  if _, err := r.for_bus.UpdateOne(c, filter, up); err != nil {
+  filter := bson.M{"_id": id}
+  coll := mg.Collection(core.TableBus)
+  if _, err := coll.UpdateOne(c, filter, up); err != nil {
     log.Println("Update bus fail,", err)
   }
 }
 
 
-func (r *bus_event) update_bstate(c context.Context, up bson.M) {
-  filter := bson.M{"_id": r.id}
+func update_bus_ldata(c context.Context, id string, up bson.M) {
+  filter := bson.M{"_id": id}
   opt := options.Update().SetUpsert(true)
-  if _, err := r.coll.UpdateOne(c, filter, up, opt); err != nil {
+  coll := mg.Collection(core.TableBusData)
+  if _, err := coll.UpdateOne(c, filter, up, opt); err != nil {
     log.Println("Update bus-state fail,", err)
   }
 }
 
 
+func update_state(ctx context.Context, id string, s bus.BusState) {
+  update_bus_ldata(ctx, id, bson.M{"status": s.String()})
+  update_bus(ctx, id, s)
+}
+
+
 func (r *bus_event) OnStopped() {
-  r.update_bus(r.ctx, bus.BusStateStop)
-  r.update_bstate(r.ctx, bson.M{ "status": bus.BusStateStop.String() })
+  update_bus(r.ctx, r.id, bus.BusStateStop)
+  update_bus_ldata(r.ctx, r.id, bson.M{ "status": bus.BusStateStop.String() })
 }
 
 
@@ -466,7 +536,7 @@ func (r *bus_event) OnCtrlSended(s bus.Slot, t *time.Time) {
     "$inc" : bson.M{ key +".count": 1 },
     "$set" : bson.M{ key +".last_t" : t },
   }
-  r.update_bstate(r.ctx, up)
+  update_bus_ldata(r.ctx, r.id, up)
 }
 
 
@@ -475,7 +545,7 @@ func (r *bus_event) OnCtrlExit(s bus.Slot) {
   up := bson.M{
     "$set" : bson.M{ key +".status" : bus.BusStateStop.String() },
   }
-  r.update_bstate(r.ctx, up)
+  update_bus_ldata(r.ctx, r.id, up)
 }
 
 
@@ -488,7 +558,7 @@ func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
       key +".value" : d.String(),
     },
   }
-  r.update_bstate(r.ctx, up)
+  update_bus_ldata(r.ctx, r.id, up)
   //TODO: 发送数据到设备数据表
 }
 
@@ -496,15 +566,15 @@ func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
 func _wrap(t core.DevDataType, v interface{}) (bus.DataWrap, error) {
   switch t {
   case core.DDT_int:
-    return &bus.Int64Data{v.(int64)}, nil
+    return &bus.Int64Data{ v.(int64) }, nil
   case core.DDT_float:
-    return &bus.Float64Data{v.(float64)}, nil
+    return &bus.Float64Data{ v.(float64) }, nil
   case core.DDT_string:
-    return &bus.StringData{v.(string)}, nil
+    return &bus.StringData{ v.(string) }, nil
   case core.DDT_sw:
-    return &bus.BoolData{v.(bool)}, nil
+    return &bus.BoolData{ v.(bool) }, nil
   case core.DDT_virtual:
-    return &bus.StringData{v.(string)}, nil
+    return &bus.StringData{ v.(string) }, nil
   }
   return nil, errors.New("无效的类型")
 }

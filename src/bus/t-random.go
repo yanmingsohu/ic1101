@@ -106,7 +106,8 @@ type random_bus struct {
 }
 
 
-func (r *random_bus) start() error {
+func (r *random_bus) start(i *BusInfo) error {
+  i.log("总线启动")
   return nil
 }
 
@@ -124,7 +125,8 @@ func (r *random_bus) send_ctrl(s Slot, d DataWrap, t *time.Time) error {
 }
 
 
-func (r *random_bus) stop() {
+func (r *random_bus) stop(i *BusInfo) {
+  i.log("总线停止")
 }
 
 

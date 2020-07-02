@@ -137,9 +137,23 @@ func (c *Crud) Upsert(id string, data interface{}) error {
 
 
 //
-// 立即返回一行数据
+// 立即返回一行数据到 http 接口
 //
 func (c *Crud) Read(id string, includeNames ...string) error {
+  ret, err := c.DRead(id, includeNames...)
+  if err != nil {
+    c.h.Json(HttpRet{1, c.info +"查询错误", err.Error()})
+    return nil
+  }
+  c.h.Json(HttpRet{0, "返回"+ c.info, ret})
+  return nil
+}
+
+
+//
+// 返回查询的数据
+//
+func (c *Crud) DRead(id string, includeNames ...string) (bson.M, error) {
   table  := mg.Collection(c.collname)
   filter := bson.D{{"_id", id}}
   ret    := bson.M{}
@@ -154,11 +168,9 @@ func (c *Crud) Read(id string, includeNames ...string) error {
   }
 
   if err := table.FindOne(c.h.Ctx(), filter, opt).Decode(&ret); err != nil {
-    c.h.Json(HttpRet{1, c.info +"查询错误", err.Error()})
-    return nil
+    return nil, err
   }
-  c.h.Json(HttpRet{0, "返回"+ c.info, ret})
-  return nil
+  return ret, nil
 }
 
 

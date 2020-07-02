@@ -73,7 +73,7 @@
             <button type="button" id='edit_bus'
                 class="pure-button button-secondary">配置总线</button>
             <button type="button" id='bus_runtime'
-                class="pure-button button-secondary">实时数据</button>
+                class="pure-button button-secondary">实时状态</button>
             <button type="button" id='start_bus'
                 class="pure-button button-success">启动</button>
             <button type="button" id='stop_bus'
@@ -116,6 +116,8 @@ jQuery(function($) {
   ic.select2fromApi(root.find("[name=timer]"));
   table.data("format.status", bus_status);
   table.data("format.type", types_conv);
+  start.click(call_serv_button('bus_start', ()=>{runtime.click()}));
+  stop.click(call_serv_button('bus_stop'));
 
   table.on("button_disabled", function(_, dis) {
     on_table_dis.forEach(function(button) {
@@ -123,14 +125,15 @@ jQuery(function($) {
     });
   });
 
-  start.click(function() {
-    let d = table.data('select_row');
-    ic.get("bus_start", {id: d.id}, on_task_back);
-  });
-
-  stop.click(function() {
-    let d = table.data('select_row');
-    ic.get("bus_stop", {id: d.id}, on_task_back);
+  runtime.click(function() {
+    let dia = ic.contentDialog("device/bus-data.html");
+    dia.on("opend", function() {
+      let d = table.data('select_row');
+      dia.find("[name=id]").val(d.id);
+    });
+    dia.on('closed', function() {
+      table.refreshData();
+    });
   });
 
   ic.get("bus_types", null, function(err, ret) {
@@ -163,12 +166,20 @@ jQuery(function($) {
     });
   }
 
-  function on_task_back(err, ret) {
-    if (err) return ic.popo(err);
-    ic.popo(ret.msg);
-    setTimeout(function() {
-      table.refreshData();
-    }, 1e3);
+  function call_serv_button(api, cb) {
+    function on_task_back(err, ret) {
+      if (err) return ic.popo(err);
+      ic.popo(ret.msg);
+      if (cb) cb();
+      setTimeout(function() {
+        table.refreshData();
+      }, 1e3);
+    }
+
+    return function() {
+      let d = table.data('select_row');
+      ic.get(api, {id: d.id}, on_task_back);
+    }
   }
 
   function types_conv(s) {
@@ -181,6 +192,8 @@ jQuery(function($) {
       case 1: return "正在启动"
       case 2: return "<b style='color:#428428'>已启动, 休眠中</b>"
       case 3: return "<b style='color:#428428'>已启动, 执行任务中</b>"
+      case -1: return "正在停止"
+      case -2: return "<b style='color:#c32346'>启动失败</b>"
     }
   }
 });

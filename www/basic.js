@@ -24,6 +24,7 @@ const ic = window.ic = {
   select2fromApi,
   numberScope,
   dateTime,
+  setIntervalDom,
 };
 
 const format_fn = {
@@ -78,6 +79,8 @@ function get(api, data, cb) {
     success : function(data, status, jxr) {
       if (data.code === 0) {
         cb(null, data)
+      } else if (data.code === 100) {
+        location.href = "index.html";
       } else {
         let type = jxr.getResponseHeader("content-type");
         if (type && (type.indexOf("json") < 0)) {
@@ -360,7 +363,8 @@ function smartTable(jdom, _convert) {
 
 
 //
-// 带有 html_template 的模板对象进行复制
+// 带有 '.html_template' 的模板对象进行复制, 
+// 如果使用了 class 选择器区分不同模板, 可能会使模板内容成倍增加.
 //
 function get_template(selector) {
   let t = $(selector).clone();
@@ -371,6 +375,7 @@ function get_template(selector) {
   t.removeAttr("id");
   return t;
 }
+
 
 //
 // <button api='删除接口' ...
@@ -882,6 +887,35 @@ function dateTime(jinput) {
     if (x < 10) return '0'+ x;
     return ''+ x;
   }
+}
+
+//
+// 在 dom 对象上应用定时器
+// 利用页面删除后事件回调被解除来自动停止定时器更新.
+// 向 jdom 发送 stop([tid]) 事件停止计时器.
+// 返回 tid 用于停止计时器
+//
+function setIntervalDom(jdom, cb, time) {
+  const id = "timer@"+ Math.random();
+  let tid;
+  jdom.on(id, time_up);
+  time_up();
+
+  function time_up(e, d) {
+    cb(e, d);
+    tid = setTimeout(function() {
+      jdom.trigger(id);
+    }, time);
+  }
+
+  jdom.on("stop", function(event, _tid) {
+    if (!_tid) {
+      clearInterval(tid);
+    } else if (id == _tid) {
+      clearInterval(tid);
+    }
+  });
+  return id;
 }
 
 });

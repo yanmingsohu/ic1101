@@ -410,6 +410,7 @@ type Bus struct {
   Desc    string             `bson:"desc"`
   Timer   string             `bson:"timer"`
   Type    string             `bson:"type"`
+  Status  int                `bson:"status"`
   Datas   map[string]BusSlot `bson:"data_slot"`
   Ctrls   map[string]BusCtrl `bson:"ctrl_slot"`
 }
@@ -419,6 +420,7 @@ type BusSlot struct {
   SlotDesc  string      `bson:"slot_desc" json:"slot_desc"`
   Dev       string      `bson:"dev_id"    json:"dev_id"`
   Name      string      `bson:"data_name" json:"data_name"`
+  Desc      string      `bson:"data_desc" json:"data_desc"`
   Type      DevDataType `bson:"data_type" json:"data_type"`
 }
 
@@ -427,6 +429,7 @@ type BusCtrl struct {
   SlotDesc  string      `bson:"slot_desc" json:"slot_desc"`
   Dev       string      `bson:"dev_id"    json:"dev_id"`
   Name      string      `bson:"data_name" json:"data_name"`
+  Desc      string      `bson:"data_desc" json:"data_desc"`
   Type      DevDataType `bson:"data_type" json:"data_type"`
   Timer     string      `bson:"timer"     json:"timer"`
   Value     interface{} `bson:"value"     json:"value"`
@@ -527,6 +530,7 @@ Table: bus_ldata {
       inter_t : 发送间隔时间
     }
   }
+}
 */
 type BusLastData struct {
   Id string `bson:"_id"`

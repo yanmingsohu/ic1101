@@ -1,0 +1,209 @@
+<div id='bus_real_data_frame'>
+  <h2>总线实时状态</h2><hr/>
+  <input name='id' type='hidden'/>
+
+<style>
+#bus_real_data_frame .data_table, #bus_real_data_frame .logs {
+  font-size: 10px;
+}
+.data_table {
+  border-collapse: separate; margin-top: 55px;
+}
+.data_table tr {
+  text-align: left; padding-top: 20px;
+}
+.data_table td {
+  border-top: 1px solid #999;
+}
+.data_table th {
+  vertical-align: bottom; border-top: 2px solid #999;
+}
+.data_table [k=value], [k=count], [k=last_t], [k=page_t] {
+  background-color: #eee;
+}
+.data_table tbody {
+  padding-top: 10px;
+}
+.data_table .header {
+  height: 50px;
+}
+</style>
+
+  <table class='data_table'>
+    <tbody>
+      <tr><th>总线ID</th><td k='_id'></td>
+          <th>状态</th><td k='status'></td>
+          <td colspan='7'></td></tr>
+
+      <tr><th>首次采集时间</th><td k='start_t' conv='time'></td>
+          <th>采集间隔</th><td k='inter_t' conv='duration'></td>
+          <td colspan='7'></td></tr>
+
+      <tr><th>最后采集时间</th><td k='last_t' conv='time'></td>
+          <th>页面刷新时间</th><td k='page_t'></td>
+          <td colspan='7'></td></tr>
+    </tbody>
+
+    <tbody>
+      <tr>
+        <th class='header'></th>
+        <th>总线数据槽ID</th>
+        <th>实时数据</th>
+        <th>设备ID</th>
+        <th>设备数据名</th>
+        <th>数据类型</th>
+        <th>采集次数</th>
+        <th colspan="4"></th>
+      </tr>
+    </tbody>
+
+    <tbody class='data_body'>
+      <tr class='html_template' id='bus_real_data_template'>
+        <td k='slot_desc'></td>
+        <td k='slot_id'></td>
+        <td k='value'></td>
+        <td k='dev_id'></td>
+        <td k='data_name'></td>
+        <td k='data_type'></td>
+        <td k='count'></td>
+        <td colspan="4"></td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr>
+        <th class='header'></th>
+        <th>总线控制ID</th>
+        <th>发送数据</th>
+        <th>设备ID</th>
+        <th>设备数据名</th>
+        <th>数据类型</th>
+        <th>采集次数</th>
+
+        <th>状态</th>
+        <th>首次发送时间</th>
+        <th>发送间隔</th>
+        <th>最后发送时间</th>
+      </tr>
+    </tbody>
+
+    <tbody class='ctrl_body'>
+      <tr class='html_template' id='bus_real_ctrl_template'>
+        <td k='slot_desc'></td>
+        <td k='slot_id'></td>
+        <td k='value'></td>
+        <td k='dev_id'></td>
+        <td k='data_name'></td>
+        <td k='data_type'></td>
+        <td k='count'></td>
+
+        <td k='status'></td>
+        <td k='start_t' conv='time'></td>
+        <td k='inter_t' conv='duration'></td>
+        <td k='last_t' conv='time'></td>
+      </tr>
+    </tbody>
+
+    <tbody><tr><th colspan="11"></th></tr></tbody>
+
+  </table>
+  <div class='ajax-message'></div>
+
+  <h4>日志</h4><hr/>
+  <pre class='logs'></pre>
+
+<script>
+jQuery(function($) {
+  const root = $("#bus_real_data_frame");
+  const table = root.find(".data_table tbody");
+  const id = root.find("[name=id]").val();
+  const base_data = table.find("*");
+  const data_dom = root.find('.data_body');
+  const ctrl_dom = root.find(".ctrl_body");
+  const msg = root.find(".ajax-message");
+  const logs = root.find(".logs");
+  const dcatch = {};
+  let updateTime = 3e3;
+
+  const conv_func = {
+    time : _time,
+    duration : _duration,
+  };
+
+  update_table();
+  ic.setIntervalDom(root, update_table, updateTime);
+
+
+  function update_table() {
+    ic.get("bus_last_data", {id:id}, function(err, ret) {
+      if (err) return msg.html("页面初始化错误, "+ err.message);
+      // root.find("pre").html(JSON.stringify(ret.data, 0, 2));
+      ret.data.page_t = new Date().toLocaleString();
+      mapping(base_data, ret.data);
+
+      slot(ret.data.data, "#bus_real_data_template", data_dom);
+      slot(ret.data.ctrl, "#bus_real_ctrl_template", ctrl_dom);
+      logs.html(ret.data.logs.join("<br/>"));
+    });
+  }
+
+
+  function slot(data, tpl, dom_insert) {
+    for (let n in data) {
+      let dom = dcatch[n];
+      if (!dom) {
+        dom = dcatch[n] = ic.getTemplate(tpl);
+        dom_insert.append(dom);
+      }
+      mapping(dom, data[n]);
+    }
+  }
+
+
+  function mapping(jtr, data) {
+    jtr.find("[k]").each(function() {
+      let thiz = $(this);
+      let k = thiz.attr("k");
+      let conv = thiz.attr("conv");
+      let v = data[k];
+      if (conv && conv_func[conv]) {
+        v = conv_func[conv](v);
+      }
+      thiz.html(v);
+    });
+  }
+
+
+  function _time(d) {
+    let t = new Date(d);
+    if (t.getDate()) return t.toLocaleString();
+    return '';
+  }
+
+  
+  function _duration(d) {
+    const aday  = 24*60*60*1e3; //ms
+    const ahour = 60*60*1e3;
+    const amin  = 60*1e3;
+    let time = parseInt(d) / 1e6; //ms
+
+    let buf = [];
+    let t = parseInt(time/aday);
+    if (t) buf.push(t +'天');
+    time = time % aday;
+    
+    t = parseInt(time/ahour);
+    if (t) buf.push(t +"小时");
+    time = time % ahour;
+
+    t = parseInt(time/amin);
+    if (t) buf.push(t +"分钟");
+    time = time % amin;
+
+    t = parseInt(time/1e3);
+    if (t) buf.push(t +"秒");
+    return buf.join(" ");
+  }
+});
+</script>
+</div>

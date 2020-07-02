@@ -2,6 +2,7 @@ package bus
 
 import (
 	"errors"
+	"fmt"
 	"ic1101/src/core"
 	"net/url"
 	"sync"
@@ -13,6 +14,7 @@ import (
 //
 var busInstance = map[string]*BusInfo{}
 var busMutex = new(sync.RWMutex)
+const MaxLogCount = 20
 
 //
 // 总线运行状态
@@ -26,6 +28,7 @@ const (
   BusStateSleep     BusState = iota 
   BusStateTask      BusState = iota 
   BusStateShutdown  BusState = -1 
+  BusStateFailStart BusState = -2
 )
 
 func (s BusState) String() string {
@@ -40,6 +43,8 @@ func (s BusState) String() string {
     return "执行任务"
   case BusStateShutdown:
     return "关闭中"
+  case BusStateFailStart:
+    return "启动失败"
   }
   return "无效"
 }
@@ -83,11 +88,11 @@ type BusCreator interface {
 //
 type Bus interface {
   // 启动总线, 用于初始化数据, 失败返回 error
-  start() error
+  start(i *BusInfo) error
   // 传送一次数据
   sync_data(*BusInfo, *time.Time) error
   // 停止总线, 该方法返回后, 总线一定是停止的
-  stop()
+  stop(i *BusInfo)
   // 发送控制指令, 发送失败返回 error
   send_ctrl(s Slot, d DataWrap, t *time.Time) error
 }
@@ -109,6 +114,7 @@ type BusInfo struct {
   // 数据插槽配置, {插槽: 数据名}
   datas []Slot
   ctrls []ctrl_slot
+  logs  []string
 }
 
 
@@ -144,7 +150,8 @@ func NewInfo(id string, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error)
     return nil, errors.New("必须提供事件监听器")
   }
   return &BusInfo{id, typ, tk, ev, BusStateStartup, 
-      nil, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10)}, nil
+      nil, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10), 
+      make([]string, 0, MaxLogCount)} , nil
 }
 
 
@@ -176,14 +183,14 @@ func (i *BusInfo) start(b Bus) error {
   if i.st != BusStateStartup {
     return errors.New("总线已经启动")
   }
-  if err := b.start(); err != nil {
+  if err := b.start(i); err != nil {
     i.st = BusStateStop
     return err
   }
   i.bs = b
 
   for _, ctrl := range i.ctrls {
-    i._ctrl_thread(&ctrl)
+    i._ctrl_thread(ctrl)
   }
 
   i.st = BusStateSleep
@@ -216,13 +223,13 @@ func (i *BusInfo) stop() {
     i.tk.Stop()
   }
   if i.bs != nil {
-    i.bs.stop()
+    i.bs.stop(i)
   }
   i.st = BusStateStop
 }
 
 
-func (i *BusInfo) _ctrl_thread(c *ctrl_slot) {
+func (i *BusInfo) _ctrl_thread(c ctrl_slot) {
   c.tk.Start(func() {
     t := time.Now()
     i.bs.send_ctrl(c.slot, c.data, &t)
@@ -235,6 +242,21 @@ func (i *BusInfo) _ctrl_thread(c *ctrl_slot) {
 
 func (i *BusInfo) State() BusState {
   return i.st
+}
+
+
+func (i *BusInfo) GetLog() []string {
+  return i.logs
+}
+
+
+// 插入新的日志, 删除超过 MaxLogCount 的部分
+func (i *BusInfo) log(s string) {
+  s = fmt.Sprintln(time.Now().Format(time.RFC3339), s)
+  i.logs = append(i.logs, s)
+  if len(i.logs) > MaxLogCount {
+    i.logs = i.logs[1:]
+  }
 }
 
 
