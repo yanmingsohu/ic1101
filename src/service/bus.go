@@ -67,9 +67,14 @@ func bus_create(h *Ht) interface{} {
   id  := checkstring("总线ID", h.Get("id"), 2, 20)
   typ := checkstring("总线类型", h.Get("type"), 2, 20)
   tm  := checkstring("定时器", h.Get("timer"), 2, 20)
+  uri := h.Get("uri")
 
-  if !bus.HasTypeName(typ) {
-    return errors.New("无效的总线类型")
+  sp, err := bus.GetSlotParser(typ)
+  if err != nil {
+    return err
+  }
+  if _, err := sp.ParseURI(uri); err != nil {
+    return err
   }
   if !hasTimer(tm) {
     return errors.New("定时器不存在 "+ tm)
@@ -77,6 +82,7 @@ func bus_create(h *Ht) interface{} {
 
   d := bson.M{
     "_id"       : id,
+    "uri"       : uri,
     "desc"      : checkstring("总线说明", h.Get("desc"), 0, 99),
     "timer"     : tm,
     "cd"        : time.Now(),
@@ -98,6 +104,7 @@ func bus_types(h *Ht) interface{} {
 func bus_update(h *Ht) interface{} {
   id  := checkstring("总线ID", h.Get("id"), 2, 20)
   tm  := checkstring("定时器", h.Get("timer"), 2, 20)
+  uri := h.Get("uri")
 
   if bus.GetBusState(id) != bus.BusStateStop {
     return errors.New("总线运行中, 禁止修改 "+ id)
@@ -106,7 +113,20 @@ func bus_update(h *Ht) interface{} {
     return errors.New("定时器不存在 "+ tm)
   }
 
+  findbus := core.Bus{}
+  if err := GetBus(id, h.Ctx(), &findbus); err != nil {
+    return err
+  }
+  sp , err := bus.GetSlotParser(findbus.Type)
+  if err != nil {
+    return err
+  }
+  if _, err := sp.ParseURI(uri); err != nil {
+    return err
+  }
+
   d := bson.M{
+    "uri"       : uri,
     "desc"      : checkstring("总线说明", h.Get("desc"), 0, 99),
     "timer"     : tm,
     "md"        : time.Now(),

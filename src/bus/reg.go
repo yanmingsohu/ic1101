@@ -1,5 +1,7 @@
 package bus
 
+import "errors"
+
 //
 // 总线类型注册表, 所有可用的总线注册到这里
 //
@@ -27,4 +29,16 @@ func GetTypes() map[string]string {
 func HasTypeName(name string) bool {
   _, has := bus_type_register[name]
   return has
+}
+
+
+//
+// 返回对应总线类型的数据槽解析器
+//
+func GetSlotParser(typeName string) (SlotParser, error) {
+  ct, has := bus_type_register[typeName]
+  if !has {
+    return nil, errors.New("不存在的总线类型 "+ typeName)
+  }
+  return ct, nil
 }

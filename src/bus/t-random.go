@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -64,6 +65,11 @@ func (*bus_random_ct) SlotDesc(s string) (string, error) {
     return "", err
   }
   return slot.Desc(), nil
+}
+
+
+func (*bus_random_ct) ParseURI(uri string) (*url.URL, error) {
+  return &url.URL{}, nil
 }
 
 

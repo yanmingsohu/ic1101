@@ -3,6 +3,7 @@ package bus
 import (
 	"errors"
 	"ic1101/src/core"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -63,6 +64,19 @@ func (t SlotType) String() string {
   }
   return "无效"
 }
+
+
+//
+// 总线创建接口
+//
+type BusCreator interface {
+  SlotParser
+  // 创建总线实例
+  Create(*BusInfo) (Bus, error)
+  // 总线的显示名称
+  Name() string
+}
+
 
 //
 // 运行中的总线实例对象
@@ -239,18 +253,6 @@ type Slot interface {
 
 
 //
-// 总线创建接口
-//
-type BusCreator interface {
-  SlotParser
-  // 创建总线实例
-  Create(*BusInfo) (Bus, error)
-  // 总线的显示名称
-  Name() string
-}
-
-
-//
 // 用于解析 slot, 数据槽格式包含 '数据/控制' 的描述
 //
 type SlotParser interface {
@@ -259,6 +261,8 @@ type SlotParser interface {
   ParseSlot(s string) (Slot, error)
   // 返回可读的对端口的描述字符串, 格式无效返回 error
   SlotDesc(s string) (string, error)
+  // 解析 uri 用于创建服务器, 如果 uri 无效, 或不受支持返回 error
+  ParseURI(uri string) (*url.URL, error)
 }
 
 
@@ -359,19 +363,4 @@ func StopBus(id string) error {
   info.stop()
   delete(busInstance, id)
   return nil
-}
-
-
-//
-// 返回对应总线类型的数据槽解析器
-//
-func GetSlotParser(typeName string) (SlotParser, error) {
-  busMutex.RLock()
-  defer busMutex.RUnlock()
-
-  ct, has := bus_type_register[typeName]
-  if !has {
-    return nil, errors.New("不存在的总线类型 "+ typeName)
-  }
-  return ct, nil
 }

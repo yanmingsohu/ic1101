@@ -371,6 +371,7 @@ func DevDataID(r TimeRange, dataName string, t *time.Time) string {
 /*
 Table: bus {
   _id(string)    : 总线id
+  uri            : 服务器启动参数
   desc(string)   : 说明
   timer          : 定时器id
   cd(time)       : 创建时间
