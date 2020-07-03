@@ -239,11 +239,12 @@ const TableDevice = "device"
 /*
 设备数据表设计:
 
-每个设备有自己的数据表, 表名: `data@[device-id]`
+每个设备有自己的数据表, 表名: `dev-data`
 每个时间粒度有一个单独文档, 文档名称/内容:
 
   所有年份数据:  {
-    _id : year$[data-name] (数据名)
+    _id : !yr~[device-id]$[data-name] (数据名)
+    dev : 设备ID - 需要索引
     l : 最后插入的数据
     v : (数据 map) {
       Y : n年数据, (数字类型)
@@ -252,7 +253,8 @@ const TableDevice = "device"
   }
 
   当年所有月数据: {
-    _id : month$[data-name]@Y
+    _id : !mo~[device-id]$[data-name]@Y
+    dev : 设备ID
     l : 最后插入的数据
     v : {
       1 : 1月数据 (月份是数字类型)
@@ -262,7 +264,8 @@ const TableDevice = "device"
   }
 
   日数据: {
-    _id : day$[data-name]@Y-M
+    _id : !dy~[device-id]$[data-name]@Y-M
+    dev : 设备ID
     l : 最后插入的数据
     v : {
       1 : x月1日数据
@@ -272,7 +275,8 @@ const TableDevice = "device"
   }
 
   小时数据: {
-    _id : hour$[data-name]@Y-M-D
+    _id : !hr~[device-id]$[data-name]@Y-M-D
+    dev : 设备ID
     l : 最后插入的数据
     v : {
       0 : 0点数据
@@ -282,7 +286,8 @@ const TableDevice = "device"
   }
 
   分钟数据:  {
-    _id : minute$[data-name]@Y-M-D_h
+    _id : !mi~[device-id]$[data-name]@Y-M-D_h
+    dev : 设备ID
     l : 最后插入的数据
     v : {
       0 : 0分数据
@@ -292,7 +297,8 @@ const TableDevice = "device"
   }
 
   秒数据:  {
-    _id : second$[data-name]@Y-M-D_h:m
+    _id : !se~[device-id]$[data-name]@Y-M-D_h:m
+    dev : 设备ID
     l : 最后插入的数据
     v : {
       0 : 0秒数据
@@ -309,62 +315,89 @@ type DeviceData struct {
   V  bson.M `bson:"v"`
 }
 
+const TableDevData = "dev-data"
+
 type TimeRange int
 
 const (
-  TimeRangeYear   TimeRange = 1
-  TimeRangeMonth  TimeRange = 2
-  TimeRangeDay    TimeRange = 3
-  TimeRangeHour   TimeRange = 4
-  TimeRangeMinute TimeRange = 5
-  TimeRangeSecond TimeRange = 6
+  TimeRangeAllYear TimeRange = iota
+  TimeRangeYear    TimeRange = iota
+  TimeRangeMonth   TimeRange = iota
+  TimeRangeDay     TimeRange = iota
+  TimeRangeHour    TimeRange = iota
+  TimeRangeMinute  TimeRange = iota
+  TimeRangeSecond  TimeRange = iota
 )
 
 var TimeRangeMap = map[TimeRange]string {
-  TimeRangeYear   : "年",
-  TimeRangeMonth  : "月",
-  TimeRangeDay    : "日",
-  TimeRangeHour   : "时",
-  TimeRangeMinute : "分",
-  TimeRangeSecond : "秒",
+  TimeRangeYear    : "年",
+  TimeRangeMonth   : "月",
+  TimeRangeDay     : "日",
+  TimeRangeHour    : "时",
+  TimeRangeMinute  : "分",
+  TimeRangeSecond  : "秒",
 }
 
-//
-// 返回数据表名
-//
-func TableDevData(devid string) string {
-  return "data@"+ devid
-}
 
 //
-// 返回数据的 id
+// 返回数据表的 id, (设备id, 数据名称, 时间)
 //
-func DevDataID(r TimeRange, dataName string, t *time.Time) string {
+func (r TimeRange) GetId(did, name string, t *time.Time) string {
   switch (r) {
   case TimeRangeYear:
-    return "year$"+ dataName
+    return GetDDYearID(did, name, t)
 
   case TimeRangeMonth:
-    return fmt.Sprintf("month$%s@%d", dataName, t.Year())
+    return GetDDMonthID(did, name, t)
 
   case TimeRangeDay:
-    return fmt.Sprintf("day$%s@%d-%d", dataName, t.Year(), t.Month())
+    return GetDDDayID(did, name, t)
 
   case TimeRangeHour:
-    return fmt.Sprintf("hour$%s@%d-%d-%d", dataName, 
-            t.Year(), t.Month(), t.Day())
+    return GetDDHourID(did, name, t)
 
   case TimeRangeMinute:
-    return fmt.Sprintf("minute$%s@%d-%d-%d_%d", dataName, 
-            t.Year(), t.Month(), t.Day(), t.Minute())
+    return GetDDMinuteID(did, name, t)
 
   case TimeRangeSecond:
-    return fmt.Sprintf("minute$%s@%d-%d-%d_%d:%d", dataName, 
-            t.Year(), t.Month(), t.Day(), t.Minute(), t.Second())
+    return GetDDSecondID(did, name, t)
             
   default:
     panic("无效的时间范围")
   }
+}
+
+
+func GetDDYearID(did, name string, t *time.Time) string {
+  return fmt.Sprintf("!yr~%s$%s", did, name)
+}
+
+
+func GetDDMonthID(did, name string, t *time.Time) string {
+  return fmt.Sprintf("!mo~%s$%s@%d", did, name, t.Year())
+}
+
+
+func GetDDDayID(did, name string, t *time.Time) string {
+  return fmt.Sprintf("!dy~%s$%s@%d-%d", did, name, t.Year(), t.Month())
+}
+
+
+func GetDDHourID(did, name string, t *time.Time) string {
+  return fmt.Sprintf("!hr~%s$%s@%d-%d-%d", 
+          did, name, t.Year(), t.Month(), t.Day())
+}
+
+
+func GetDDMinuteID(did, name string, t *time.Time) string {
+  return fmt.Sprintf("!mi~%s$%s@%d-%d-%d_%d", 
+          did, name, t.Year(), t.Month(), t.Day(), t.Hour())
+}
+
+
+func GetDDSecondID(did, name string, t *time.Time) string {
+  return fmt.Sprintf("!se~%s$%s@%d-%d-%d_%d:%d", did, name, 
+          t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute())
 }
 
 

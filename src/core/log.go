@@ -12,8 +12,17 @@ import (
 	"time"
 )
 
-const LOG_MAX_SIZE = 5e6
-const LOG_DIR = "logs/"
+const (
+	LOG_MAX_SIZE = 5e6
+	LOG_DIR = "logs/"
+	LOG_BUFF_COUNT = 64
+	LOG_BUFF_SIZE = 1024
+)
+
+
+func UninstallLogger() {
+	log.SetOutput(os.Stderr)
+}
 
 
 func SetupLogger() {
@@ -23,15 +32,25 @@ func SetupLogger() {
 		return 
 	}
 
-	out := log_output_file{make(chan []byte, 64)}
+	out := log_output_file{
+		O: make(chan *log_buff, LOG_BUFF_COUNT),
+		getBuf: make(chan *log_buff, LOG_BUFF_COUNT),
+	}
+
+	for i:=0; i<LOG_BUFF_COUNT; i++ {
+		out.getBuf <- &log_buff{[LOG_BUFF_SIZE]byte{}, 0}
+	}
+
 	log.SetOutput(&out)
 	c := 0
 
 	go (func() {
 		for b := range out.O {
-			os.Stdout.Write(b)
-			file.Write(b)
+			d := b.b[:b.l]
+			os.Stdout.Write(d)
+			file.Write(d)
 			file.Sync()
+			out.getBuf <- b
 
 			c++
 			if c > 100 {
@@ -45,23 +64,32 @@ func SetupLogger() {
 				} else {
 					log.Println("Get log info", err)
 				}
+				c = 0
 			}
 		}
 	})()
 }
 
 
+type log_buff struct {
+	b 	[LOG_BUFF_SIZE]byte
+	l 	int
+}
+
+
 type log_output_file struct {
-	O 	chan []byte
+	O 			chan *log_buff
+	getBuf	chan *log_buff
 }
 
 
 func (log *log_output_file) Write(p []byte) (n int, err error) {
-	l := len(p)
-	c := make([]byte, l)
-	copy(c, p)
+	// c := make([]byte, l)
+	c := <- log.getBuf
+	c.l = len(p)
+	copy(c.b[:], p)
 	log.O <- c
-	return l, err
+	return c.l, err
 }
 
 
