@@ -125,8 +125,11 @@ func dev_upsert(h *Ht) interface{} {
 
 
 func dev_delete(h *Ht) interface{} {
-  //TODO: 不能删除有数据的设备, 不能删除挂接在总线上的设备
+  //TODO: 不能删除挂接在总线上的设备
   id := checkstring("设备ID", h.Get("id"), 2, 20)
+  if err := delete_dev_data(h.Ctx(), id); err != nil {
+    return HttpRet{5, "删除设备数据失败", err.Error()}
+  }
   return h.Crud().Delete(id)
 }
 
@@ -151,4 +154,18 @@ func GetDeviceRefProto(ctx context.Context, protoid string) bool {
   }
   defer cur.Close(ctx)
   return cur.Next(ctx)
+}
+
+
+//
+// 更新设备的数据状态字段
+//
+func UpdateDataCount(ctx context.Context, devid string, t *time.Time) error {
+  filter := bson.M{ "_id": devid }
+  up := bson.M{
+    "$set" : bson.M{ "dd" : t },
+    "$inc" : bson.M{ "dc" : 1 },
+  }
+  _, err := mg.Collection(core.TableDevice).UpdateOne(ctx, filter, up)
+  return err
 }

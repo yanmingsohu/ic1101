@@ -366,11 +366,11 @@ func _bus_start(ctx context.Context, id string) error {
   }
 
   event := &bus_event{}
-  event.init(id, tk)
   info, err := bus.NewInfo(findbus.Id, findbus.Type, tk, event)
   if err != nil {
     return err
   }
+  event.init(id, tk, info)
 
   sp , err := bus.GetSlotParser(findbus.Type)
   if err != nil {
@@ -437,15 +437,17 @@ type bus_event struct {
   coll      *mongo.Collection
   for_bus   *mongo.Collection
   ctx       context.Context
+  info      *bus.BusInfo
 }
 
 
-func (r *bus_event) init(id string, tk core.Tick) {
+func (r *bus_event) init(id string, tk core.Tick, i *bus.BusInfo) {
   r.id = id
   r.datas = make(map[string]*w_data_slot)
   r.ctrls = make(map[string]*w_ctrl_slot)
   r.main_tk = tk
   r.ctx = context.Background()
+  r.info = i
 }
 
 
@@ -557,6 +559,7 @@ func (r *bus_event) OnCtrlExit(s bus.Slot) {
 
 
 func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
+  // 发送数据到总线实时数据表
   key := "data."+ s.String()
   up := bson.M{
     "$inc" : bson.M{ key +".count": 1 },
@@ -566,7 +569,21 @@ func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
     },
   }
   update_bus_ldata(r.ctx, r.id, up)
-  //TODO: 发送数据到设备数据表
+  
+  // 发送数据到设备数据表
+  info, has := r.datas[s.String()]
+  if !has {
+    r.info.Log("系统错误, 在未配置的数据槽上发送数据 "+ s.String())
+  }
+  err := send_dev_data(r.ctx, &info.BusSlot, d, t)
+  if err != nil {
+    r.info.Log("保存数据错误, "+ err.Error())
+  }
+  
+  err = UpdateDataCount(r.ctx, info.Dev, t)
+  if err != nil {
+    r.info.Log("更新设备状态错误, "+ err.Error())
+  }
 }
 
 
