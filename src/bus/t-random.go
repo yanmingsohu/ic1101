@@ -107,13 +107,13 @@ type random_bus struct {
 
 
 func (r *random_bus) start(i *BusInfo) error {
-  i.log("总线启动")
+  i.Log("总线启动")
   return nil
 }
 
 func (r *random_bus) sync_data(i *BusInfo, t *time.Time) error {
   for _, s := range i.datas {
-    d := IntData{rand.Int()}
+    d := IntData{rand.Int() % 999}
     i.event.OnData(s, t, &d)
   }
   return nil
@@ -126,7 +126,7 @@ func (r *random_bus) send_ctrl(s Slot, d DataWrap, t *time.Time) error {
 
 
 func (r *random_bus) stop(i *BusInfo) {
-  i.log("总线停止")
+  i.Log("总线停止")
 }
 
 

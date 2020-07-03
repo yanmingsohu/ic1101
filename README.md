@@ -1,9 +1,13 @@
 # IC1101
 
 
-# 测试/开发
+## 测试/开发
 
 `air`
+
+## 运行测试用例
+
+`go test ic1101/src/test`
 
 
 # TODO
@@ -24,6 +28,7 @@
 * [Select2](https://select2.org/data-sources/ajax)
 * [modbus从站模拟器](https://www.modbusdriver.com/diagslave.html)
 * [Logger](https://godoc.org/go.uber.org/zap)
+* [chart](https://github.com/apache/incubator-echarts)
 
 
 # 协议参考
