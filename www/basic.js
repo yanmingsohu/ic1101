@@ -197,14 +197,14 @@ function ajaxform(jdom) {
 // _convert: 可选的数据转换器, 必须返回数组, 默认返回 api 返回的数组
 //
 function smartTable(jdom, _convert) {
-  const api    = jdom.attr('api');
-  const form   = $(jdom.attr('form') || '<form>');
-  const tbody  = jdom.find("tbody");
-  const header = [];
-  let rows   = 0;
-  let oldtr  = jdom.find("tr");
+  const api     = jdom.attr('api');
+  const form    = $(jdom.attr('form') || '<form>');
+  const tbody   = jdom.find("tbody");
+  const header  = [];
+  let rows      = 0;
+  let oldtr     = jdom.find("tr");
   let totalpage = 0;
-  let currpage = 0;
+  let currpage  = 0;
   let pagedom;
   let search_filter_changed;
   let convert_data = _convert || _get_array_data;
@@ -632,14 +632,17 @@ function center(where, who) {
 //   table_convert : 表格数据转换器
 //   copy_edit: function(data, targetDom) : 
 //      用当前数据初始化编辑子页面, 适用于 create_page/edit_page
+//   button_on_table_select:[] : 可选的, 数组中的按钮在表格选中后启用
 // }
 //
 // table 附加事件: button_disabled(event, bool)
 //
 function commandCrudPage(conf) {
+  const buttons = conf.button_on_table_select || [];
   smartTable(conf.table, conf.table_convert);
   deleteButton(conf.delete);
   update_button(true);
+  buttons.push(conf.edit, conf.delete);
 
   conf.delete.on('delete_success', refreshTableData);
 
@@ -679,8 +682,11 @@ function commandCrudPage(conf) {
   }
 
   function update_button(dis) {
-    conf.edit.prop('disabled', dis);
-    conf.delete.prop('disabled', dis);
+    for (let i=buttons.length-1; i>=0; --i) {
+      if (buttons[i]) {
+        buttons[i].prop('disabled', dis);
+      }
+    }
     conf.table.trigger("button_disabled", dis);
   }
 }

@@ -55,8 +55,8 @@
                 class="pure-button button-secondary">设备信息</button>
             <button type="button" id='data_dev'
                 class="pure-button button-secondary">数据</button>
-            <button type="button" id='ctrl_dev'
-                class="pure-button button-secondary">控制</button>
+            <!-- <button type="button" id='ctrl_dev'
+                class="pure-button button-secondary">控制</button> -->
             <button type="button" id='delete_dev' api='dev_delete'
                 class="pure-button button-warning">删除</button>
           </div>
@@ -73,7 +73,7 @@
       <th cn='desc'>说明</th>
       <th cn='changeid'>版本</th>
       <th cn='dc'>数据量</th>
-      <th cn='dd'>数据时间</th>
+      <th cn='dd' format='date'>数据时间</th>
       <th cn='md' format='date'>修改时间</th>
       <th cn='cd' format='date'>创建时间</th>
     </thead>
@@ -88,6 +88,7 @@ jQuery(function($) {
   const table = root.find("#dev_table");
   const del = root.find("#delete_dev");
   const edit = root.find("#edit_dev");
+  const look_data = root.find("#data_dev");
 
   ic.select2fromApi(proto, function(r) {
     if (r.data) {
@@ -100,6 +101,16 @@ jQuery(function($) {
       });
       return r.data;
     }
+  });
+
+  look_data.click(function() {
+    let d = table.data("select_row");
+    let cd = ic.contentDialog("device/dev-data.html");
+    // cd.on("closed", function() {});
+    cd.on("opend", function() {
+      cd.find("[name=dev_id]").val(d.id);
+      cd.find("[name=proto_id").val(d.tid);
+    });
   });
 
   create.submit(function() {
@@ -139,6 +150,7 @@ jQuery(function($) {
     edit_page : 'device/update.html',
     table,
     delete : del,
+    button_on_table_select : [look_data],
 
     copy_edit(data, target) {
       target.find("[name=id]").val(data.id);
