@@ -1,13 +1,14 @@
 <div id='bus_real_data_frame'>
-  <h2>总线实时状态</h2><hr/>
+  <h3>总线实时状态</h3><hr/>
   <input name='id' type='hidden'/>
 
 <style>
 #bus_real_data_frame .data_table, #bus_real_data_frame .logs {
-  font-size: 10px;
+  font-size: 11px;
 }
 .data_table {
-  border-collapse: separate; margin-top: 55px;
+  border-collapse: separate; margin-top: 55px;  table-layout : fixed;
+  font-family: monospace;
 }
 .data_table tr {
   text-align: left; padding-top: 20px;
@@ -34,17 +35,17 @@
 
   <table class='data_table'>
     <tbody>
-      <tr><th>总线ID</th><td k='_id'></td>
+      <tr><th>总线ID</th><td k='_id' colspan='2'></td>
           <th>状态</th><td k='status' colspan='3'></td>
-          <td colspan='5'></td></tr>
+          <td colspan='6'></td></tr>
 
-      <tr><th>首次采集时间</th><td k='start_t' conv='time'></td>
+      <tr><th>首次采集时间</th><td k='start_t' conv='time' colspan='2'></td>
           <th>采集间隔</th><td k='inter_t' conv='duration' colspan='3'></td>
-          <td colspan='5'></td></tr>
+          <td colspan='6'></td></tr>
 
-      <tr><th>最后采集时间</th><td k='last_t' conv='time'></td>
+      <tr><th>最后采集时间</th><td k='last_t' conv='time' colspan='2'></td>
           <th>页面刷新时间</th><td k='page_t' colspan='3'></td>
-          <td colspan='5'></td></tr>
+          <td colspan='6'></td></tr>
     </tbody>
 
     <tbody>
@@ -56,7 +57,7 @@
         <th>设备数据名</th>
         <th>数据类型</th>
         <th>采集次数</th>
-        <th colspan="4"></th>
+        <th colspan="6"></th>
       </tr>
     </tbody>
 
@@ -69,7 +70,7 @@
         <td k='data_name'></td>
         <td k='data_type'></td>
         <td k='count'></td>
-        <td colspan="4"></td>
+        <td colspan="6"></td>
       </tr>
     </tbody>
 
@@ -84,9 +85,9 @@
         <th>采集次数</th>
 
         <th>状态</th>
-        <th>首次发送时间</th>
+        <th colspan='2'>首次发送时间</th>
         <th>发送间隔</th>
-        <th>最后发送时间</th>
+        <th colspan='2'>最后发送时间</th>
       </tr>
     </tbody>
 
@@ -101,13 +102,13 @@
         <td k='count'></td>
 
         <td k='status'></td>
-        <td k='start_t' conv='time'></td>
+        <td k='start_t' conv='time' colspan='2'></td>
         <td k='inter_t' conv='duration'></td>
-        <td k='last_t' conv='time'></td>
+        <td k='last_t' conv='time' colspan='2'></td>
       </tr>
     </tbody>
 
-    <tbody><tr><th colspan="11"></th></tr></tbody>
+    <tbody><tr><th colspan="13"></th></tr></tbody>
 
   </table>
 
@@ -172,8 +173,50 @@ jQuery(function($) {
       if (conv && conv_func[conv]) {
         v = conv_func[conv](v);
       }
-      thiz.html(v);
+      // thiz.html(v);
+      changeText(thiz, v);
     });
+  }
+
+
+  function changeText(dom, v) {
+    v = v +"";
+    if (dom.text() == v) return;
+    dom.trigger("stop_change");
+    const B = '■';
+    let running = true;
+    let arr_t = dom.text().split('');
+    let arr_s = v.split('');
+    let len = Math.max(arr_t.length, arr_s.length);
+    let tid;
+    let dly_time = Math.min(1000/len, 200);
+
+    let i = -1;
+    up(i);
+    setTimeout(_next, dly_time);
+
+    dom.one('stop_change', function() {
+      clearTimeout(tid);
+      running = false;
+      dom.text(v);
+    });
+    
+    function _next() {
+      if (++i < len) {
+        up(i, arr_s[i]);
+        if (running) {
+          tid = setTimeout(_next, dly_time);
+        }
+      } else {
+        up(i);
+      }
+    }
+
+    function up(i, c) {
+      if (i >= 0) arr_t[i] = c;
+      if (i < len) arr_t[i+1] = B;
+      dom.text(arr_t.join(''));
+    }
   }
 
 

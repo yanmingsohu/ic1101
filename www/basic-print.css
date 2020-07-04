@@ -1,0 +1,19 @@
+html {
+  font-size: 10px;
+}
+
+#main_menu, form, h2, hr, .popo_message, .closeframe {
+  display: none;
+}
+
+tr, td, th {
+  border: 1px solid #000 !important;
+  padding: 1px 3px !important;
+}
+
+.ic_dialog {
+  position: absolute; top: 0; left: 0; 
+  height: 1000%; width: 100%; 
+  border-radius: 0!important;
+  box-shadow: 0 0 0!important;
+}
