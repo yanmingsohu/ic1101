@@ -354,6 +354,7 @@ func bus_start(h *Ht) interface{} {
   return HttpRet{0, "总线已启动", nil}
 }
 
+
 func _bus_start(ctx context.Context, id string) error {
   findbus := core.Bus{}
   if err := GetBus(id, ctx, &findbus); err != nil {
@@ -453,11 +454,13 @@ func (r *bus_event) init(id string, tk core.Tick, i *bus.BusInfo) {
 
 func (r *bus_event) push_data(d core.BusSlot, s bus.Slot) {
   r.datas[d.SlotID] = &w_data_slot{d, s}
+  device_ref.Add(d.Dev)
 }
 
 
 func (r *bus_event) push_ctrl(c core.BusCtrl, s bus.Slot, t core.Tick) {
   r.ctrls[c.SlotID] = &w_ctrl_slot{c, s, t}
+  device_ref.Add(c.Dev)
 }
 
 
@@ -536,6 +539,14 @@ func update_state(ctx context.Context, id string, s bus.BusState) {
 func (r *bus_event) OnStopped() {
   update_bus(r.ctx, r.id, bus.BusStateStop)
   update_bus_ldata(r.ctx, r.id, bson.M{ "status": bus.BusStateStop.String() })
+
+  for _, d := range r.datas {
+    device_ref.Free(d.Dev)
+  }
+
+  for _, c := range r.ctrls {
+    device_ref.Free(c.Dev)
+  }
 }
 
 

@@ -11,6 +11,9 @@ import (
 )
 
 
+var device_ref = core.NewRefCount()
+
+
 func installDeviceService(b *brick.Brick) {  
   mg.CreateIndex(core.TableDevice, &bson.D{{"_id", "text"}, {"desc", "text"}})
   mg.CreateIndex(core.TableDevice, &bson.D{{"tid", 1}})
@@ -50,6 +53,9 @@ func dev_upsert(h *Ht) interface{} {
   exists := bson.M{}
   if nil == GetDevice(h.Ctx(), id, exists) {
     tid = exists["tid"].(string)
+    if device_ref.Count(id) > 0 {
+      return HttpRet{5, "不能修改使用中的设备", id}
+    }
   } else {
     tid = checkstring("设备原型ID", h.Get("tid"), 2, 20)
   }
@@ -125,8 +131,10 @@ func dev_upsert(h *Ht) interface{} {
 
 
 func dev_delete(h *Ht) interface{} {
-  //TODO: 不能删除挂接在总线上的设备
   id := checkstring("设备ID", h.Get("id"), 2, 20)
+  if device_ref.Count(id) > 0 {
+    return HttpRet{5, "不能删除使用中的设备", id}
+  }
   if err := delete_dev_data(h.Ctx(), id); err != nil {
     return HttpRet{5, "删除设备数据失败", err.Error()}
   }
