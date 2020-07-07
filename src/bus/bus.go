@@ -102,6 +102,7 @@ type Bus interface {
 type BusInfo struct {
   // 总线id
   id string
+  uri *url.URL
   // 总线类型, 在 bus.busInfos 中
   typeName string
   // 定时抓取数据的定时器
@@ -129,17 +130,19 @@ type ctrl_slot struct {
 //
 // 创建一个用于启动总线的数据对象
 //
+// uri -- 用于创建服务器/连接客户端
 // id  -- 总线id
 // typ -- 总线类型
 // tk  -- 总线数据定时器, 如果该定时器停止, 则所有相关任务都会停止, 总线退出
 // ev  -- 事件接收器
 //
-func NewInfo(id string, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error) {
+func NewInfo(uri, id, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error) {
   if id == "" {
     return nil, errors.New("id 不能为空")
   }
-  if !HasTypeName(typ) {
-    return nil, errors.New("无效的总线类型 "+ typ)
+  sp, err := GetSlotParser(typ)
+  if err != nil {
+    return nil, err
   }
   if tk == nil {
     return nil, errors.New("必须提供定时器")
@@ -150,7 +153,11 @@ func NewInfo(id string, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error)
   if ev == nil {
     return nil, errors.New("必须提供事件监听器")
   }
-  return &BusInfo{id, typ, tk, ev, BusStateStartup, 
+  u, err := sp.ParseURI(uri)
+  if err != nil {
+    return nil, err
+  }
+  return &BusInfo{id, u, typ, tk, ev, BusStateStartup, 
       nil, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10), 
       make([]string, 0, MaxLogCount)} , nil
 }

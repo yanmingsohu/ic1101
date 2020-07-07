@@ -367,7 +367,7 @@ func _bus_start(ctx context.Context, id string) error {
   }
 
   event := &bus_event{}
-  info, err := bus.NewInfo(findbus.Id, findbus.Type, tk, event)
+  info, err := bus.NewInfo(findbus.Uri, findbus.Id, findbus.Type, tk, event)
   if err != nil {
     return err
   }

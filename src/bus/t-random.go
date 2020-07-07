@@ -128,8 +128,3 @@ func (r *random_bus) send_ctrl(s Slot, d DataWrap, t *time.Time) error {
 func (r *random_bus) stop(i *BusInfo) {
   i.Log("总线停止")
 }
-
-
-func (*random_bus) SendCtrl(s Slot, d DataWrap) error {
-  return nil
-}

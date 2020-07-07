@@ -180,7 +180,11 @@ jQuery(function($) {
 
 
   function changeText(dom, v) {
-    v = v +"";
+    if (v === null || v === undefined) {
+      v = "";
+    } else {
+      v += "";
+    }
     if (dom.text() == v) return;
     dom.trigger("stop_change");
     const B = '■';

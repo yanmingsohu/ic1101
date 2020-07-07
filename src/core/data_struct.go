@@ -440,6 +440,7 @@ Table: bus {
 */
 type Bus struct {
   Id      string             `bson:"_id"`
+  Uri     string             `bson:"uri"`
   Desc    string             `bson:"desc"`
   Timer   string             `bson:"timer"`
   Type    string             `bson:"type"`

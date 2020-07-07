@@ -6,6 +6,8 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
+	github.com/goburrow/modbus v0.1.0
+	github.com/goburrow/serial v0.1.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1
 	github.com/imdario/mergo v0.3.9 // indirect
