@@ -112,14 +112,13 @@ func (c *Crud) Update(id string, data interface{}, opts ...*options.UpdateOption
     return nil
   }
 
-  if res.MatchedCount < 1 {
-    c.h.Json(HttpRet{1, c.info +"数据不存在", nil})
-    return nil
-  }
-
   if res.UpsertedCount > 0 {
     c.h.Json(HttpRet{0, c.info +" 已创建", id})
   } else {
+    if res.MatchedCount < 1 {
+      c.h.Json(HttpRet{1, c.info +"数据不存在", nil})
+      return nil
+    }
     c.h.Json(HttpRet{0, c.info +" 已更新", id})
   }
   return nil
