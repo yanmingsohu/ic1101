@@ -102,7 +102,7 @@ type Context interface {
   // 如果 dtu 不支持该方法则总是返回错误,
   // Conn.Close() 方法不能关闭连接, 并且总是返回错误.
   //
-  OpenConn() (net.Conn, error)
+  GetConn() (net.Conn, error)
 }
 
 

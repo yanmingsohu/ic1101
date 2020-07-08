@@ -16,7 +16,7 @@
 
 <body class='fullbody'>
 <div id='main_menu'>
-  <div class='title'><span>IC 1101</span></div>
+  <div class='title'><span>IOT-IC 1101</span></div>
   <div class='menus'>
 
     <div class='s1'>现场数据</div>
@@ -27,7 +27,7 @@
     <div class='s1'>报表</div>
       <div class='s2'>报表</div>
       <div class='s2'>图表</div>
-      <div class='s2'>工艺图</div>
+      <div class='s2'>3D 工艺图</div>
       <div class='s2'>计费</div>
 
     <div class='s1'>元数据</div>
@@ -80,15 +80,21 @@ $('#main_menu .s2').click(function() {
   let href = thiz.attr("href");
   if (!href) return;
   body.trigger("uninstall_main_page");
-  ic.loadpage(href);
-  location.hash = href;
+  load(href);
 });
+
+function load(url) {
+  ic.loadpage(url);
+  location.hash = url;
+}
 
 function checkHash() {
   let h = location.hash;
   if (h[0] == '#') h = h.substr(1);
   if (h) {
     ic.loadpage(h);
+  } else {
+    load("default.html");
   }
 }
 

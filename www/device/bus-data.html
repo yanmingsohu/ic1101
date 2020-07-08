@@ -164,7 +164,9 @@ jQuery(function($) {
 
       slot(ret.data.data, "#bus_real_data_template", data_dom);
       slot(ret.data.ctrl, "#bus_real_ctrl_template", ctrl_dom);
-      logs.html(ret.data.logs.join("<br/>"));
+      if (ret.data.logs) {
+        logs.html(ret.data.logs.join("<br/>"));
+      }
     });
   }
 

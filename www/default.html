@@ -1,0 +1,92 @@
+<div>
+  <style>
+    .logo {
+      font-size: 90px; margin-top: 20%;
+      font-family: fantasy; margin-left: 31%;
+    }
+    .icons img {
+      position: fixed; width: 80px; opacity: 0.1;
+    }
+  </style>
+
+  <div class='icons hide'>
+    <div class='row'>
+      <img src='icon/2922260.png'/>
+      <img src='icon/2895129.png'/>
+      <img src='icon/2905945.png'/>
+      <img src='icon/2922420.png'/>
+    </div>
+    <div class='row'>
+      <img src='icon/2922451.png'/>
+      <img src='icon/2922466.png'/>
+      <img src='icon/2955540.png'/>
+      <img src='icon/2975103.png'/>
+    </div>
+    <div class='row'>
+      <img src="icon/746659.svg"/>
+      <img src="icon/886614.svg"/>
+      <img src="icon/1034626.svg"/>
+      <img src="icon/2991079.svg"/>
+    </div>
+    <div class='row'>
+      <img src="icon/1554170.svg"/>
+      <img src="icon/2094405.svg"/>
+      <img src="icon/2905947.svg"/>
+      <img src="icon/2905998.svg"/>
+    </div>
+    <div class='row'>
+      <img src="icon/2922310.svg"/>
+      <img src="icon/2922317.svg"/>
+      <img src="icon/2922395.svg"/>
+      <img src="icon/2972458.svg"/>
+    </div>
+    <div class='row'>
+      <img src="icon/2922415.svg"/>
+      <img src="icon/2922429.svg"/>
+      <img src="icon/2922436.svg"/>
+      <img src="icon/2922461.svg"/>
+    </div>
+  </div>
+  <div class='logo'>IOT-IC1101</div>
+
+<script>
+jQuery(function($) {
+  const icons = $(".icons img");
+  const win = $(window);
+
+  icons.each(function() {
+    const CC = 100;
+    const thiz = $(this);
+    const off = {
+      top  : Math.random() * win.height(),
+      left : Math.random() * win.width() + 300,
+    }
+    let time = 0;
+    let rot = Math.random() * 360;
+    let t = Math.random() - 0.5;
+    let l = Math.random() - 0.5;
+    update();
+
+    const tid = setInterval(function() {
+      if (++time > CC) {
+        clearInterval(tid);
+      }
+      let c = CC/2;
+      t = t - t/c;
+      l = l - l/c;
+      rot += t;
+      off.top += t;
+      off.left += l;
+      update();
+    }, 20);
+
+    function update() {
+      thiz.offset(off);
+      thiz.css({transform: "rotate("+ rot +"deg)"});
+    }
+  });
+
+  $(".icons").show();
+});
+</script>
+</div>

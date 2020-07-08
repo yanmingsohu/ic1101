@@ -104,7 +104,7 @@ func (*bus_modbus_ct) ParseURI(uri string) (*url.URL, error) {
   case "rtuovertcp":
   case "dtu":
   default:
-    return nil, errors.New("scheme 只支持 tcp://, rtu://, rtuovertcp://, dtu:// 模式");
+    return nil, errors.New("scheme 必须是: tcp://, rtu://, rtuovertcp://, dtu://");
   }
   return u, nil
 }
