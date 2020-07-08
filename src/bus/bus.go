@@ -192,7 +192,7 @@ func (i *BusInfo) start(b Bus) error {
     return errors.New("总线已经启动")
   }
   if err := b.start(i); err != nil {
-    i.st = BusStateStop
+    i.st = BusStateFailStart
     return err
   }
   i.bs = b
@@ -305,6 +305,7 @@ type DataWrap interface {
   Int64()   int64
   String()  string
   Float()   float32
+  Float64() float64
   Bool()    bool
 }
 

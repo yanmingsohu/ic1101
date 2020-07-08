@@ -2,12 +2,12 @@ module ic1101
 
 go 1.13
 
+replace github.com/simonvetter/modbus => github.com/yanmingsohu/modbus v1.0.0
+
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
-	github.com/goburrow/modbus v0.1.0
-	github.com/goburrow/serial v0.1.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1
 	github.com/imdario/mergo v0.3.9 // indirect
@@ -25,6 +25,7 @@ require (
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/simonvetter/modbus v0.0.0-00010101000000-000000000000
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/valyala/fasthttp v1.14.0 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect

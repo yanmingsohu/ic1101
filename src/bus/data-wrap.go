@@ -23,6 +23,11 @@ func (r *IntData) Float() float32 {
 }
 
 
+func (r *IntData) Float64() float64 {
+  return float64(r.D)
+}
+
+
 func (r *IntData) String() string {
   return strconv.Itoa(r.D)
 }
@@ -53,12 +58,52 @@ func (r *Int64Data) Float() float32 {
 }
 
 
+func (r *Int64Data) Float64() float64 {
+  return float64(r.D)
+}
+
+
 func (r *Int64Data) String() string {
   return strconv.FormatInt(r.D, 10)
 }
 
 
 func (r *Int64Data) Bool() bool {
+  return r.D != 0
+}
+
+
+type UInt64Data struct {
+  D uint64
+}
+
+
+func (r *UInt64Data) Int() int {
+  return int(r.D)
+}
+
+
+func (r *UInt64Data) Int64() int64 {
+  return int64(r.D)
+}
+
+
+func (r *UInt64Data) Float() float32 {
+  return float32(r.D)
+}
+
+
+func (r *UInt64Data) Float64() float64 {
+  return float64(r.D)
+}
+
+
+func (r *UInt64Data) String() string {
+  return strconv.FormatUint(r.D, 10)
+}
+
+
+func (r *UInt64Data) Bool() bool {
   return r.D != 0
 }
 
@@ -80,6 +125,11 @@ func (r *FloatData) Int64() int64 {
 
 func (r *FloatData) Float() float32 {
   return float32(r.D)
+}
+
+
+func (r *FloatData) Float64() float64 {
+  return float64(r.D)
 }
 
 
@@ -110,6 +160,11 @@ func (r *Float64Data) Int64() int64 {
 
 func (r *Float64Data) Float() float32 {
   return float32(r.D)
+}
+
+
+func (r *Float64Data) Float64() float64 {
+  return r.D
 }
 
 
@@ -155,6 +210,15 @@ func (r *StringData) Float() float32 {
 }
 
 
+func (r *StringData) Float64() float64 {
+  v, e := strconv.ParseFloat(r.D, 64)
+  if e != nil {
+    return 0
+  }
+  return v
+}
+
+
 func (r *StringData) String() string {
   return r.D
 }
@@ -197,6 +261,14 @@ func (r *BoolData) Int64() int64 {
 
 
 func (r *BoolData) Float() float32 {
+  if r.D {
+    return 1
+  }
+  return 0
+}
+
+
+func (r *BoolData) Float64() float64 {
   if r.D {
     return 1
   }
