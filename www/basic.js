@@ -25,7 +25,9 @@ const ic = window.ic = {
   numberScope,
   dateTime,
   setIntervalDom,
+  onESC,
 };
+
 
 const format_fn = {
   'date': function(d) {
@@ -581,6 +583,10 @@ function contentDialog(url) {
     return false;
   });
 
+  onESC(function() {
+    close.click();
+  });
+
   function resize() {
     content.width(content_frame.outerWidth());
     content.height(window.innerHeight);
@@ -922,6 +928,34 @@ function setIntervalDom(jdom, cb, time) {
     }
   });
   return id;
+}
+
+
+//
+// 接受键盘 ESC 事件, 并在按下后调用 cb;
+// 事件不会立即触发所有回调, 而是像堆栈一样后进先出.
+//
+function onESC(cb) {
+  let st = win.data("esc_stack");
+  if (!st) {
+    st = [];
+    win.data("esc_stack", st);
+    win.keydown(onKey);
+
+    function onKey(e) {
+      if (e.keyCode == 27 /* ESC */) {
+        try {
+          // console.log("ESC");
+          st.pop()()
+        } catch(e) {}
+      }
+      if (st.length < 1) {
+        win.off("keydown", onKey);
+        win.removeData("esc_stack");
+      }
+    }
+  }
+  st.push(cb);
 }
 
 });
