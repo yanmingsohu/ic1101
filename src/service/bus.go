@@ -454,16 +454,17 @@ func (r *bus_event) init(id string, tk core.Tick, i *bus.BusInfo) {
 
 func (r *bus_event) push_data(d core.BusSlot, s bus.Slot) {
   r.datas[d.SlotID] = &w_data_slot{d, s}
-  device_ref.Add(d.Dev)
 }
 
 
 func (r *bus_event) push_ctrl(c core.BusCtrl, s bus.Slot, t core.Tick) {
   r.ctrls[c.SlotID] = &w_ctrl_slot{c, s, t}
-  device_ref.Add(c.Dev)
 }
 
 
+//
+// 更新数据库状态: 总线状态, 总线实时数据; 增加设备引用计数.
+//
 func (r *bus_event) update(ctx context.Context, i *bus.BusInfo) {
   data := bson.M{}
   for _, d := range r.datas {
@@ -475,6 +476,7 @@ func (r *bus_event) update(ctx context.Context, i *bus.BusInfo) {
       "data_type" : d.Type.String(),
       "data_desc" : d.Desc,
     }
+    device_ref.Add(d.Dev)
   }
 
   ctrl := bson.M{}
@@ -492,6 +494,7 @@ func (r *bus_event) update(ctx context.Context, i *bus.BusInfo) {
       "inter_t"   : c.t.Duration(),
       "status"    : "等待发送",
     }
+    device_ref.Add(c.Dev)
   }
 
   state := i.State()
