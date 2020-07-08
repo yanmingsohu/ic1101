@@ -528,9 +528,13 @@ function ynDialog(msg, cb) {
     cb(null, true);
   });
 
-  t.find(".no").click(function() {
+  let no = t.find(".no").click(function() {
     t.hide(100, function() { t.remove() });
     cb(null, false);
+  });
+
+  onESC(function() {
+    no.click();
   });
 }
 
@@ -934,6 +938,8 @@ function setIntervalDom(jdom, cb, time) {
 //
 // 接受键盘 ESC 事件, 并在按下后调用 cb;
 // 事件不会立即触发所有回调, 而是像堆栈一样后进先出.
+// 由于会一直保存回调函数, 当回调中的上下文已经无效, 
+// 需要保证回调后不产生副作用.
 //
 function onESC(cb) {
   let st = win.data("esc_stack");
