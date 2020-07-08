@@ -19,7 +19,7 @@
 .data_table th {
   vertical-align: bottom; border-top: 2px solid #999;
 }
-.data_table [k=value], [k=count], [k=last_t], [k=page_t] {
+.data_table .dym, [k=value], [k=count], [k=last_t], [k=page_t] {
   background-color: #eee;
 }
 .data_table tbody {
@@ -31,21 +31,24 @@
 .data_table [k=slot_desc] {
   font-weight: bold;
 }
+.data_table span {
+  display: inline-block;
+}
+.data_table .sec_row td {
+  border-top-color: #eee;
+}
 </style>
 
   <table class='data_table'>
     <tbody>
       <tr><th>总线ID</th><td k='_id' colspan='2'></td>
           <th>状态</th><td k='status' colspan='3'></td>
-          <td colspan='6'></td></tr>
 
       <tr><th>首次采集时间</th><td k='start_t' conv='time' colspan='2'></td>
           <th>采集间隔</th><td k='inter_t' conv='duration' colspan='3'></td>
-          <td colspan='6'></td></tr>
 
       <tr><th>最后采集时间</th><td k='last_t' conv='time' colspan='2'></td>
           <th>页面刷新时间</th><td k='page_t' colspan='3'></td>
-          <td colspan='6'></td></tr>
     </tbody>
 
     <tbody>
@@ -57,21 +60,10 @@
         <th>设备数据名</th>
         <th>数据类型</th>
         <th>采集次数</th>
-        <th colspan="6"></th>
       </tr>
     </tbody>
 
     <tbody class='data_body'>
-      <tr class='html_template' id='bus_real_data_template'>
-        <td k='slot_desc'></td>
-        <td k='slot_id'></td>
-        <td k='value'></td>
-        <td k='dev_id'></td>
-        <td k='data_name'></td>
-        <td k='data_type'></td>
-        <td k='count'></td>
-        <td colspan="6"></td>
-      </tr>
     </tbody>
 
     <tbody>
@@ -82,39 +74,54 @@
         <th>设备ID</th>
         <th>设备数据名</th>
         <th>数据类型</th>
-        <th>采集次数</th>
-
-        <th>状态</th>
-        <th colspan='2'>首次发送时间</th>
-        <th>发送间隔</th>
-        <th colspan='2'>最后发送时间</th>
+        <th>发送次数</th>
       </tr>
     </tbody>
 
     <tbody class='ctrl_body'>
-      <tr class='html_template' id='bus_real_ctrl_template'>
-        <td k='slot_desc'></td>
-        <td k='slot_id'></td>
-        <td k='value'></td>
-        <td k='dev_id'></td>
-        <td k='data_name'></td>
-        <td k='data_type'></td>
-        <td k='count'></td>
-
-        <td k='status'></td>
-        <td k='start_t' conv='time' colspan='2'></td>
-        <td k='inter_t' conv='duration'></td>
-        <td k='last_t' conv='time' colspan='2'></td>
-      </tr>
     </tbody>
 
-    <tbody><tr><th colspan="13"></th></tr></tbody>
-
+    <tbody><tr><th colspan="7"></th></tr></tbody>
   </table>
 
   <h4>日志</h4><hr/>
   <pre class='logs'></pre>
   <div class='ajax-message'></div>
+
+  <table class='hide'>
+  <tbody class='html_template' id='bus_real_data_template'>
+    <tr>
+      <td k='slot_desc'></td>
+      <td k='slot_id'></td>
+      <td k='value'></td>
+      <td k='dev_id'></td>
+      <td k='data_name'></td>
+      <td k='data_type'></td>
+      <td k='count'></td>
+    </tr>
+  </tbody>
+
+  <tbody class='html_template' id='bus_real_ctrl_template'>
+    <tr>
+      <td k='slot_desc' rowspan="2"></td>
+      <td k='slot_id'></td>
+      <td k='value'></td>
+      <td k='dev_id'></td>
+      <td k='data_name'></td>
+      <td k='data_type'></td>
+      <td k='count'></td>
+    </tr>
+    <tr class='sec_row'>
+      <td k='status'></td>
+      <td colspan='2'>首发: 
+        <span k='start_t' conv='time'></span></td>
+      <td>间隔:
+        <span k='inter_t' conv='duration'></span></td>
+      <td colspan='2' class='dym'>最新:
+        <span k='last_t' conv='time'></span></td>
+    </tr>
+  </tbody>
+  </table>
 
 <script>
 jQuery(function($) {
@@ -127,6 +134,7 @@ jQuery(function($) {
   const msg = root.find(".ajax-message");
   const logs = root.find(".logs");
   const dcatch = {};
+  let open_print = false;
   let updateTime = 3e3;
 
   const conv_func = {
@@ -136,6 +144,15 @@ jQuery(function($) {
 
   update_table();
   ic.setIntervalDom(root, update_table, updateTime);
+  bind_print_event();
+
+
+  function bind_print_event() {
+    const w = $(window);
+    w.off("beforeprint").off("afterprint");
+    w.on("beforeprint", ()=>{ open_print = true });
+    w.on("afterprint",  ()=>{ open_print = false });
+  }
 
 
   function update_table() {
@@ -156,7 +173,7 @@ jQuery(function($) {
     for (let n in data) {
       let dom = dcatch[n];
       if (!dom) {
-        dom = dcatch[n] = ic.getTemplate(tpl);
+        dom = dcatch[n] = ic.getTemplate(tpl).children();
         dom_insert.append(dom);
       }
       mapping(dom, data[n]);
@@ -206,6 +223,10 @@ jQuery(function($) {
     });
     
     function _next() {
+      if (open_print) {
+        dom.text(v);
+        return;
+      }
       if (++i < len) {
         up(i, arr_s[i]);
         if (running) {
