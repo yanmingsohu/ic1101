@@ -184,7 +184,7 @@
     </div>
   </div>
 
-  <script src='scanf/browser.js'></script>
+  <script src='scan.js/browser.js'></script>
   <script src='printf/sprintf.min.js'></script>
   <!-- 各个总线类型的配置子画面模板, 模板中必须有 name='slot_id' 的表单 -->
 
@@ -216,52 +216,92 @@
   <div class='html_template pure-u-1' type='modbus'>
     <input name='slot_id' type='hidden'/>
     <div class="pure-g">
-      <div class="pure-u-1 pure-u-md-1-4">
+      <div class="pure-u-1 pure-u-md-1-2">
         <label>从机地址</label>
-        <input class="pure-u-23-24 addr" placeholder="0 ~ 255"/>
+        <input class="pure-u-23-24 sl" placeholder="0 ~ 255"/>
       </div>
-      <div class="pure-u-1 pure-u-md-1-4">
+      <div class="pure-u-1 pure-u-md-1-2">
+        <label>数据地址</label>
+        <input class="pure-u-23-24 addr" placeholder="0 ~ 65535"/>
+      </div>
+      <div class="pure-u-1 pure-u-md-1-3">
         <label>动作</label>
         <select class="pure-u-23-24 act">
-          <option value="1" t='d'>读线圈</option>
-          <option value="2" t='d'>读离散量</option>
-          <option value="3" t='d'>读保持寄存器</option>
           <option value="4" t='d'>读输入寄存器</option>
+          <option value="1" t='d'>读线圈</option>
+          <option value="3" t='d'>读保持寄存器</option>
+          <option value="2" t='d'>读离散量</option>
 
           <option value="5" t='c'>写线圈</option>
           <option value="6" t='c'>写寄存器</option>
         </select>
       </div>
-      <div class="pure-u-1 pure-u-md-1-4">
+      <div class="pure-u-1 pure-u-md-1-3">
         <label>数据类型</label>
         <select class="pure-u-23-24 dt">
-          <option value="1">无符号1字节整数</option>
-          <option value="2">有符号1字节整数</option>
-          <option value="3">无符号2字节整数</option>
-          <option value="4">有符号2字节整数</option>
-          <option value="5">无符号4字节整数</option>
-          <option value="6">有符号4字节整数</option>
+          <option value="1">无符号2字节整数</option>
+          <option value="2">有符号2字节整数</option>
+          <option value="3">无符号4字节整数</option>
+          <option value="4">有符号4字节整数</option>
+          <option value="5">无符号8字节整数</option>
+          <option value="6">有符号8字节整数</option>
           <option value="7">4字节浮点数</option>
-          <option value="8">1字节整数</option>
+          <option value="8">8字节浮点数</option>
         </select>
       </div>
-      <div class="pure-u-1 pure-u-md-1-4">
-        <label>数据地址</label>
-        <input class="pure-u-23-24 da" placeholder="0 ~ 65535"/>
+      <div class="pure-u-1 pure-u-md-1-3">
+        <label>字节序</label>
+        <select class="pure-u-23-24 bit">
+          <option value="1">大端</option>
+          <option value="2">大端, 低位在前</option>
+          <option value="3">小端</option>
+          <option value="4">小端, 高位在前</option>
+        </select>
       </div>
     </div>
     <script>
-      //TODO: 完成完成完成完成完成完成完成完成完成
-      // slot 格式: !NN@CC$AAAA&T
       busConf['modbus'] = {
+        init(jroot) {
+          let fmt = this.fmt = "N%xS%xR%xT%xL%x";
+          let f = this.getFrom(jroot);
+
+          jroot.find(":input").change(update_value);
+          update_value();
+
+          function update_value() {
+            let id = sprintf(fmt, 
+              f.n.val(), f.c.val(), f.a.val(), f.t.val(), f.l.val());
+            jroot.find('[name=slot_id]').val(id);
+          }
+        },
         initData(jroot) {
+          jroot.find("[t=c]").remove();
+          this.init(jroot);
         },
         initCtrl(jroot) {
+          jroot.find("[t=d]").remove();
+          this.init(jroot);
         },
         // 页面初始化时调用
         setVal(jroot, v) {
           jroot.find('[name=slot_id]').val(v);
+          let ar = sscanf(v, this.fmt);
+          let f = this.getFrom(jroot);
+          f.n.val(ar[0] +"");
+          f.c.val(ar[1] +"");
+          f.a.val(ar[2] +"");
+          f.t.val(ar[3] +"");
+          f.l.val(ar[4] +"");
         },
+        getFrom(jroot) {
+          return {
+            n : jroot.find(".act"),
+            c : jroot.find(".sl"),
+            a : jroot.find(".addr"),
+            t : jroot.find(".dt"),
+            l : jroot.find(".bit"),
+          }
+        }
       };
     </script>
   </div>
@@ -357,6 +397,7 @@ jQuery(function($) {
 
 
     function on_table_select(_, v) {
+      if (isdata) v.isdata = true;
       del.data("id", id);
       del.data("parm", v);
       del.data("what", v.slot_desc +' ('+ v.slot_id +")");
