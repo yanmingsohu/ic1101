@@ -1,12 +1,21 @@
 package core
 
 import (
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha1"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"gopkg.in/yaml.v2"
 )
 
 /*
@@ -572,3 +581,100 @@ type BusLastData struct {
 }
 
 const TableBusData = "bus_ldata"
+
+
+/*L
+授权信息
+*/
+type Li struct {
+  AppName   string `bson:"appName"    yaml:"appName"`
+  Company   string `bson:"company"    yaml:"company"`
+  Dns       string `bson:"dns"        yaml:"dns"`
+  Email     string `bson:"email"      yaml:"email"`
+  BeginTime uint64 `bson:"beginTime"  yaml:"beginTime"`
+  EndTime   uint64 `bson:"endTime"    yaml:"endTime"`
+  Z         string `bson:"z"          yaml:"z"`
+  Api       ApiArr `bson:"api"        yaml:"api"`
+  Signature string `bson:"signature"  yaml:"signature"`
+}
+
+//
+// Init -> ComputeZ -> Verification
+//
+func (l *Li) Init(yamlstr string) error {
+  if err := yaml.Unmarshal([]byte(yamlstr), l); err != nil {
+    return err
+  }
+  l.AppName = GAppName
+}
+
+func (l *Li) String() (string, error) {
+  buf, err := yaml.Marshal(l)
+  if err != nil {
+    return "", err
+  }
+  return string(buf), nil
+}
+
+func (l *Li) Message() ([]byte) {
+  s := l.AppName + 
+       l.Company + 
+       l.Dns + 
+       l.Email +
+       strconv.FormatUint(l.BeginTime, 10) +
+       strconv.FormatUint(l.EndTime, 10) +
+       Singleline(l.Z) +
+       l.GetApi()
+  return []byte(s)
+}
+
+func (l *Li) ComputeZ() {
+  c := l.AppName + l.Company
+  a := pick_ref_count_by_user(c)
+  b := base64.StdEncoding.EncodeToString(a)
+  l.Z = Multiline(b)
+}
+
+func (l *Li) GetApi() string {
+  sort.Sort(&l.Api)
+  return "["+ strings.Join(l.Api, ", ") +"]"
+}
+
+func (l *Li) Verification() error {
+  if l.AppName != GAppName {
+    return errors.New("")
+  }
+  p, _ := pem.Decode(pick_session_info())
+  if p == nil {
+    return errors.New("")
+  }
+  pubk, err := x509.ParsePKIXPublicKey(p.Bytes)
+  if err != nil {
+    return err
+  }
+  signed, err := base64.StdEncoding.DecodeString(l.Signature)
+  if err != nil {
+    return err
+  }
+  hash := sha1.New()
+  hash.Write(l.Message())
+  sum := hash.Sum([]byte{})
+  return rsa.VerifyPKCS1v15(pubk.(*rsa.PublicKey), crypto.SHA1, sum, signed)
+}
+
+
+type ApiArr []string
+
+func (a *ApiArr) Len() int {
+  return len(*a)
+}
+
+func (a *ApiArr) Less(i, j int) bool {
+  return strings.Compare((*a)[i], (*a)[j]) < 0
+}
+
+func (a *ApiArr) Swap(i, j int) {
+  (*a)[i], (*a)[j] = (*a)[j], (*a)[i]
+}
+
+const TableSystem = "sys_info"

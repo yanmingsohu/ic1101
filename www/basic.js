@@ -82,6 +82,7 @@ function get(api, data, cb) {
       if (data.code === 0) {
         cb(null, data)
       } else if (data.code === 100) {
+        alert("用户未登录, 即将跳转到登录页面");
         location.href = "index.html";
       } else {
         let type = jxr.getResponseHeader("content-type");

@@ -33,6 +33,7 @@ func serviceList(b *brick.Brick) {
   installBusService(b)
   installLogService(b)
   installDeviceDataService(b)
+  installLicenseService(b)
 }
 
 
@@ -106,7 +107,9 @@ func notfound(h brick.Http) error {
 }
 
 
+//
 // 无授权检测
+//
 func dserv(b *brick.Brick, ctx *ServiceGroupContext, 
            name string, service ServiceHandler) {
   // name := funcName(h)
@@ -134,7 +137,9 @@ func dserv(b *brick.Brick, ctx *ServiceGroupContext,
 }
 
 
-// 检查登录/权限
+//
+// 检查登录/权限/ TODO:软件授权
+//
 func aserv(b *brick.Brick, ctx *ServiceGroupContext, 
            name string, handler ServiceHandler) {
   auth_arr = append(auth_arr, name)
@@ -156,6 +161,28 @@ func aserv(b *brick.Brick, ctx *ServiceGroupContext,
     } else {
       log.Print("[", user.Name, ":", name, "] ", h.Get("id"))
     }
+
+    return handler(h)
+  })
+}
+
+
+//
+// 必须是超级管理员用户, 没有其他限制
+//
+func lserv(b *brick.Brick, ctx *ServiceGroupContext, 
+           name string, handler ServiceHandler) {
+  dserv(b, ctx, name, func(h *Ht) interface{} {
+    v := h.Session().Get("user")
+    if v == nil {
+      h.Json(HttpRet{100, "用户未登录", nil})
+      return nil
+    }
+    user := v.(*core.LoginUser)
+    if !user.IsRoot {
+      h.Json(HttpRet{101, "只有超级用户可以执行该操作", nil})
+    }
+    log.Print("[", user.Name, ":", name, "] ", h.Get("id"))
 
     return handler(h)
   })
