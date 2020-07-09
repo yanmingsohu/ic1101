@@ -12,7 +12,11 @@ aQIDAQAB
 -----END PUBLIC KEY-----
 `
 
+// "无效的应用名称"
 var _cpu_more_1 = "无效的应用名称"
+// "公钥损坏"
 var _cpu_more_2 = "公钥损坏"
+// "应用需要授权"
 var C_cpu_mre_3 = "应用需要授权"
+// "授权过期"
 var _cpu_more_4 = "授权过期"

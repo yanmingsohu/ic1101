@@ -9,7 +9,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -665,7 +664,6 @@ func (l *Li) Verification() error {
 
 func (l *Li) CheckTime() error {
   now := uint64(time.Now().Unix() * 1000)
-  log.Println(l.BeginTime, now, l.EndTime)
   if l.BeginTime < now && now < l.EndTime {
     return nil
   }
