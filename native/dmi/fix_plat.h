@@ -4,7 +4,7 @@
 // Windows platform
 #if defined(_WIN32) || defined(_WIN64) || defined(WIN32)
 #if NODE_MAJOR_VERSION < 4
-  typedef int ssize_t;
+  // typedef int ssize_t;
 #endif
 #endif
 

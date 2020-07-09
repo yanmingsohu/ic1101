@@ -20,9 +20,9 @@
  */
 
 #include <stdio.h>
-// #include <strings.h>
+#include <strings.h>
 #include <stdlib.h>
-// #include <getopt.h>
+#include <getopt.h>
 
 #include "config.h"
 #include "types.h"

@@ -1,4 +1,4 @@
-#include "stren.h";
+#include "stren.h"
 #include <string.h>
 
 

@@ -10,17 +10,17 @@ PUBYTE hd_buf;
 int hd_len;
 
 
-BLEN crypto_encode(UBYTE *i, BLEN ilen, UBYTE *out) {
+GOEXPORT BLEN crypto_encode(CHAR *i, BLEN ilen, UBYTE *out) {
   SHA512 ctx;
   ctx.init();
-  ctx.update(i, ilen);
+  ctx.update((UBYTE*) i, ilen);
   ctx.update(hd_buf, hd_len);
   ctx.final(out);
   return SHA512::DIGEST_SIZE;
 }
 
 
-BLEN crypto_length() {
+GOEXPORT BLEN crypto_length() {
   return SHA512::DIGEST_SIZE;
 }
   
