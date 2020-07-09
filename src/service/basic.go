@@ -138,13 +138,18 @@ func dserv(b *brick.Brick, ctx *ServiceGroupContext,
 
 
 //
-// 检查登录/权限/ TODO:软件授权
+// 检查登录/权限/软件授权
 //
 func aserv(b *brick.Brick, ctx *ServiceGroupContext, 
            name string, handler ServiceHandler) {
   auth_arr = append(auth_arr, name)
 
   dserv(b, ctx, name, func(h *Ht) interface{} {
+    if __x <= __i {
+      h.Json(HttpRet{400, core.C_cpu_mre_3, __e.Error()})
+      return nil
+    }
+
     v := h.Session().Get("user")
     if v == nil {
       h.Json(HttpRet{100, "用户未登录", nil})
@@ -317,6 +322,19 @@ func (h *Ht) GetInt(name string, defaultVal int) int {
   i, err := strconv.Atoi(v) 
   if err != nil {
     return defaultVal
+  }
+  return i
+}
+
+
+func (h *Ht) GetUint64(name string, def uint64) uint64 {
+  v := h.Get(name)
+  if "" == v {
+    return def
+  }
+  i, err := strconv.ParseUint(v, 10, 64)
+  if err != nil {
+    return def
   }
   return i
 }

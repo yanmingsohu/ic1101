@@ -9,6 +9,16 @@
 
 `go test ic1101/src/test`
 
+## 发布
+
+`make`
+
+> make 会编译 c 加密库, 在测试前必须编译.
+
+> 参数: `#cgo LDFLAGS: -lstdc++` 可以解决编译时异常
+  `undefined reference to 'operator new[](unsigned long long)'`
+  https://github.com/golang/go/issues/18460
+
 
 # TODO
 

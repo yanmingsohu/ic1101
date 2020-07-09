@@ -7,6 +7,7 @@ const content_frame = $("#main_frame");
 
 const ic = window.ic = {
   get,
+  post,
   getDict,
   ajaxform,
   init,
@@ -74,15 +75,25 @@ function password(name, pass) {
 
 
 function get(api, data, cb) {
+  ajax("GET", api, data, cb);
+}
+
+
+function post(api, data, cb) {
+  ajax("POST", api, data, cb);
+}
+
+
+function ajax(_type, api, data, cb) {
   $.ajax(API_ROOT + api, {
-    type : 'GET',
+    type : _type || 'GET',
     data : data,
 
     success : function(data, status, jxr) {
       if (data.code === 0) {
         cb(null, data)
       } else if (data.code === 100) {
-        alert("用户未登录, 即将跳转到登录页面");
+        // alert("用户未登录, 即将跳转到登录页面");
         location.href = "index.html";
       } else {
         let type = jxr.getResponseHeader("content-type");

@@ -1,3 +1,120 @@
-<div>
+<div id='license_manager_frame'>
+  <style>
+    .red {
+      color: red;
+    }
+    .blue {
+      color: blue;
+    }
+    #license_manager_frame textarea {
+      height: 300px; font-family: monospace;
+    }
+  </style>
   <h2>软件授权许可</h2>
+  <form class="pure-form pure-form-stacked req_lis"
+        action='license_get_req'>
+    <legend>
+      请填写注册信息 <b class='state'></b>
+    </legend>
+
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>应用名称</label>
+      <input name='appName' class="pure-u-23-24"/>
+    </div>
+    
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>授权单位/个人</label>
+      <input name='company' class="pure-u-23-24" placeholder="必须填写"/>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>域名 / IP</label>
+      <input name='dns' class="pure-u-23-24" placeholder="选填"/>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>邮件</label>
+      <input name='email' class="pure-u-23-24" placeholder="选填"/>
+    </div>
+
+    <input name='beginTime' type='hidden'/>
+    <input name='endTime' type='hidden'/>
+
+    <div class="pure-u-1 pure-u-md-1-3">
+      <label>操作</label>
+      <div class="pure-button-group" role="group">
+        <button type="submit" 
+          class="pure-button button-primary">申请</button>
+      </div>
+      <span class='ajax-message error-message'></span>
+    </div>
+  </form>
+
+  <form class="pure-form pure-form-stacked send_lis hide"
+        action='license_update' method='post'>
+    <legend>
+      请把以下注册信息发送给软件作者
+    </legend>
+    <textarea name='txt' class="pure-u-1-2"></textarea>
+    <div class="pure-button-group" role="group">
+      <button type="submit" disabled
+        class="pure-button button-primary send">注册</button>
+    </div>
+  </form>
+
+<script>
+jQuery(function($) {
+  const root = $("#license_manager_frame");
+  const state = root.find(".state");
+  const req_form = root.find("form.req_lis");
+  const send_form = root.find("form.send_lis");
+  const txt = send_form.find("[name=txt]");
+
+  ic.ajaxform(req_form);
+  update_state();
+  req_form.on('success', req_text);
+  send_form.submit(send_req);
+
+  txt.change(()=>{
+    send_form.find(".send").prop("disabled", false);
+  });
+
+
+  function update_state() {
+    ic.get("license_get_state", null, function(err, ret) {
+      if (err) {
+        state.text("软件未授权").addClass('red').removeClass("blue");
+        ic.popo(new Error("软件未授权"));
+      } else {
+        state.text("软件已授权").addClass('blue').removeClass("red");;
+        ic.popo("软件已授权");
+        send_form.hide();
+      }
+    });
+    init_form();
+  }
+
+  function init_form() {
+    ic.get("license_get_info", null, function(err, ret) {
+      if (err) return ic.popo("页面初始化失败")
+      for (let n in ret.data) {
+        root.find("[name='"+ n +"']").val(ret.data[n]);
+      }
+    });
+  }
+
+  function req_text(_, ret) {
+    txt.val(ret.data);
+    send_form.show();
+  }
+
+  function send_req() {
+    ic.post("license_update", txt.val(), function(err, ret) {
+      if (err) return ic.popo(err);
+      update_state();
+    });
+    return false;
+  }
+});
+</script>
 </div>

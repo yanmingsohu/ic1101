@@ -1,11 +1,16 @@
 package core
 
-import "sync"
+import (
+	"sync"
+	"unsafe"
+)
 
-// #cgo CFLAGS: -I${SRCDIR}/native
-// #cgo LDFLAGS: ${SRCDIR}/build/native.a
+// #cgo CFLAGS: -I${SRCDIR}/../../native
+// #cgo LDFLAGS: -L${SRCDIR}/../../build -lnative -lstdc++
+// #include <stdlib.h>
 // #include <main.h>
 import "C"
+
 
 //
 // 对某个对象的引用计数器
@@ -112,6 +117,14 @@ func pick_session_info() []byte {
 //
 // 获取硬件加密信息
 //
-func pick_ref_count_by_user(string) []byte {
-  return nil
+func pick_ref_count_by_user(s string) []byte {
+  bt   := []byte(s)
+  cs   := unsafe.Pointer(&bt[0])
+  ilen := len(s)
+  olen := C.crypto_length()
+  out  := make([]byte, olen)
+  pout := unsafe.Pointer(&out[0])
+
+  C.crypto_encode((*C.char)(cs), C.uint(ilen), (*C.uchar)(pout))
+  return out
 }

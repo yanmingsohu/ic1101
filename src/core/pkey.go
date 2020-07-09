@@ -1,6 +1,6 @@
 package core
 
-const _cpu_core_info = `
+var _cpu_core_info = `
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3RRpu+CFRgTajKY1g0Sz
 SXH51p6uphRuPN/Jh0ZZV8vdQVB9LYT9xYLgDmm2AU72BU1f7GdNp7o6yML7meKz
@@ -11,3 +11,8 @@ diVtlH84RxIw8442LXUvXJJDiboh2pKSJyYDQZ8/UX2BOjg0kzHbq1+3wFiHd3wJ
 aQIDAQAB
 -----END PUBLIC KEY-----
 `
+
+var _cpu_more_1 = "无效的应用名称"
+var _cpu_more_2 = "公钥损坏"
+var C_cpu_mre_3 = "应用需要授权"
+var _cpu_more_4 = "授权过期"

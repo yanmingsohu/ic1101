@@ -86,7 +86,11 @@ type log_output_file struct {
 func (log *log_output_file) Write(p []byte) (n int, err error) {
 	// c := make([]byte, l)
 	c := <- log.getBuf
-	c.l = len(p)
+	if l := len(p); l < LOG_BUFF_SIZE {
+		c.l = l
+	} else {
+		c.l = LOG_BUFF_SIZE
+	}
 	copy(c.b[:], p)
 	log.O <- c
 	return c.l, err

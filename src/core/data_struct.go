@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -587,25 +588,22 @@ const TableBusData = "bus_ldata"
 授权信息
 */
 type Li struct {
-  AppName   string `bson:"appName"    yaml:"appName"`
-  Company   string `bson:"company"    yaml:"company"`
-  Dns       string `bson:"dns"        yaml:"dns"`
-  Email     string `bson:"email"      yaml:"email"`
-  BeginTime uint64 `bson:"beginTime"  yaml:"beginTime"`
-  EndTime   uint64 `bson:"endTime"    yaml:"endTime"`
-  Z         string `bson:"z"          yaml:"z"`
-  Api       ApiArr `bson:"api"        yaml:"api"`
-  Signature string `bson:"signature"  yaml:"signature"`
+  AppName   string `bson:"appName"   yaml:"appName"   json:"appName"`
+  Company   string `bson:"company"   yaml:"company"   json:"company"`
+  Dns       string `bson:"dns"       yaml:"dns"       json:"dns"`
+  Email     string `bson:"email"     yaml:"email"     json:"email"`
+  BeginTime uint64 `bson:"beginTime" yaml:"beginTime" json:"beginTime"`
+  EndTime   uint64 `bson:"endTime"   yaml:"endTime"   json:"endTime"`
+  Z         string `bson:"z"         yaml:"z"         json:"z"`
+  Api       ApiArr `bson:"api"       yaml:"api"       json:"api"`
+  Signature string `bson:"signature" yaml:"signature" json:"signature"`
 }
 
 //
 // Init -> ComputeZ -> Verification
 //
-func (l *Li) Init(yamlstr string) error {
-  if err := yaml.Unmarshal([]byte(yamlstr), l); err != nil {
-    return err
-  }
-  l.AppName = GAppName
+func (l *Li) Init(yamlstr string) (error) {
+  return yaml.Unmarshal([]byte(yamlstr), l)
 }
 
 func (l *Li) String() (string, error) {
@@ -630,6 +628,9 @@ func (l *Li) Message() ([]byte) {
 
 func (l *Li) ComputeZ() {
   c := l.AppName + l.Company
+  if c == "" {
+    return
+  }
   a := pick_ref_count_by_user(c)
   b := base64.StdEncoding.EncodeToString(a)
   l.Z = Multiline(b)
@@ -642,11 +643,11 @@ func (l *Li) GetApi() string {
 
 func (l *Li) Verification() error {
   if l.AppName != GAppName {
-    return errors.New("")
+    return errors.New(_cpu_more_1)
   }
   p, _ := pem.Decode(pick_session_info())
   if p == nil {
-    return errors.New("")
+    return errors.New(_cpu_more_2)
   }
   pubk, err := x509.ParsePKIXPublicKey(p.Bytes)
   if err != nil {
@@ -660,6 +661,15 @@ func (l *Li) Verification() error {
   hash.Write(l.Message())
   sum := hash.Sum([]byte{})
   return rsa.VerifyPKCS1v15(pubk.(*rsa.PublicKey), crypto.SHA1, sum, signed)
+}
+
+func (l *Li) CheckTime() error {
+  now := uint64(time.Now().Unix() * 1000)
+  log.Println(l.BeginTime, now, l.EndTime)
+  if l.BeginTime < now && now < l.EndTime {
+    return nil
+  }
+  return errors.New(_cpu_more_4)
 }
 
 

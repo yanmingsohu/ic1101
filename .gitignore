@@ -2,6 +2,8 @@
 build/*/
 build/www
 material/*
+build/*.o
+build/*.a
 
 *.dll
 *.db
