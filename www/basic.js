@@ -457,28 +457,37 @@ function popo(msg) {
   });
 
   if (msg.constructor == Error) {
-    conf = ['错误', msg.message, 'error'];
-    if (msg.data) {
-      let buf = ["<div class='small'>"];
-      if (typeof msg.data == 'string') {
-        buf.push(msg.data);
-      } else {
-        for (let n in msg.data) {
-          buf.push(n, ": ", msg.data[n], ", ");
-        }
-      }
-      buf.push("</div>");
-      conf[1] += buf.join("");
-    }
-  } else if (typeof msg == "string") {
+    conf = ['错误', format(msg.message, msg.data), 'error'];
+  } 
+  else if (typeof msg == "string") {
     conf = ['消息', msg, 'info'];
-  } else {
+  } 
+  else if (msg.msg && msg.data) {
+    conf = ['消息', format(msg.msg, msg.data), 'info'];
+  } 
+  else {
     conf = ['调试', JSON.stringify(msg), 'debug'];
   }
 
   t.find(".ti").text(conf[0]);
   t.find(".msg").html(conf[1]);
   content.addClass(conf[2]);
+
+  function format(info) {
+    let buf = [info, "<div class='small'>"];
+    for (let i=1; i<arguments.length; ++i) {
+      let v = arguments[i];
+      if (typeof v == 'string') {
+        buf.push(v)
+      } else {
+        for (let n in v) {
+          buf.push(n, ": ", v[n], ", ");
+        }
+      }
+    }
+    buf.push("</div>");
+    return buf.join("");
+  }
 
   function _show() {
     content.addClass("show");

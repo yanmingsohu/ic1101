@@ -99,7 +99,7 @@
           <legend class='not-full'>操作</legend>
           <div class="pure-button-group" role="group">
             <button type="submit" api='bus_slot_create'
-                  class="pure-button button-secondary">更新槽</button>
+                  class="pure-button button-secondary">更新</button>
             <button type="reset"
                   class="pure-button button-secondary">清除</button>
             <button type="button" api='bus_slot_delete'
@@ -172,11 +172,13 @@
           <legend class='not-full'>操作</legend>
           <div class="pure-button-group" role="group">
             <button type="submit" api='bus_slot_create'
-                  class="pure-button button-secondary">更新槽</button>
+                  class="pure-button button-secondary">更新</button>
             <button type="reset"
                   class="pure-button button-secondary">清除</button>
             <button type="button" api='bus_slot_delete'
                   class="pure-button button-warning delete_slot">删除</button>
+            <button type="button" api='bus_ctrl_send'
+                  class="pure-button button-secondary send">立即发送</button>
             <span class='ajax-message error-message pure-u-1'></span>
           </div>
         </fieldset>
@@ -348,6 +350,7 @@ jQuery(function($) {
     const show_type = slotroot.find(".show_datatype");
     const timer_list = slotroot.find("[name=ctrl_timer]");
     const data_val = slotroot.find("[name=value]");
+    const send = create.find(".send");
     let data_type_mapping = {};
     let data_name;
 
@@ -357,6 +360,7 @@ jQuery(function($) {
       conf_funcs.initData(conf_root);
     } else {
       conf_funcs.initCtrl(conf_root);
+      send.click(send_ctrl);
     }
 
     table.on("select_row", on_table_select);
@@ -375,6 +379,7 @@ jQuery(function($) {
       edit_page : '',
       table_convert,
       copy_edit(data, target) {},
+      button_on_table_select : [send],
     });
 
     if (timer_list.length) {
@@ -449,6 +454,24 @@ jQuery(function($) {
     function on_change_dataname_list() {
       let name = data_name_list.val();
       show_type.text(format_data_type( data_type_mapping[name] ));
+    }
+
+
+    function send_ctrl() {
+      let row = table.data("select_row");
+      let parm = {
+        id      : id,
+        value   : data_val.val(),
+        slot_id : row.slot_id,
+      };
+
+      ic.get("bus_ctrl_send", parm, function(err, ret) {
+        if (err) {
+          ic.popo(err);
+        } else {
+          ic.popo(ret.msg);
+        }
+      });
     }
   }
 });

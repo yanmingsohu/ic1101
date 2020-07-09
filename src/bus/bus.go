@@ -23,11 +23,10 @@ const MaxLogCount = 20
 type BusState int
 
 const (
-  // 总线没有启动
-  BusStateStop      BusState = iota 
-  BusStateStartup   BusState = iota 
-  BusStateSleep     BusState = iota 
-  BusStateTask      BusState = iota 
+  BusStateStop BusState = iota       
+  BusStateStartup
+  BusStateSleep
+  BusStateTask
   BusStateShutdown  BusState = -1 
   BusStateFailStart BusState = -2
 )
@@ -112,6 +111,7 @@ type BusInfo struct {
 
   st BusState
   bs Bus
+  ps SlotParser
 
   // 数据插槽配置, {插槽: 数据名}
   datas []Slot
@@ -158,7 +158,7 @@ func NewInfo(uri, id, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error) {
     return nil, err
   }
   return &BusInfo{id, u, typ, tk, ev, BusStateStartup, 
-      nil, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10), 
+      nil, sp, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10), 
       make([]string, 0, MaxLogCount)} , nil
 }
 
@@ -175,6 +175,9 @@ func (i *BusInfo) AddData(s Slot) error {
 }
 
 
+//
+// 添加一个发送任务到总线接口, 当定时器 tk 开始执行, value 被发送到控制槽
+//
 func (i *BusInfo) AddCtrl(s Slot, tk core.Tick, value DataWrap) error {
   if i.st != BusStateStartup {
     return errors.New("总线已经启动, 不能修改状态")
@@ -184,6 +187,26 @@ func (i *BusInfo) AddCtrl(s Slot, tk core.Tick, value DataWrap) error {
   }
   i.ctrls = append(i.ctrls, ctrl_slot{s, tk, value})
   return nil
+}
+
+
+//
+// 立即发送控制指令
+//
+func (i *BusInfo) SendCtrl(s Slot, value DataWrap) error {
+  busMutex.Lock()
+  defer busMutex.Unlock()
+
+  if i.st < BusStateStartup {
+    return errors.New("总线没有运行, 不能发送控制指令")
+  }
+  t := time.Now()
+  return i.bs.send_ctrl(s, value, &t)
+}
+
+
+func (i *BusInfo) ParseSlot(s string) (Slot, error) {
+  return i.ps.ParseSlot(s)
 }
 
 

@@ -35,6 +35,7 @@ func installBusService(b *brick.Brick) {
   aserv(b, ctx, "bus_stop",       bus_stop)
   aserv(b, ctx, "bus_start",      bus_start)
   aserv(b, ctx, "bus_last_data",  bus_last_data)
+  aserv(b, ctx, "bus_ctrl_send",  bus_ctrl_send)
 
   restart_bus()
 }
@@ -329,6 +330,31 @@ func bus_last_data(h *Ht) interface{} {
     ret["logs"] = b.GetLog()
   }
   return HttpRet{0, c.info, ret}
+}
+
+
+func bus_ctrl_send(h *Ht) interface{} {
+  id := checkstring("总线ID", h.Get("id"), 2, 20)
+  slot_id := checkstring("控制槽ID", h.Get("slot_id"), 1, 99)
+  v := checkstring("发送值", h.Get("value"), 1, 99)
+
+  inf, err := bus.GetBus(id)
+  if err != nil {
+    return err
+  }
+  slot, err := inf.ParseSlot(slot_id)
+  if err != nil {
+    return err
+  }
+  if slot.Type() != bus.SlotCtrl {
+    return errors.New("不是控制槽")
+  }
+  
+  value := bus.StringData{ D: v }
+  if err := inf.SendCtrl(slot, &value); err != nil {
+    return err
+  }
+  return HttpRet{0, "控制已发送", slot_id}
 }
 
 
