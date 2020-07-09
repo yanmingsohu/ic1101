@@ -1,6 +1,9 @@
 package core
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io/ioutil"
 	"sync"
 	"unsafe"
 )
@@ -127,4 +130,20 @@ func pick_ref_count_by_user(s string) []byte {
 
   C.crypto_encode((*C.char)(cs), C.uint(ilen), (*C.uchar)(pout))
   return out
+}
+
+
+//
+// 解压失败会 panic
+//
+func UnZip(input []byte) []byte {
+  r, err := gzip.NewReader(bytes.NewBuffer(input))
+  if err != nil {
+    panic(err)
+  }
+  a, err := ioutil.ReadAll(r)
+  if err != nil {
+    panic(err)
+  }
+  return a
 }
