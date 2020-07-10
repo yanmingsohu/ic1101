@@ -2,7 +2,6 @@ package bus
 
 import (
 	"errors"
-	"fmt"
 	"ic1101/src/core"
 	"log"
 	"net/url"
@@ -326,7 +325,7 @@ func (i *BusInfo) GetLog() []string {
 
 // 插入新的日志, 删除超过 MaxLogCount 的部分
 func (i *BusInfo) Log(msg string) {
-  s := fmt.Sprintln(time.Now().Format(time.RFC3339), msg)
+  s := time.Now().Format(time.RFC3339) +" "+ msg
   i.logs = append(i.logs, s)
   if len(i.logs) > MaxLogCount {
     i.logs = i.logs[1:]
