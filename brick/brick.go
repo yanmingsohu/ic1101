@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -58,6 +59,7 @@ type Brick struct {
   templateDir     string
   log             Logger
   errorHandle     HttpErrorHandler
+  Debug           bool
 } 
 
 type Http struct {
@@ -205,9 +207,11 @@ func (b *Brick) Service(path string, h HttpHandler) {
 
     defer func() {
       if err := recover(); err != nil {
-        // var buf [4096]byte
-        // n := runtime.Stack(buf[:], false)
-        // b.log.Error("==>", err, string(buf[:n]))
+        if b.Debug {
+          var buf [4096]byte
+          n := runtime.Stack(buf[:], false)
+          b.log.Error("==>", err, string(buf[:n]))
+        }
 
         b.errorHandle(&hd, err)
       }
