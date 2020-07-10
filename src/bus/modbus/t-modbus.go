@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"ic1101/src/bus"
+	"ic1101/src/dtu"
 	"net/url"
 	"time"
 
@@ -66,7 +67,7 @@ func (*bus_modbus_ct) Name() string {
 
 func (*bus_modbus_ct) Create(i bus.BusReal) (bus.Bus, error) {
   if i.URL().Scheme == "dtu" {
-    panic("未实现")
+    return &tcp_server{}, nil
   }
   return &modbus_s_impl{}, nil
 }
@@ -104,6 +105,9 @@ func (*bus_modbus_ct) ParseURI(uri string) (*url.URL, error) {
   case "rtu":
   case "rtuovertcp":
   case "dtu":
+    if _, err = dtu.CheckUrl(u); err != nil {
+      return nil, err
+    }
   default:
     return nil, errors.New("scheme 必须是: tcp://, rtu://, rtuovertcp://, dtu://");
   }
@@ -124,7 +128,7 @@ func (r *modbus_s_impl) Start(i bus.BusReal) (err error) {
   case "tcp":
     c, err = modbus.NewClient(&modbus.ClientConfiguration{
       URL:      i.URL().String(),
-      Timeout:  1 * time.Second,
+      Timeout:  10 * time.Second,
     })
 
   case "rtu":
@@ -140,7 +144,7 @@ func (r *modbus_s_impl) Start(i bus.BusReal) (err error) {
   case "rtuovertcp":
     c, err = modbus.NewClient(&modbus.ClientConfiguration{
       URL:      i.URL().String(),
-      Timeout:  1 * time.Second,
+      Timeout:  10 * time.Second,
     })
 
   default:
