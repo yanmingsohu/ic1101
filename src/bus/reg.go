@@ -1,6 +1,9 @@
 package bus
 
-import "errors"
+import (
+	"errors"
+	"log"
+)
 
 //
 // 总线类型注册表, 所有可用的总线注册到这里
@@ -14,6 +17,7 @@ func InstallBus(id string, ct BusCreator) {
     panic("总线已经被注册 "+ id)
   }
   bus_type_register[id] = ct
+  log.Println("BUS reg:", id)
 }
 
 

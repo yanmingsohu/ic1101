@@ -1,8 +1,9 @@
-package bus
+package bus_modbus
 
 import (
 	"errors"
 	"fmt"
+	"ic1101/src/bus"
 	"net/url"
 	"time"
 
@@ -50,7 +51,7 @@ const (
 
 
 func init() {
-  InstallBus("modbus", &bus_modbus_ct{})
+  bus.InstallBus("modbus", &bus_modbus_ct{})
 }
 
 
@@ -63,8 +64,8 @@ func (*bus_modbus_ct) Name() string {
 }
 
 
-func (*bus_modbus_ct) Create(i *BusInfo) (Bus, error) {
-  if i.uri.Scheme == "dtu" {
+func (*bus_modbus_ct) Create(i bus.BusReal) (bus.Bus, error) {
+  if i.URL().Scheme == "dtu" {
     panic("未实现")
   }
   return &modbus_s_impl{}, nil
@@ -72,7 +73,7 @@ func (*bus_modbus_ct) Create(i *BusInfo) (Bus, error) {
 
 
 // 接受任何字符串作为 slot
-func (*bus_modbus_ct) ParseSlot(s string) (Slot, error) {
+func (*bus_modbus_ct) ParseSlot(s string) (bus.Slot, error) {
   return _parse_modbus_slot(s)
 }
 
@@ -116,19 +117,19 @@ type modbus_s_impl struct {
 }
 
 
-func (r *modbus_s_impl) start(i *BusInfo) (err error) {
+func (r *modbus_s_impl) Start(i bus.BusReal) (err error) {
   var c *modbus.ModbusClient
 
-  switch i.uri.Scheme {
+  switch i.URL().Scheme {
   case "tcp":
     c, err = modbus.NewClient(&modbus.ClientConfiguration{
-      URL:      i.uri.String(),
+      URL:      i.URL().String(),
       Timeout:  1 * time.Second,
     })
 
   case "rtu":
     c, err = modbus.NewClient(&modbus.ClientConfiguration{
-      URL:      i.uri.String(),
+      URL:      i.URL().String(),
       Speed:    9600,
       DataBits: 8,
       Parity:   modbus.PARITY_NONE,
@@ -138,7 +139,7 @@ func (r *modbus_s_impl) start(i *BusInfo) (err error) {
 
   case "rtuovertcp":
     c, err = modbus.NewClient(&modbus.ClientConfiguration{
-      URL:      i.uri.String(),
+      URL:      i.URL().String(),
       Timeout:  1 * time.Second,
     })
 
@@ -154,13 +155,13 @@ func (r *modbus_s_impl) start(i *BusInfo) (err error) {
   if err := r.c.Open(); err != nil {
     return err
   }
-  i.Log("总线启动, " + i.uri.String())
+  i.Log("总线启动, " + i.URL().String())
   return
 }
 
 
-func (r *modbus_s_impl) sync_data(i *BusInfo, t *time.Time) (err error) {
-  for _, s := range i.datas {
+func (r *modbus_s_impl) SyncData(i bus.BusReal, t *time.Time) (err error) {
+  for _, s := range i.Datas() {
     ms := s.(*modbus_slot)
 
     r.c.SetUnitId(ms.c)
@@ -170,13 +171,13 @@ func (r *modbus_s_impl) sync_data(i *BusInfo, t *time.Time) (err error) {
       return err
     }
 
-    i.event.OnData(s, t, d)
+    i.Event().OnData(s, t, d)
   }
   return nil
 }
 
 
-func (r *modbus_s_impl) send_ctrl(_s Slot, d DataWrap, t *time.Time) error {
+func (r *modbus_s_impl) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
   s := _s.(*modbus_slot)
   r.c.SetUnitId(s.c)
   r.c.setMode(s.l)
@@ -184,7 +185,7 @@ func (r *modbus_s_impl) send_ctrl(_s Slot, d DataWrap, t *time.Time) error {
 }
 
 
-func (r *modbus_s_impl) stop(i *BusInfo) {
+func (r *modbus_s_impl) Stop(i bus.BusReal) {
   r.c.Close()
   i.Log("总线停止")
 }
@@ -212,7 +213,7 @@ func (c *MC) setMode(b byte) {
 }
 
 
-func (c *MC) send(s *modbus_slot, d DataWrap) error {
+func (c *MC) send(s *modbus_slot, d bus.DataWrap) error {
   switch s.n {
   case MB_w_coil:
     return c.WriteCoil(s.a, d.Bool())
@@ -254,21 +255,21 @@ func (c *MC) send(s *modbus_slot, d DataWrap) error {
 }
 
 
-func (c *MC) read(s *modbus_slot) (DataWrap, error) {
+func (c *MC) read(s *modbus_slot) (bus.DataWrap, error) {
   switch s.n {
   case MB_r_coils:
     v, err := c.ReadCoil(s.a)
     if err != nil {
       return nil, err
     }
-    return &BoolData{v}, nil
+    return &bus.BoolData{v}, nil
 
   case MB_r_discreta_inputs:
     v, err := c.ReadDiscreteInput(s.a)
     if err != nil {
       return nil, err
     }
-    return &BoolData{v}, nil
+    return &bus.BoolData{v}, nil
 
   case MB_r_holding_registers:
     v, err := c.read_reg(s, modbus.HOLDING_REGISTER)
@@ -290,63 +291,63 @@ func (c *MC) read(s *modbus_slot) (DataWrap, error) {
 }
 
 
-func (c *MC) read_reg(s *modbus_slot, t modbus.RegType) (DataWrap, error) {
+func (c *MC) read_reg(s *modbus_slot, t modbus.RegType) (bus.DataWrap, error) {
   switch s.t {
   case mb_dt_uint16:
     v, err := c.ReadRegister(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &UInt64Data{uint64(v)}, nil
+    return &bus.UInt64Data{uint64(v)}, nil
 
   case mb_dt_int16:
     v, err := c.ReadRegister(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &Int64Data{int64(int16(v))}, nil
+    return &bus.Int64Data{int64(int16(v))}, nil
 
   case mb_dt_uint32:
     v, err := c.ReadUint32(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &UInt64Data{uint64(v)}, nil
+    return &bus.UInt64Data{uint64(v)}, nil
 
   case mb_dt_int32:
     v, err := c.ReadUint32(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &Int64Data{int64(int32(v))}, nil
+    return &bus.Int64Data{int64(int32(v))}, nil
 
   case mb_dt_uint64:
     v, err := c.ReadUint64(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &UInt64Data{v}, nil
+    return &bus.UInt64Data{v}, nil
     
   case mb_dt_int64:
     v, err := c.ReadUint64(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &Int64Data{int64(v)}, nil
+    return &bus.Int64Data{int64(v)}, nil
 
   case mb_dt_float32:
     v, err := c.ReadFloat32(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &FloatData{v}, nil
+    return &bus.FloatData{v}, nil
 
   case mb_dt_float64:
     v, err := c.ReadFloat64(s.a, t)
     if err != nil {
       return nil, err
     }
-    return &Float64Data{v}, nil
+    return &bus.Float64Data{v}, nil
   }
   return nil, errors.New("无效的数据长度")
 }
@@ -361,7 +362,7 @@ const _modbus_format = "N%xS%xR%xT%xL%x"
 //  T = 16 进制, 数据类型
 //  L = 字节序
 //
-func _parse_modbus_slot(s string) (Slot, error) {
+func _parse_modbus_slot(s string) (bus.Slot, error) {
   m := modbus_slot{}
   n, err := fmt.Sscanf(s, _modbus_format, &m.n, &m.c, &m.a, &m.t, &m.l)
   if err != nil {
@@ -417,22 +418,22 @@ func (m *modbus_slot) Desc() string {
 }
 
 
-func (m *modbus_slot) Type() SlotType {
+func (m *modbus_slot) Type() bus.SlotType {
   switch m.n {
   case MB_r_coils:
-    return SlotData
+    return bus.SlotData
   case MB_r_discreta_inputs:
-    return SlotData
+    return bus.SlotData
   case MB_r_holding_registers:
-    return SlotData
+    return bus.SlotData
   case MB_r_input_registers:
-    return SlotData
+    return bus.SlotData
   case MB_w_coil:
-    return SlotCtrl
+    return bus.SlotCtrl
   case MB_w_register:
-    return SlotCtrl
+    return bus.SlotCtrl
   case MB_r_fifo:
-    return SlotData
+    return bus.SlotData
   }
-  return SlotInvaild
+  return bus.SlotInvaild
 }

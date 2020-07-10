@@ -1,8 +1,9 @@
-package bus
+package bus_random
 
 import (
 	"errors"
 	"fmt"
+	"ic1101/src/bus"
 	"math/rand"
 	"net/url"
 	"strconv"
@@ -11,14 +12,14 @@ import (
 
 
 func init() {
-  InstallBus("random", &bus_random_ct{})
+  bus.InstallBus("random", &bus_random_ct{})
 }
 
 
 func _parse_random_slot(s string) (*bus_random_sl, error) {
   var t int
   var port int
-  var tp SlotType
+  var tp bus.SlotType
 
   n, err := fmt.Sscanf(s, "%c#%d", &t, &port)
   if err != nil {
@@ -29,9 +30,9 @@ func _parse_random_slot(s string) (*bus_random_sl, error) {
   }
   switch (t) {
   case 'D':
-    tp = SlotData
+    tp = bus.SlotData
   case 'C':
-    tp = SlotCtrl
+    tp = bus.SlotCtrl
   default:
     return nil, errors.New("无效的类型字符")
   }
@@ -48,13 +49,13 @@ func (*bus_random_ct) Name() string {
 }
 
 
-func (*bus_random_ct) Create(i *BusInfo) (Bus, error) {
+func (*bus_random_ct) Create(i bus.BusReal) (bus.Bus, error) {
   return &random_bus{}, nil
 }
 
 
 // 接受任何字符串作为 slot
-func (*bus_random_ct) ParseSlot(s string) (Slot, error) {
+func (*bus_random_ct) ParseSlot(s string) (bus.Slot, error) {
   return _parse_random_slot(s)
 }
 
@@ -75,12 +76,12 @@ func (*bus_random_ct) ParseURI(uri string) (*url.URL, error) {
 
 type bus_random_sl struct {
   port int
-  tp SlotType
+  tp bus.SlotType
 }
 
 
 func (s *bus_random_sl) String() string {
-  if s.tp == SlotData {
+  if s.tp == bus.SlotData {
     return "D#"+ strconv.Itoa(s.port)
   } else {
     return "C#"+ strconv.Itoa(s.port)
@@ -89,7 +90,7 @@ func (s *bus_random_sl) String() string {
 
 
 func (s *bus_random_sl) Desc() string {
-  if s.tp == SlotData {
+  if s.tp == bus.SlotData {
     return "虚拟数据 "+ strconv.Itoa(s.port)
   } else {
     return "虚拟控制 "+ strconv.Itoa(s.port)
@@ -97,7 +98,7 @@ func (s *bus_random_sl) Desc() string {
 }
 
 
-func (s *bus_random_sl) Type() SlotType {
+func (s *bus_random_sl) Type() bus.SlotType {
   return s.tp
 }
 
@@ -106,25 +107,25 @@ type random_bus struct {
 }
 
 
-func (r *random_bus) start(i *BusInfo) error {
+func (r *random_bus) Start(i bus.BusReal) error {
   i.Log("总线启动")
   return nil
 }
 
-func (r *random_bus) sync_data(i *BusInfo, t *time.Time) error {
-  for _, s := range i.datas {
-    d := IntData{rand.Int() % 999}
-    i.event.OnData(s, t, &d)
+func (r *random_bus) SyncData(i bus.BusReal, t *time.Time) error {
+  for _, s := range i.Datas() {
+    d := bus.IntData{rand.Int() % 999}
+    i.Event().OnData(s, t, &d)
   }
   return nil
 }
 
 
-func (r *random_bus) send_ctrl(s Slot, d DataWrap, t *time.Time) error {
+func (r *random_bus) SendCtrl(s bus.Slot, d bus.DataWrap, t *time.Time) error {
   return nil
 }
 
 
-func (r *random_bus) stop(i *BusInfo) {
+func (r *random_bus) Stop(i bus.BusReal) {
   i.Log("总线停止")
 }

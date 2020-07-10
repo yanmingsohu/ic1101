@@ -2,6 +2,7 @@ package dtu
 
 import (
 	"errors"
+	"log"
 	"net"
 	"net/url"
 )
@@ -45,6 +46,7 @@ func RegFact(f Fact) {
     panic(errors.New("工厂名称冲突" + f.Name()))
   }
   _dtu_factorys[f.Name()] = f
+  log.Println("DTU reg:", f.Name(), f.Desc())
 }
 
 
@@ -57,7 +59,7 @@ type Fact interface {
   //
   New(url *url.URL, handle Event) (Impl, error)
   //
-  // 该 dtu 的类型名
+  // 该 dtu 的类型名, 使用该名称注册到 dtu 注册表
   //
   Name() string
   //
@@ -91,7 +93,11 @@ type Context interface {
   //
   // 返回上下文参数, 不同的 DTU 实现会有不同的参数定义.
   //
-  Get(name string) (string, error)
+  Get(name string) (interface{}, error)
+  //
+  // 允许在上下文绑定变量, 之后用 Get() 可以取得该变量.
+  //
+  Bind(name string, data interface{})
   //
   // 关闭这个上下文, 实现通常会关闭底层网络连接, 重复调用该方法是安全的.
   //
@@ -100,7 +106,7 @@ type Context interface {
   // 对于该函数的使用方, DTU 中的数据转换是透明的, 
   // 用户只关心与设备之间的原始数据格式.
   // 如果 dtu 不支持该方法则总是返回错误,
-  // Conn.Close() 方法不能关闭连接, 并且总是返回错误.
+  // Conn.Close() 方法与 Context.Close() 有相同的效果
   //
   GetConn() (net.Conn, error)
 }

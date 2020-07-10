@@ -77,7 +77,7 @@ func (t SlotType) String() string {
 type BusCreator interface {
   SlotParser
   // 创建总线实例
-  Create(*BusInfo) (Bus, error)
+  Create(BusReal) (Bus, error)
   // 总线的显示名称
   Name() string
 }
@@ -88,16 +88,57 @@ type BusCreator interface {
 //
 type Bus interface {
   // 启动总线, 用于初始化数据, 失败返回 error
-  start(i *BusInfo) error
+  Start(BusReal) error
   // 传送一次数据
-  sync_data(*BusInfo, *time.Time) error
+  SyncData(BusReal, *time.Time) error
   // 停止总线, 该方法返回后, 总线一定是停止的
-  stop(i *BusInfo)
+  Stop(BusReal)
   // 发送控制指令, 发送失败返回 error
-  send_ctrl(s Slot, d DataWrap, t *time.Time) error
+  SendCtrl(s Slot, d DataWrap, t *time.Time) error
 }
 
 
+//
+// 该对象是面向总线实现者的, 尽可能暴露方法
+//
+type BusReal interface {
+  // 返回创建总线使用的 url
+  URL() *url.URL
+  // 返回事件对象
+  Event() BusEvent
+  // 返回数据槽的切片
+  Datas() []Slot
+  // 记录日志
+  Log(msg string)
+}
+
+
+//
+// 对总线使用者隐藏
+//
+type bus_real_impl struct {
+  *BusInfo
+}
+
+
+func (b *bus_real_impl) URL() *url.URL {
+  return b.uri
+}
+
+
+func (b *bus_real_impl) Event() BusEvent {
+  return b.event
+}
+
+
+func (b *bus_real_impl) Datas() []Slot {
+  return b.datas[:]
+}
+
+
+//
+// 该接口是面向总线使用者的, 尽可能少的暴露方法和属性
+//
 type BusInfo struct {
   // 总线id
   id string
@@ -201,7 +242,7 @@ func (i *BusInfo) SendCtrl(s Slot, value DataWrap) error {
     return errors.New("总线没有运行, 不能发送控制指令")
   }
   t := time.Now()
-  return i.bs.send_ctrl(s, value, &t)
+  return i.bs.SendCtrl(s, value, &t)
 }
 
 
@@ -214,7 +255,8 @@ func (i *BusInfo) start(b Bus) error {
   if i.st != BusStateStartup {
     return errors.New("总线已经启动")
   }
-  if err := b.start(i); err != nil {
+  real := &bus_real_impl{i}
+  if err := b.Start(real); err != nil {
     i.st = BusStateFailStart
     return err
   }
@@ -228,7 +270,7 @@ func (i *BusInfo) start(b Bus) error {
   i.tk.Start(func() {
     i.st = BusStateTask
     t := time.Now()
-    b.sync_data(i, &t)
+    b.SyncData(real, &t)
     i.st = BusStateSleep
   }, func() {
     i.stop()
@@ -254,7 +296,8 @@ func (i *BusInfo) stop() {
     i.tk.Stop()
   }
   if i.bs != nil {
-    i.bs.stop(i)
+    real := &bus_real_impl{i}
+    i.bs.Stop(real)
   }
   i.st = BusStateStop
 }
@@ -263,7 +306,7 @@ func (i *BusInfo) stop() {
 func (i *BusInfo) _ctrl_thread(c ctrl_slot) {
   c.tk.Start(func() {
     t := time.Now()
-    i.bs.send_ctrl(c.slot, c.data, &t)
+    i.bs.SendCtrl(c.slot, c.data, &t)
     i.event.OnCtrlSended(c.slot, &t)
   }, func() {
     i.event.OnCtrlExit(c.slot)
@@ -392,7 +435,8 @@ func StartBus(info *BusInfo) (error) {
     return errors.New("无效的总线类型 "+ info.typeName)
   }
 
-  bus, err := ct.Create(info)
+  real := &bus_real_impl{info}
+  bus, err := ct.Create(real)
   if err != nil {
     return err
   }
