@@ -43,11 +43,6 @@ func installBusService(b *brick.Brick) {
 
 // 系统重启后, 重启正在运行的总线
 func restart_bus() {
-  if __x <= __i {
-    log.Println(__e)
-    return
-  }
-
   log.Println("[[[Restart BUS...")
   filter := bson.M{ "status" : bson.M{"$gt" : bus.BusStateStop} }
   ctx := context.Background()

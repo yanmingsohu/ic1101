@@ -67,7 +67,11 @@ func (r *tcp_server) SyncData(i bus.BusReal, t *time.Time) error {
       continue
     }
 
-    client.SetUnitId(ms.c)
+    if r.parm.sid < 0 {
+      client.SetUnitId(ms.c)
+    } else {
+      client.SetUnitId(uint8(r.parm.sid))
+    }
     client.setMode(ms.l)
 
     d, err := client.read(ms)
@@ -88,7 +92,11 @@ func (r *tcp_server) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
   if err != nil {
     return err
   }
-  client.SetUnitId(s.c)
+  if r.parm.sid < 0 {
+    client.SetUnitId(s.c)
+  } else {
+    client.SetUnitId(uint8(r.parm.sid))
+  }
   client.setMode(s.l)
   return client.send(s, d)
 }
@@ -157,6 +165,7 @@ func (r *tcp_server) OnStart(msg string) {
 type UrlParam struct {
   mode      uint
   timeout   time.Duration
+  sid       int
 }
 
 
@@ -176,6 +185,15 @@ func (p *UrlParam) Parse(u *url.URL) {
     i, _ := strconv.Atoi(t)
     if i > 0 {
       p.timeout = time.Duration(i) * time.Second
+    }
+  }
+  // sid < 0 使用动态从机地址, 否则固定从机地址
+  s := vs.Get("sid")
+  p.sid = -1
+  if s != "" {
+    i, _ := strconv.Atoi(s)
+    if i >= 0 {
+      p.sid = i
     }
   }
 }
