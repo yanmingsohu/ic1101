@@ -62,13 +62,14 @@ func __start__license(ctx *ServiceGroupContext) {
   })()
 
   go (func() {
-    // 系统启动时检查一次
-    __c <- 0
     tk := time.NewTicker(time.Hour * 3)
     for range tk.C {
       __c <- 0
     }
   })()
+  
+  // 系统启动时检查一次
+  __c <- 0
 }
 
 

@@ -18,7 +18,7 @@ QQ: 412475540 / Email: yanming-sohu@sohu.com
 --------------------------------------------
 `
 
-func PrintLogo() {
+func init() {
 	fmt.Print(LOGO)
 	fmt.Print()
 }

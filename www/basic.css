@@ -4,6 +4,10 @@ a { text-decoration:none; }
 .small { font-size: 8px; }
 table { border-radius: 3px; }
 
+.vf {
+  font-size: 8px; color: #666;
+}
+
 select, input[type=datetime-local] {
   padding: 0.3em 0.6em !important;
 }
@@ -45,11 +49,11 @@ select, input[type=datetime-local] {
 }
 
 #main_menu .title {
-  width: 100%; background-color: #eee; color: #444; padding: 30px 30px;
+  width: 100%; background-color: #eee; color: #444; padding: 30px 30px 10px 30px;
   font-family: fantasy; font-size: 30px; 
 }
 
-#main_menu .title span {
+#main_menu .title .name {
   border: 2px solid #333; border-radius: 5px; padding: 1px 3px;
 }
 

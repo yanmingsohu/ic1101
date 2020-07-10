@@ -122,7 +122,9 @@ func whoaim(h *Ht) interface{} {
 	if v == nil {
 		h.Json(HttpRet{1, "用户未登录", nil})
 	} else {
-		h.Json(HttpRet{0, "用户名", v.(*core.LoginUser).Name})
+		h.Json(HttpRet{0, "用户名", struct {
+			Name string; Version string
+		}{ v.(*core.LoginUser).Name, core.GVersion }})
 	}
 	return nil
 }

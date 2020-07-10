@@ -16,7 +16,11 @@
 
 <body class='fullbody'>
 <div id='main_menu'>
-  <div class='title'><span>IOT-IC 1101</span></div>
+  <div class='title'>
+    <span class='name'>IOT-IC 1101</span>
+    <div class='vf'>version <span class='version'></span></div>
+  </div>
+
   <div class='menus'>
 
     <div class='s1'>现场数据</div>
@@ -67,11 +71,12 @@ ic.init(function(err) {
   
 ic.get('whoaim', null, function(err, d) {
   if (err || d.code) {
-    alert("用户未登录, 即将跳转到登录页面");
+    // alert("用户未登录, 即将跳转到登录页面");
     location.href = 'index.html';
   } else {
-    ic.username = d.data;
+    ic.username = d.data.Name;
     ic.popo("用户 "+ ic.username +" 已经登录");
+    $(".version").text(d.data.Version);
   }
 });
 

@@ -24,6 +24,7 @@ var sessionExp = 20 * time.Hour
 
 
 func serviceList(b *brick.Brick) {
+  installLicenseService(b)
   installUserService(b)
   installDictService(b)
   installAuthService(b)
@@ -33,7 +34,6 @@ func serviceList(b *brick.Brick) {
   installBusService(b)
   installLogService(b)
   installDeviceDataService(b)
-  installLicenseService(b)
 }
 
 
