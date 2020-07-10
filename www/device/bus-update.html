@@ -18,7 +18,7 @@
         </div>
 
         <div class="pure-u-1 pure-u-md-1-3">
-          <label>服务器 URI</label>
+          <label>服务器 URI <a href='#' class='uri_help'>帮助</a></label>
           <input type="text" name='uri' class="pure-u-23-24"/>
         </div>
 
@@ -332,6 +332,14 @@ jQuery(function($) {
     data_types = ret.data;
     init_slot_config(root.find(".slot_data_config"));
     init_slot_config(root.find(".slot_ctrl_config"));
+  });
+
+  root.find(".uri_help").click(function() {
+    let dia = ic.contentDialog("device/url-help.html");
+    dia.on("url", function(_, url) {
+      root.find("[name=uri]").val(url);
+    });
+    return false;
   });
 
 

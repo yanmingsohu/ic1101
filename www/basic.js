@@ -608,9 +608,12 @@ function contentDialog(url) {
     return false;
   });
 
-  onESC(function() {
+  onESC(_close);
+  t.on("close", _close);
+
+  function _close() {
     close.click();
-  });
+  }
 
   function resize() {
     content.width(content_frame.outerWidth());

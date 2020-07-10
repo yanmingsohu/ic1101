@@ -13,7 +13,7 @@
         </div>
 
         <div class="pure-u-1 pure-u-md-1-3">
-          <label>服务器 URI</label>
+          <label>服务器 URI <a href='#' class='uri_help'>帮助</a></label>
           <input type="text" name='uri' class="pure-u-23-24"/>
         </div>
 
@@ -118,6 +118,14 @@ jQuery(function($) {
   start.click(call_serv_button('bus_start', ()=>{runtime.click()}));
   stop.click(call_serv_button('bus_stop'));
   table.on("button_disabled", sw_buttons_state);
+
+  root.find(".uri_help").click(function() {
+    let dia = ic.contentDialog("device/url-help.html");
+    dia.on("url", function(_, url) {
+      root.find("[name=uri]").val(url);
+    });
+    return false;
+  });
 
   runtime.click(function() {
     let dia = ic.contentDialog("device/bus-data.html");

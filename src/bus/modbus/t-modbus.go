@@ -92,7 +92,7 @@ func (*bus_modbus_ct) SlotDesc(s string) (string, error) {
 // modbus uri 格式:
 //   tcp://[host][:port]
 //   rtu://[/path]
-//   asc://[/path]
+//   rtuovertcp://[/path]
 //   dtu://[host][:port][/dtu-type]
 //
 func (*bus_modbus_ct) ParseURI(uri string) (*url.URL, error) {
