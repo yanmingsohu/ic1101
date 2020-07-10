@@ -35,29 +35,33 @@ func installLicenseService(b *brick.Brick) {
 func __start__license(ctx *ServiceGroupContext) {
   coll := mg.Collection(ctx.collectionName)
 
+  look_mem := func() {
+    li := core.Li{}
+    err := coll.FindOne(context.Background(), license_filter).Decode(&li)
+    if err != nil {
+      __e = err
+      return
+    }
+    
+    li.ComputeZ()
+    err = li.Verification()
+    if err == nil {
+      err = li.CheckTime()
+    }
+    if err == nil {
+      __i = uint8(rand.Int() % 0xEF)
+      __x = __i + 1
+    } else {
+      __i = 1
+      __x = 0
+      __e = err
+    }
+  }
+
   go (func() {
     for _ = range __c {
       // log.Println("验证授权")
-      li := core.Li{}
-      err := coll.FindOne(context.Background(), license_filter).Decode(&li)
-      if err != nil {
-        __e = err
-        return
-      }
-      
-      li.ComputeZ()
-      err = li.Verification()
-      if err == nil {
-        err = li.CheckTime()
-      }
-      if err == nil {
-        __i = uint8(rand.Int() % 0xEF)
-        __x = __i + 1
-      } else {
-        __i = 1
-        __x = 0
-        __e = err
-      }
+      look_mem()
     }
   })()
 
@@ -69,7 +73,7 @@ func __start__license(ctx *ServiceGroupContext) {
   })()
   
   // 系统启动时检查一次
-  __c <- 0
+  look_mem()
 }
 
 
