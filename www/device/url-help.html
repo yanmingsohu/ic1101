@@ -91,8 +91,13 @@
       </div>
     
       <div class="pure-g hide" id='allover'>
-        <div class="pure-u-1 pure-u-md-1-1">
-          <label>操作</label>
+        <legend></legend>
+        <!-- <div class="pure-u-1 pure-u-md-1-2">
+          <label>生成的URL</label>
+          <input class="pure-u-23-24 gen_url" readonly/>
+        </div> -->
+        <div class="pure-u-1 pure-u-md-1-8">
+          <!-- <label>操作</label> -->
           <div class="pure-button-group" role="group">
             <button type="submit" 
               class="pure-button button-primary">确定</button>
@@ -109,6 +114,7 @@ jQuery(function($) {
   const root = $("#url_helper_frame");
   const afor = root.find("[for]");
   const form = root.find("form");
+  const gen_url = root.find(".gen_url");
 
 
   // radio 的 [for] 指向一个选择器, 当 radio 被选中, 选择器指向
@@ -130,6 +136,7 @@ jQuery(function($) {
       tar.hide();
       tar.find(":input").prop("disabled", true);
     }
+
     if (!skip) {
       root.find("[name='"+ name +"']").trigger("change", 1);
     }
@@ -139,6 +146,18 @@ jQuery(function($) {
 
 
   form.submit(function() {
+    form.trigger("url", get_url());
+    form.trigger("close");
+    return false;
+  });
+
+
+  function update_url() {
+    gen_url.val(get_url());
+  }
+
+
+  function get_url() {
     let arr = form.serializeArray();
     // 关键 url 参数组件, 表单中必须有 name 对应的表单项.
     let part = {
@@ -162,11 +181,8 @@ jQuery(function($) {
     });
 
     let url = [part.scheme, part.host, part.path, part.query];
-    // console.log('URL', url.join(""));
-    form.trigger("url", url.join(""));
-    form.trigger("close");
-    return false;
-  });
+    return url.join("");
+  }
 });
 </script>
 </div>

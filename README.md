@@ -22,9 +22,8 @@
 
 # TODO
 
-* 设备属性支持宽度和顺序定义
+* 设备属性表单支持宽度和顺序定义
 * 字典可导入/导出
-* 版本号的显示
 * 日志分类
 * 设备版本落后于原型版本时, 在列表中提示
 
@@ -40,11 +39,12 @@
 * [modbus开发资料](http://www.dalescott.net/modbus-development/)
 * [Logger](https://godoc.org/go.uber.org/zap)
 * [chart](https://github.com/apache/incubator-echarts)
+* [JavaScript](https://github.com/dop251/goja)
 
 
 # 协议参考
 
-* [Modbus](https://github.com/goburrow/modbus)
+* [Modbus](github.com/yanmingsohu/modbus)
 * [MBus](https://github.com/karl-gustav/ams-han)
 * [MQTT](https://github.com/eclipse/paho.mqtt.golang)
 * [MQTT](https://github.com/VolantMQ/volantmq)
