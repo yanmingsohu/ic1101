@@ -4,6 +4,7 @@ build/www
 material/*
 build/*.o
 build/*.a
+www/ace/demo/**
 
 *.dll
 *.db
