@@ -447,6 +447,7 @@ function popo(msg) {
   let content = t.find('.popo_message');
   let mouseon;
   let offset = body.data('popo_offset');
+  let showtime = 5e3;
 
   // content_frame.append(t); // 子页面会遮挡弹出消息
   body.append(t);
@@ -454,11 +455,6 @@ function popo(msg) {
 
   setTimeout(_show, 10);
   t.click(_close);
-
-  let tid = setInterval(()=>{
-    if (mouseon) return;
-    _close();
-  }, 5e3);
 
   content.mouseenter(()=>{
     mouseon = 1;
@@ -470,6 +466,7 @@ function popo(msg) {
 
   if (msg.constructor == Error) {
     conf = ['错误', format(msg.message, msg.data), 'error'];
+    showtime *= 3;
   } 
   else if (typeof msg == "string") {
     conf = ['消息', msg, 'info'];
@@ -480,6 +477,11 @@ function popo(msg) {
   else {
     conf = ['调试', JSON.stringify(msg), 'debug'];
   }
+
+  let tid = setInterval(()=>{
+    if (mouseon) return;
+    _close();
+  }, showtime);
 
   t.find(".ti").text(conf[0]);
   t.find(".msg").html(conf[1]);
@@ -597,14 +599,16 @@ function contentDialog(url) {
 
   close.click(function() {
     try {
-      t.trigger('closing');
+      content.trigger('closing');
       content.animate({right: -1000}, 200);
       t.fadeOut(500, function() {
-        t.trigger('closed');
+        content.trigger('closed');
         win.off('resize', resize);
         t.remove();
       });
-    } catch(err) {}
+    } catch(err) {
+      ic.popo(err);
+    }
     return false;
   });
 
@@ -625,10 +629,10 @@ function contentDialog(url) {
     try {
       loading.hide();
       c.html(html);
-      t.trigger('opend');
+      content.trigger('opend');
     } catch(err) {
       c.html('<pre>'+ err.stack +"</pre>");
-      t.trigger('error', err);
+      content.trigger('error', err);
     }
   }
   return t;

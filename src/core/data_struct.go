@@ -686,3 +686,29 @@ func (a *ApiArr) Swap(i, j int) {
 }
 
 const TableSystem = "sys_info"
+
+
+
+/*
+设备脚本
+
+Table: dev_script {
+  _id(string)       : 字典(ID)名称
+  desc(string)			: 说明
+  size(string)      : 脚本大小
+  js                : js脚本内容
+  version           : 每次修改版本+1
+  cd(time)          : 创建时间
+  md(time)  				: 修改时间
+}
+*/
+type DevScript struct {
+  Id      string      `bson:"_id"`
+  Desc    string      `bson:"desc"`
+  Size    int         `bson:"size"`
+  Js      string      `bson:"js"`
+  Cd      time.Time   `bson:"cd"`
+  Md      time.Time   `bson:"md"`
+}
+
+const TableDevScript = "dev_script"

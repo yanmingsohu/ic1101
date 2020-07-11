@@ -31,9 +31,10 @@ func serviceList(b *brick.Brick) {
   installDevProtoService(b)
   installDeviceService(b)
   installTimerService(b)
-  installBusService(b)
   installLogService(b)
   installDeviceDataService(b)
+  installScriptService(b)
+  installBusService(b)
 }
 
 

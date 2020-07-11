@@ -1,0 +1,280 @@
+<div id='dev_script_code_editor_frame'>
+  <h2>脚本编辑</h2><hr/>
+  <style>
+    #dev_sc_code_editor a, .tip, .note {
+      font-size: 9px; color: #999; margin-left: 20px;
+    }
+    .js_code {
+      min-height: 300px;
+    }
+    [name=js] {
+      display: none!important;
+    }
+    .full_screen_editor {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: #fff;
+      display: flex; flex-direction: row;
+    }
+    .full_screen_editor .code {
+      flex: 1;
+    }
+    .full_screen_editor .right {
+      flex: 1; display: flex; flex-direction: column;
+    }
+    .full_screen_editor .doc {
+      flex: 8; padding: 5px 30px;
+    }
+    .full_screen_editor .console {
+      background-color: #222; color: green;
+      font-size: 10px; padding: 5px; font-family: monospace;
+    }
+  </style>
+
+  <form class="pure-form pure-form-stacked" action='dev_sc_update' 
+        id='dev_sc_code_editor' method='post'>
+    <legend>基本属性</legend>
+    <fieldset>
+      <div class="pure-g">
+        <div class="pure-u-1 pure-u-md-1-4">
+          <label>脚本ID</label>
+          <input type="text" name='id' class="pure-u-23-24" readonly/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-2">
+          <label>说明</label>
+          <input type="text" name='desc' class="pure-u-23-24"/>
+        </div>
+
+        <div class="pure-u-1 pure-u-md-1-4">
+          <label>操作</label>
+          <div class="pure-button-group" role="group">
+            <button type="submit" 
+              class="pure-button button-primary">保存 (Ctrl+S)</button>
+          </div>
+          <span class='ajax-message'></span>
+        </div>
+      </div>
+    </fieldset>
+
+    <legend>代码 <b class='tip'></b></legend>
+    <div class="pure-u-1 pure-u-md-1-1">
+      <label>Javascript 
+        <a target='_blank' href='https://developer.mozilla.org/zh-CN/docs/Web/JavaScript'>
+          [JS 中文文档]</a> 
+        <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript'>
+          [JS English Documents]</a>
+        <a href='#' class='script_api'>[设备脚本开发指南]</a>
+        <a href='#' class='open_full_editor'>[全屏编辑]</a>
+      </label>
+
+      <textarea name='js'></textarea>
+      <pre class='js_code pure-u-23-24'></pre>
+      <div class='code-message error-message'></div>
+
+      <select class='theme'>
+        <option>chrome</option>
+        <option>github</option>
+        <option>chaos</option>
+        <option>eclipse</option>
+        <option>monokai</option>
+        <option>dawn</option>
+        <option>terminal</option>
+        <option>tomorrow</option>
+        <option>xcode</option>
+      </select>
+    </div>
+  </form>
+
+  <div id='full_screen_editor' class='hide'>
+    <div class='full_screen_editor'>
+      <pre class='code'></pre>
+      <div class='right'>
+        <div class='doc'></div>
+        <div class='note'>
+          <a class='clear' href='#'>[清除]</a>
+          <a class='close' href='#'>[关闭]</a>
+        </div>
+        <div class='console'></div>
+      </div>
+    </div>
+  </div>
+
+<script src='ace/src-min/ace.js'></script>
+<script>
+jQuery(function($) {
+  const root = $("#dev_script_code_editor_frame");
+  const id = root.find("[name=id]").val();
+  const code = root.find("[name=js]");
+  const js_code = root.find(".js_code");
+  const form = root.find("#dev_sc_code_editor");
+  const codemsg = root.find(".code-message");
+  const open_full = root.find(".open_full_editor");
+  const tip = root.find(".tip");
+  const ENTER = 13, S = 83;
+  const theme_sel = root.find(".theme");
+  const store_key = 'dev_script_editor_theme';
+
+  let tip_state = 0;
+  let editor = ace.edit(js_code[0]);
+
+  editor.setOptions({
+    enableBasicAutocompletion: true,
+    autoScrollEditorIntoView: true,
+    theme: "ace/theme/chrome",
+    mode: "ace/mode/javascript",
+    wrap: true,
+    minLines: 20,
+  });
+
+  theme_sel.change(function() {
+    editor.setTheme("ace/theme/"+ theme_sel.val());
+    localStorage.setItem(store_key, theme_sel.val());
+  });
+
+  ic.get("dev_sc_read", {id}, function(err, ret) {
+    if (err) return ic.popo(err);
+    root.find("[name=desc]").val(ret.data.desc);
+    code.val(ret.data.js);
+    editor.setValue(ret.data.js);
+    editor.moveCursorTo(0,0);
+  });
+
+  theme_sel.val(localStorage.getItem(store_key) || 'chrome').change();
+  js_code.on("keydown", quick_key(save_code));
+  open_full.click(open_full_editor);
+
+  form.submit(function() {
+    save_code();
+    return false;
+  });
+
+  root.find(".script_api").click(function() {
+    let dia = ic.contentDialog('meta/script-api.html');
+    return false;
+  });
+
+  root.parents(".content_dialog").on("closing", function() {
+    if (tip_state) {
+      throw new Error("脚本更改后未保存");
+    }
+  });
+
+  window.onbeforeunload = function(e) {
+    if (tip_state) {
+      var e = window.event || e;
+      e.returnValue = "离开后将丢失脚本的修改";
+    }
+  };
+
+
+  function open_full_editor() {
+    let pos = editor.getCursorPosition();
+    let full = ic.getTemplate("#full_screen_editor");
+    let console = full.find(".console");
+    let doc = full.find(".doc");
+    let log = [];
+    full.appendTo(document.body);
+    full.show();
+
+    let full_editor = ace.edit(full.find('.code')[0]);
+    full_editor.setOptions({
+      enableBasicAutocompletion: true,
+      autoScrollEditorIntoView: true,
+      theme: "ace/theme/"+ theme_sel.val(),
+      mode: "ace/mode/javascript",
+      wrap: true,
+    });
+    full_editor.setValue(editor.getValue());
+    full_editor.moveCursorTo(0,0);
+
+    ic.onESC(close);
+    full.on('keydown', quick_key(_save));
+    full.find(".close").click(close);
+    codemsg.on("msg", update_console);
+
+    $.get("meta/script-api.html", function(txt) {
+      doc.html(txt);
+    });
+
+    full.find(".clear").click(function() {
+      log.length = 0;
+      console.html("");
+      return false;
+    });
+
+
+    function update_console(e, msg) {
+      log.push(new Date().toLocaleString() +"&nbsp"+ msg +"<br/>");
+      if (log.length > 3) {
+        log.shift()
+      }
+      console.html(log.join(""));
+    }
+
+    function close() {
+      _copy();
+      codemsg.off("msg", update_console);
+      full.remove();
+      return false;
+    }
+
+    function _save() {
+      _copy();
+      save_code();
+    }
+
+    function _copy() {
+      editor.setValue(full_editor.getValue());
+      editor.moveCursorToPosition(pos);
+      editor.clearSelection();
+    }
+    return false;
+  }
+
+
+  function quick_key(on_save) {
+    return function(e) {
+      switch (e.keyCode) {
+      case ENTER:
+        // resize_code();
+        break;
+      case S:
+        if (e.ctrlKey) {
+          on_save();
+        }
+        return false;
+      }
+
+      if (tip_state == 0) {
+        tip_state = 1;
+        tip.text("未保存");
+      }
+    };
+  }
+
+
+  function save_code() {
+    let new_code = editor.getValue().trim();
+    code.val(new_code);
+
+    codemsg.html("");
+    let param = form.serialize();
+    ic.post("dev_sc_update", param, function(err, ret) {
+      if (err) {
+        ic.popo(err);
+        let msg = err.message +"<br/>"+ err.data;
+        codemsg.html(msg);
+        codemsg.trigger("msg", msg);
+        return;
+      }
+
+      codemsg.trigger("msg", ret.msg);
+      ic.popo(ret.msg);
+      tip_state = 0;
+      tip.text("");
+    });
+  }
+});
+</script>
+</div>
