@@ -351,7 +351,8 @@ func bus_ctrl_send(h *Ht) interface{} {
   }
   
   value := bus.StringData{ D: v }
-  if err := inf.SendCtrl(slot, &value); err != nil {
+  t := time.Now()
+  if err := inf.SendCtrl(slot, &value, &t); err != nil {
     return err
   }
   return HttpRet{0, "控制已发送", slot_id}
@@ -413,7 +414,8 @@ func _bus_start(ctx context.Context, id string) error {
       return err
     }
     event.push_data(d, ds)
-    if err := event.init_dev_script(d.Dev); err != nil {
+    
+    if err := event.init_dev_script(d.Dev, findbus.Ctrls, sp); err != nil {
       return &HttpRet{6, "加载设备脚本时出错", err.Error()}
     }
   }
@@ -496,7 +498,9 @@ func (r *bus_event) push_ctrl(c core.BusCtrl, s bus.Slot, t core.Tick) {
 
 
 // 初始化设备脚本
-func (r *bus_event) init_dev_script(devid string) error {
+func (r *bus_event) init_dev_script(devid string, 
+    ctrlSet map[string]core.BusCtrl, sp bus.SlotParser) error {
+
   if _, has := r.devjs[devid]; has {
     return nil
   }
@@ -513,7 +517,12 @@ func (r *bus_event) init_dev_script(devid string) error {
   if err := GetDevScript(r.ctx, devp.Script, &js); err != nil {
     return err
   }
-  sr, err := BuildDevScript(js.Id, js.Js)
+
+  cs, err := NewCtrlSendImpl(devid, ctrlSet, sp, r.info)
+  if err != nil {
+    return err
+  }
+  sr, err := BuildDevScript(js.Id, js.Js, cs)
   if err != nil {
     return err
   }
@@ -610,6 +619,10 @@ func (r *bus_event) OnStopped() {
   for _, c := range r.ctrls {
     device_ref.Free(c.Dev)
   }
+
+  for _, j := range r.devjs {
+    j.Stop("bus stopped")
+  }
 }
 
 
@@ -667,6 +680,62 @@ func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
   if err != nil {
     r.info.Log("更新设备状态错误, "+ err.Error())
   }
+}
+
+
+//
+// 关联设备上的所有控制槽到总线槽
+//
+type CtrlSendImpl struct {
+  // 控制槽名称映射到总线槽, 用控制槽名称发送指令时使用
+  ctrl2bus_slot map[string]bus.Slot
+  info          *bus.BusInfo
+}
+
+
+func (c *CtrlSendImpl) Send(devCtrlName string, v interface{}) {
+  slot, has := c.ctrl2bus_slot[devCtrlName]
+  if !has {
+    panic(errors.New("不存在的控制槽: "+ devCtrlName))
+  }
+  t := time.Now()
+  data, err := bus.NewDataWrap(v)
+  if err != nil {
+    panic(err)
+  }
+
+  // 等待发送任务释放锁, 之后在逐个发送控制
+  go (func() {
+    if err := c.info.SendCtrl(slot, data, &t); err != nil {
+      c.info.Log("发送控制错误", devCtrlName, err)
+    }
+  })()
+}
+
+
+func (c *CtrlSendImpl) Log(msg ...interface{}) {
+  c.info.Log(msg...)
+}
+
+
+func NewCtrlSendImpl(devid string, ctrlSet map[string]core.BusCtrl, 
+    sp bus.SlotParser, info *bus.BusInfo) (*CtrlSendImpl, error) {
+
+  cs := CtrlSendImpl{
+    ctrl2bus_slot : make(map[string]bus.Slot),
+    info : info,
+  }
+
+  for _, v := range ctrlSet {
+    if v.Dev == devid {
+      var err error
+      cs.ctrl2bus_slot[v.Name], err = sp.ParseSlot(v.SlotID)
+      if err != nil {
+        return nil, err
+      }
+    }
+  }
+  return &cs, nil
 }
 
 

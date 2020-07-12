@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"ic1101/brick"
 	"ic1101/src/bus"
 	"ic1101/src/core"
@@ -98,7 +99,7 @@ func dev_sc_update(h *Ht) interface{} {
 }
 
 
-func BuildDevScript(name, code string) (*ScriptRuntime, error) {
+func BuildDevScript(name, code string, s CtrlSender) (*ScriptRuntime, error) {
   sr := ScriptRuntime{}
   if err := sr.Compile(name, code); err != nil {
     return nil, err
@@ -112,7 +113,15 @@ func BuildDevScript(name, code string) (*ScriptRuntime, error) {
   }
   sr.on_data = on_data
   sr.Name = name
+  sr.sender = s
   return &sr, nil
+}
+
+
+type CtrlSender interface {
+  // 如果发生错误会 panic
+  Send(devCtrlName string, v interface{})
+  Log(msg ...interface{})
 }
 
 
@@ -124,6 +133,7 @@ type ScriptRuntime struct {
   core.ScriptRuntime
   on_data   goja.Callable
   Name      string
+  sender    CtrlSender
 }
 
 
@@ -186,6 +196,36 @@ func (d *JSDevData) GetDev(fc goja.FunctionCall) goja.Value {
 //
 func (d *JSDevData) GetType(fc goja.FunctionCall) goja.Value {
   return d.sr.Value(d.data.Type)
+}
+
+
+//
+// 发送一个控制指令, 如果出错会抛出异常
+// js: Send(ctrlName, data)
+//
+func (d *JSDevData) Send(fc goja.FunctionCall) goja.Value {
+  name := fc.Argument(0).String()
+  if name == "" {
+    panic(errors.New("控制名称不能为空"))
+  }
+  data := fc.Argument(1).Export()
+  if data == nil {
+    panic(errors.New("数据不能为空"))
+  }
+  d.sr.sender.Send(name, data)
+  return d.sr.Value(nil)
+}
+
+
+func (d *JSDevData) Log(fc goja.FunctionCall) goja.Value {
+  vs := fc.Arguments
+  ln := len(vs)
+  ps := make([]interface{}, ln)
+  for i := 0; i<ln; i++ {
+    ps[i] = vs[i].ToString()
+  }
+  d.sr.sender.Log(ps...)
+  return d.sr.Value(nil)
 }
 
 

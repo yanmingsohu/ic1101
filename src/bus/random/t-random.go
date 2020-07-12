@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const RealRegNum = 5;
+
 
 func init() {
   bus.InstallBus("random", &bus_random_ct{})
@@ -50,7 +52,11 @@ func (*bus_random_ct) Name() string {
 
 
 func (*bus_random_ct) Create(i bus.BusReal) (bus.Bus, error) {
-  return &random_bus{}, nil
+  rb := random_bus{ make([]bus.DataWrap, RealRegNum) }
+  for i := 0; i < RealRegNum; i++ {
+    rb.reg[i] = &bus.IntData{D:0}
+  }
+  return &rb, nil
 }
 
 
@@ -90,10 +96,18 @@ func (s *bus_random_sl) String() string {
 
 
 func (s *bus_random_sl) Desc() string {
-  if s.tp == bus.SlotData {
-    return "虚拟数据 "+ strconv.Itoa(s.port)
+  if s.port < RealRegNum {
+    if s.tp == bus.SlotData {
+      return "虚拟寄存器 "+ strconv.Itoa(s.port)
+    } else {
+      return "虚拟控制 "+ strconv.Itoa(s.port)
+    }
   } else {
-    return "虚拟控制 "+ strconv.Itoa(s.port)
+    if s.tp == bus.SlotData {
+      return "随机数据 "+ strconv.Itoa(s.port)
+    } else {
+      return "空控制 "+ strconv.Itoa(s.port)
+    }
   }
 }
 
@@ -104,6 +118,7 @@ func (s *bus_random_sl) Type() bus.SlotType {
 
 
 type random_bus struct {
+  reg []bus.DataWrap
 }
 
 
@@ -112,16 +127,26 @@ func (r *random_bus) Start(i bus.BusReal) error {
   return nil
 }
 
+
 func (r *random_bus) SyncData(i bus.BusReal, t *time.Time) error {
   for _, s := range i.Datas() {
-    d := bus.IntData{rand.Int() % 999}
-    i.Event().OnData(s, t, &d)
+    slot := s.(*bus_random_sl)
+    if slot.port < RealRegNum {
+      i.Event().OnData(s, t, r.reg[slot.port])
+    } else {
+      d := bus.IntData{D: rand.Int() % 999}
+      i.Event().OnData(s, t, &d)
+    }
   }
   return nil
 }
 
 
 func (r *random_bus) SendCtrl(s bus.Slot, d bus.DataWrap, t *time.Time) error {
+  slot := s.(*bus_random_sl)
+  if slot.port < RealRegNum {
+    r.reg[slot.port] = d
+  }
   return nil
 }
 

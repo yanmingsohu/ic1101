@@ -71,3 +71,37 @@ function on_data(dev, time, data) {
 * 3: 虚拟数据
 * 4: 开关类型
 * 5: 字符串类型
+
+### void Send(name, data)
+
+向设备定义的控制槽发送一个数据, 该控制槽必须已经挂接在总线上, 参数错误会抛出异常
+
+* name 设备上的控制槽名称
+* data 数据, 可以是 数字/字符串/布尔
+
+```javascript
+function on_data(dev, time, data) {
+  // 如果是 '瞬时流量' 数据超过 20 立方米/秒, 则阀门关闭 50%
+  if (dev.GetName() == '瞬时流量' && data > 20) {
+    dev.Send("入口阀门", 0.5);
+  }
+  // 不对返回做处理
+  return data;
+}
+```
+
+### void Log(...)
+
+```javascript
+function on_data(dev, time, data) {
+  // 如果是 '瞬时流量' 数据超过 20 立方米/秒, 发送一个日志
+  if (dev.GetName() == '瞬时流量' && data > 20) {
+    dev.Log("流量超过阈值", data);
+  }
+  // 不对返回做处理
+  return data;
+}
+```
+
+记录一行日志, 该日志会在 `总线实时状态` 和控制台上打印.
+参数可以任意.

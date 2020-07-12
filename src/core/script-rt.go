@@ -84,3 +84,11 @@ func (s *ScriptRuntime) VM() *goja.Runtime {
 func (s *ScriptRuntime) Value(i interface{}) goja.Value {
   return s.vm.ToValue(i)
 }
+
+
+//
+// 终止虚拟机中任务
+//
+func (s *ScriptRuntime) Stop(cause string) {
+  s.vm.Interrupt(cause)
+}

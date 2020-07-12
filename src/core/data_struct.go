@@ -471,9 +471,9 @@ type BusCtrl struct {
   SlotID    string      `bson:"slot_id"   json:"slot_id"`
   SlotDesc  string      `bson:"slot_desc" json:"slot_desc"`
   Dev       string      `bson:"dev_id"    json:"dev_id"`
-  Name      string      `bson:"data_name" json:"data_name"`
-  Desc      string      `bson:"data_desc" json:"data_desc"`
-  Type      DevDataType `bson:"data_type" json:"data_type"`
+  Name      string      `bson:"data_name" json:"data_name"` //难以纠正的错误
+  Desc      string      `bson:"data_desc" json:"data_desc"` //..
+  Type      DevDataType `bson:"data_type" json:"data_type"` //..
   Timer     string      `bson:"timer"     json:"timer"`
   Value     interface{} `bson:"value"     json:"value"`
 }
