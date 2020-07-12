@@ -84,7 +84,8 @@ type BusCreator interface {
 
 
 //
-// 运行中的总线实例对象
+// 运行中的总线实例对象, 该对象的操作已经被包装
+// 无需考虑线程安全问题.
 //
 type Bus interface {
   // 启动总线, 用于初始化数据, 失败返回 error
@@ -93,6 +94,15 @@ type Bus interface {
   SyncData(BusReal, *time.Time) error
   // 停止总线, 该方法返回后, 总线一定是停止的
   Stop(BusReal)
+  // 发送控制指令, 发送失败返回 error
+  Sender
+}
+
+
+//
+// 发送命令的接口
+//
+type Sender interface {
   // 发送控制指令, 发送失败返回 error
   SendCtrl(s Slot, d DataWrap, t *time.Time) error
 }
@@ -158,6 +168,9 @@ type BusInfo struct {
   datas []Slot
   ctrls []ctrl_slot
   logs  []string
+
+  sync  sync.Mutex
+  logsy sync.RWMutex
 }
 
 
@@ -198,9 +211,18 @@ func NewInfo(uri, id, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error) {
   if err != nil {
     return nil, err
   }
-  return &BusInfo{id, u, typ, tk, ev, BusStateStartup, 
-      nil, sp, make([]Slot, 0, 10), make([]ctrl_slot, 0, 10), 
-      make([]string, 0, MaxLogCount)} , nil
+  return &BusInfo{
+    id : id, 
+    uri : u, 
+    typeName : typ, 
+    tk : tk, 
+    event : ev, 
+    st : BusStateStartup, 
+    bs : nil, 
+    ps : sp, 
+    datas : make([]Slot, 0, 10), 
+    ctrls : make([]ctrl_slot, 0, 10), 
+    logs : make([]string, 0, MaxLogCount) } , nil
 }
 
 
@@ -234,15 +256,18 @@ func (i *BusInfo) AddCtrl(s Slot, tk core.Tick, value DataWrap) error {
 //
 // 立即发送控制指令
 //
-func (i *BusInfo) SendCtrl(s Slot, value DataWrap) error {
-  busMutex.Lock()
-  defer busMutex.Unlock()
+func (i *BusInfo) SendCtrl(s Slot, value DataWrap, t *time.Time) error {
+  i.sync.Lock()
+  defer i.sync.Unlock()
 
   if i.st < BusStateStartup {
     return errors.New("总线没有运行, 不能发送控制指令")
   }
-  t := time.Now()
-  return i.bs.SendCtrl(s, value, &t)
+  err := i.bs.SendCtrl(s, value, t)
+  if err == nil {
+    i.event.OnCtrlSended(s, t)
+  }
+  return err
 }
 
 
@@ -268,6 +293,9 @@ func (i *BusInfo) start(b Bus) error {
 
   i.st = BusStateSleep
   i.tk.Start(func() {
+    i.sync.Lock()
+    defer i.sync.Unlock()
+
     i.st = BusStateTask
     t := time.Now()
     b.SyncData(real, &t)
@@ -306,8 +334,9 @@ func (i *BusInfo) stop() {
 func (i *BusInfo) _ctrl_thread(c ctrl_slot) {
   c.tk.Start(func() {
     t := time.Now()
-    i.bs.SendCtrl(c.slot, c.data, &t)
-    i.event.OnCtrlSended(c.slot, &t)
+    if err := i.SendCtrl(c.slot, c.data, &t); err != nil {
+      i.Log("发送控制失败", c.slot.String(), err)
+    }
   }, func() {
     i.event.OnCtrlExit(c.slot)
   })
@@ -320,14 +349,19 @@ func (i *BusInfo) State() BusState {
 
 
 func (i *BusInfo) GetLog() []string {
+  i.logsy.RLock()
+  defer i.logsy.RUnlock()
   return i.logs
 }
 
 
 // 插入新的日志, 删除超过 MaxLogCount 的部分
 func (i *BusInfo) Log(msg ...interface{}) {
-  s := fmt.Sprintln(msg)
-  i.logs = append(i.logs, time.Now().Format(time.RFC3339) + s)
+  i.logsy.Lock()
+  defer i.logsy.Unlock()
+
+  s := fmt.Sprint(msg...)
+  i.logs = append(i.logs, time.Now().Format(time.RFC3339) +" "+ s)
   if len(i.logs) > MaxLogCount {
     i.logs = i.logs[1:]
   }
@@ -382,7 +416,7 @@ type DataWrap interface {
 // 消息接收器接口
 //
 type BusEvent interface {
-  // 接受总线发送的数据, [该方法由总线调用]
+  // 接受总线发送的数据, [该方法由总线调用, 参数一定不为 nil]
   OnData(slot Slot, time *time.Time, data DataWrap)
   // 总线上所有任务都终止了, 该方法被调用
   OnStopped()
