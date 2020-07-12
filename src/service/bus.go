@@ -413,6 +413,9 @@ func _bus_start(ctx context.Context, id string) error {
       return err
     }
     event.push_data(d, ds)
+    if err := event.init_dev_script(d.Dev); err != nil {
+      return err
+    }
   }
 
   for _, c := range findbus.Ctrls {

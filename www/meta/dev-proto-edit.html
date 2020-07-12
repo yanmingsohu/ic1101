@@ -22,7 +22,7 @@
 
         <div class="pure-u-1 pure-u-md-1-2">
           <label>脚本</label>
-          <select type="text" name='script'class="pure-u-23-24">
+          <select type="text" name='script' class="pure-u-23-24" api='dev_sc_list'>
             <option value=''>(无)</option>
           </select>
         </div>
@@ -267,6 +267,9 @@ jQuery(function($) {
   let id = root.find("[name=id]").val();
   let attr_types = {};
   let data_types = {};
+  let script = root.find("[name=script]");
+
+  ic.select2fromApi(script);
 
   ic.get("dev_proto_attr_types", null, function(err, ret) {
     if (err) return ic.popo("页面初始化错误, "+ err.message);

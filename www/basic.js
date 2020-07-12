@@ -782,6 +782,9 @@ function initDictSelect(jselect) {
 // 用 trigger('change', value) 触发默认选项的加载, 
 // 一旦数据加载完成, 触发 change_over(event, data) 事件
 //
+// 由于 select 在列表初始化完成前无法设定 value 属性,
+// 可以通过 data('val',...) 设置一个列表当前选项.
+//
 function select2fromApi(jselect, data_convert) {
   const api = jselect.attr('api');
   if (!api) return popo("api 参数无效");
@@ -829,13 +832,15 @@ function select2fromApi(jselect, data_convert) {
     cache: true,
   });
 
-  if (jselect.val()) {
-    set_value(jselect.val());
+  let init_val = jselect.val() || jselect.data("val");
+  if (init_val) {
+    set_value(init_val);
   }
 
   jselect.on("change", function(event, value) {
-    if (!value) return;
-    set_value(value);
+    if (value) {
+      set_value(value);
+    }
   });
 
   function set_value(value) {

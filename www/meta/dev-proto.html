@@ -20,7 +20,8 @@
 
         <div class="pure-u-1 pure-u-md-1-2">
           <label>脚本</label>
-          <select type="text" name='script'class="pure-u-23-24">
+          <select type="text" name='script' 
+            class="pure-u-23-24" api='dev_sc_list'>
             <option value=''>(无)</option>
           </select>
         </div>
@@ -91,6 +92,9 @@ jQuery(function($) {
   let edit = root.find("#edit_dev_proto");
   let del = root.find("#delete_dev_proto");
   let table = root.find("#dev_proto_table");
+  let script = root.find("[name=script]");
+
+  ic.select2fromApi(script);
 
   create.on('success', function() {
     table.selectNone();
@@ -114,7 +118,7 @@ jQuery(function($) {
       }
       
       target.find("[name=id]").val(data.id);
-      target.find("[name=script]").val(data.script);
+      target.find("[name=script]").data('val', data.script);
       target.find(".dev_proto_desc").val(data.desc);
     },
   });
