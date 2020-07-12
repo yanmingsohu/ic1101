@@ -51,6 +51,8 @@
           <div class="pure-button-group" role="group">
             <button type="submit" 
               class="pure-button button-primary">保存 (Ctrl+S)</button>
+            <button type='button'
+              class="nosave pure-button button-error">不保存退出</button>
           </div>
           <span class='ajax-message'></span>
         </div>
@@ -103,6 +105,7 @@
 <script src='ace/src-min/ace.js'></script>
 <script>
 jQuery(function($) {
+  const body = $(document.body);
   const root = $("#dev_script_code_editor_frame");
   const id = root.find("[name=id]").val();
   const code = root.find("[name=js]");
@@ -111,21 +114,15 @@ jQuery(function($) {
   const codemsg = root.find(".code-message");
   const open_full = root.find(".open_full_editor");
   const tip = root.find(".tip");
-  const ENTER = 13, S = 83;
   const theme_sel = root.find(".theme");
   const store_key = 'dev_script_editor_theme';
+  const nosave = root.find(".nosave");
 
+  const ENTER = 13, S = 83;
   let tip_state = 0;
   let editor = ace.edit(js_code[0]);
 
-  editor.setOptions({
-    enableBasicAutocompletion: true,
-    autoScrollEditorIntoView: true,
-    theme: "ace/theme/chrome",
-    mode: "ace/mode/javascript",
-    wrap: true,
-    minLines: 20,
-  });
+  editor.setOptions(editor_options());
 
   theme_sel.change(function() {
     editor.setTheme("ace/theme/"+ theme_sel.val());
@@ -154,11 +151,9 @@ jQuery(function($) {
     return false;
   });
 
-  root.parents(".content_dialog").on("closing", function() {
-    if (tip_state) {
-      throw new Error("脚本更改后未保存");
-    }
-  });
+  root.parents(".content_dialog").on("closing", not_close_when_nosave);
+  body.on("uninstall_main_page", not_close_when_nosave);
+  nosave.click(exit_without_save);
 
   window.onbeforeunload = function(e) {
     if (tip_state) {
@@ -167,6 +162,12 @@ jQuery(function($) {
     }
   };
 
+
+  function not_close_when_nosave() {
+    if (tip_state) {
+      throw new Error("脚本更改后未保存");
+    }
+  }
 
   function open_full_editor() {
     let pos = editor.getCursorPosition();
@@ -178,13 +179,7 @@ jQuery(function($) {
     full.show();
 
     let full_editor = ace.edit(full.find('.code')[0]);
-    full_editor.setOptions({
-      enableBasicAutocompletion: true,
-      autoScrollEditorIntoView: true,
-      theme: "ace/theme/"+ theme_sel.val(),
-      mode: "ace/mode/javascript",
-      wrap: true,
-    });
+    full_editor.setOptions(editor_options());
     full_editor.setValue(editor.getValue());
     full_editor.moveCursorTo(0,0);
 
@@ -235,6 +230,12 @@ jQuery(function($) {
   }
 
 
+  function exit_without_save() {
+    tip_state = 0;
+    root.trigger("close");
+  }
+
+
   function quick_key(on_save) {
     return function(e) {
       switch (e.keyCode) {
@@ -244,8 +245,9 @@ jQuery(function($) {
       case S:
         if (e.ctrlKey) {
           on_save();
+          return false;
         }
-        return false;
+        break;
       }
 
       if (tip_state == 0) {
@@ -276,6 +278,19 @@ jQuery(function($) {
       tip_state = 0;
       tip.text("");
     });
+  }
+
+  
+  function editor_options() {
+    return {
+      enableBasicAutocompletion: true,
+      autoScrollEditorIntoView: true,
+      theme: "ace/theme/" + theme_sel.val() || 'chrome',
+      mode: "ace/mode/javascript",
+      wrap: true,
+      minLines: 20,
+      tabSize: 2,
+    }
   }
 });
 </script>

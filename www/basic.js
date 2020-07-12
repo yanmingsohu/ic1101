@@ -670,6 +670,7 @@ function center(where, who) {
 //   table_convert : 表格数据转换器
 //   copy_edit: function(data, targetDom) : 
 //      用当前数据初始化编辑子页面, 适用于 create_page/edit_page
+//      如果手动触发 edit 的 click 事件, data 参数可能为空
 //   button_on_table_select:[] : 可选的, 数组中的按钮在表格选中后启用
 // }
 //
@@ -709,6 +710,7 @@ function commandCrudPage(conf) {
   function openDialogWith(page) {
     let dialog = contentDialog(page);
     dialog.on('opend', function() {
+      // 这里 data 可能为空
       let data = conf.table.data('select_row');
       conf.copy_edit(data, dialog);
     });

@@ -18,18 +18,16 @@
 这是一个默认的脚本代码, 该代码返回总线传来的数据, 此外什么都不做.
 
 ```javascript
-{
-  //
-  // 在保存数据之前, 对数据进行转换, 如果什么都不处理则返回原始值
-  //
-  // dev  : class Dev 参看 Dev 类的说明.
-  // time : 数据时间的毫秒值, 可以通过 Date 转换为 js 原生类型.
-  // data : 设备传来的数据, js 原生数据类型.
-  //
-  on_data : function(dev, time, data) {
-    // 默认直接返回原始值
-    return data;
-  },
+//
+// 在保存数据之前, 对数据进行转换, 如果什么都不处理则返回原始值
+//
+// dev  : class Dev 参看 Dev 类的说明.
+// time : 数据时间的毫秒值, 可以通过 Date 转换为 js 原生类型.
+// data : 设备传来的数据, js 原生数据类型.
+//
+function on_data(dev, time, data) {
+  // 默认直接返回原始值
+  return data;
 }
 ```
 
@@ -45,16 +43,14 @@ on_data 第一个参数 dev 的定义
 该属性可以用来针对不同的数据进行分类处理
 
 ```javascript
-{
-  on_data : function(dev, time, data) {
-    // 如果是 '瞬时流量' 数据, 就把数据缩小 100 倍
-    if (dev.GetName() == '瞬时流量') {
-        return data/100;
-    } else {
-        // 否则返回原始值
-        return data;
-    }
-  },
+function on_data(dev, time, data) {
+  // 如果是 '瞬时流量' 数据, 就把数据缩小 100 倍
+  if (dev.GetName() == '瞬时流量') {
+    return data/100;
+  } else {
+    // 否则返回原始值
+    return data;
+  }
 }
 ```
 

@@ -85,8 +85,12 @@ $('#main_menu .s2').click(function() {
   let thiz = $(this);
   let href = thiz.attr("href");
   if (!href) return;
-  body.trigger("uninstall_main_page");
-  load(href);
+  try {
+    body.trigger("uninstall_main_page");
+    load(href);
+  } catch(err) {
+    ic.popo(err);
+  }
 });
 
 function load(url) {

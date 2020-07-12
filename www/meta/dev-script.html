@@ -85,6 +85,7 @@ jQuery(function($) {
   let edit = root.find("#edit_ds");
   let del = root.find("#delet_ds");
   let table = root.find("#dev_script_table");
+  let id = root.find("[name=id]");
 
   create.on('success', function() {
     table.selectNone();
@@ -99,6 +100,11 @@ jQuery(function($) {
     delete : del,
 
     copy_edit(data, target) {
+      if (!data) {
+        data = {
+          id: id.val(),
+        };
+      }
       target.find("[name=id]").val(data.id);
     },
   });
