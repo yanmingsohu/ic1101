@@ -68,7 +68,6 @@ func dev_sc_create(h *Ht) interface{} {
     "size"    : len(NullScript),
     "version" : 1,
   }
-
   return h.Crud().Create(&d)
 }
 

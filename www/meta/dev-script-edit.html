@@ -27,7 +27,13 @@
     }
     .full_screen_editor .console {
       background-color: #222; color: green;
-      font-size: 10px; padding: 5px; font-family: monospace;
+      font-size: 10px; font-family: monospace; padding: 0 5px;
+    }
+    .full_screen_editor .full_ctrl {
+      position: fixed; right: 30px; top: 1px; 
+    }
+    .full_screen_editor .full_ctrl a {
+      color: green !important;
     }
   </style>
 
@@ -72,19 +78,22 @@
 
       <textarea name='js'></textarea>
       <pre class='js_code pure-u-23-24'></pre>
-      <div class='code-message error-message'></div>
 
-      <select class='theme'>
-        <option>chrome</option>
-        <option>github</option>
-        <option>chaos</option>
-        <option>eclipse</option>
-        <option>monokai</option>
-        <option>dawn</option>
-        <option>terminal</option>
-        <option>tomorrow</option>
-        <option>xcode</option>
-      </select>
+      <div class='pure-u-1 pure-u-md-1-8'>
+        <select class='theme pure-u-23-24'>
+          <option>chrome</option>
+          <option>github</option>
+          <option>chaos</option>
+          <option>eclipse</option>
+          <option>monokai</option>
+          <option>dawn</option>
+          <option>terminal</option>
+          <option>tomorrow</option>
+          <option>xcode</option>
+        </select>
+      </div>
+
+      <span class='code-message ajax-message error-message pure-u-1 pure-u-md-1-2'></span>
     </div>
   </form>
 
@@ -93,9 +102,9 @@
       <pre class='code'></pre>
       <div class='right'>
         <div class='doc'></div>
-        <div class='note'>
-          <a class='clear' href='#'>[清除]</a>
-          <a class='close' href='#'>[关闭]</a>
+        <div class='note full_ctrl'>
+          <a class='clear' href='#'>[清除日志]</a>
+          <a class='close' href='#'>[退出全屏]</a>
         </div>
         <div class='console'></div>
       </div>
@@ -200,7 +209,9 @@ jQuery(function($) {
 
 
     function update_console(e, msg) {
-      log.push(new Date().toLocaleString() +"&nbsp"+ msg +"<br/>");
+      let s = ['<div class="log">', new Date().toLocaleString(), 
+                " ", msg, "</div>"];
+      log.push(s.join(""));
       if (log.length > 3) {
         log.shift()
       }
@@ -266,17 +277,18 @@ jQuery(function($) {
     let param = form.serialize();
     ic.post("dev_sc_update", param, function(err, ret) {
       if (err) {
-        ic.popo(err);
+        // ic.popo(err);
         let msg = err.message +"<br/>"+ err.data;
-        codemsg.html(msg);
+        codemsg.html(msg).addClass("error-message");
         codemsg.trigger("msg", msg);
         return;
       }
 
+      // ic.popo(ret.msg);
+      codemsg.html(ret.msg).removeClass("error-message");
       codemsg.trigger("msg", ret.msg);
-      ic.popo(ret.msg);
       tip_state = 0;
-      tip.text("");
+      tip.text('');
     });
   }
 
