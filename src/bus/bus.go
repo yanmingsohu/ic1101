@@ -2,6 +2,7 @@ package bus
 
 import (
 	"errors"
+	"fmt"
 	"ic1101/src/core"
 	"log"
 	"net/url"
@@ -108,7 +109,7 @@ type BusReal interface {
   // 返回数据槽的切片
   Datas() []Slot
   // 记录日志
-  Log(msg string)
+  Log(msg ...interface{})
 }
 
 
@@ -324,13 +325,13 @@ func (i *BusInfo) GetLog() []string {
 
 
 // 插入新的日志, 删除超过 MaxLogCount 的部分
-func (i *BusInfo) Log(msg string) {
-  s := time.Now().Format(time.RFC3339) +" "+ msg
-  i.logs = append(i.logs, s)
+func (i *BusInfo) Log(msg ...interface{}) {
+  s := fmt.Sprintln(msg)
+  i.logs = append(i.logs, time.Now().Format(time.RFC3339) + s)
   if len(i.logs) > MaxLogCount {
     i.logs = i.logs[1:]
   }
-  log.Println(i.id, msg)
+  log.Println(i.id, s)
 }
 
 
@@ -372,6 +373,8 @@ type DataWrap interface {
   Float()   float32
   Float64() float64
   Bool()    bool
+  // 返回内部类型的值
+  Src() interface{}
 }
 
 

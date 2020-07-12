@@ -55,6 +55,9 @@ func (s *ScriptRuntime) InitObject() error {
 }
 
 
+//
+// 找不到函数会返回错误
+//
 func (s *ScriptRuntime) GetFunc(name string) (goja.Callable, error) {
   v := s.ext.Get(name)
   af, is := goja.AssertFunction(v)
@@ -65,11 +68,25 @@ func (s *ScriptRuntime) GetFunc(name string) (goja.Callable, error) {
 }
 
 
+//
+// 返回脚本导出的对象
+//
 func (s *ScriptRuntime) This() *goja.Object {
   return s.ext
 }
 
 
+//
+// 返回虚拟机
+//
 func (s *ScriptRuntime) VM() *goja.Runtime {
   return s.vm
+}
+
+
+//
+// 对 goja.Runtime.ToValue() 的包装
+//
+func (s *ScriptRuntime) Value(i interface{}) goja.Value {
+  return s.vm.ToValue(i)
 }

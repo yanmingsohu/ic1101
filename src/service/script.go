@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"ic1101/brick"
+	"ic1101/src/bus"
 	"ic1101/src/core"
 	"time"
 
@@ -15,11 +16,13 @@ import (
 const NullScript = `
 {
   //
+  // 在保存数据之前, 对数据进行转换
+  // dev: class Dev
   // time: 数据时间
-  // data: 数据包装器
+  // data: 设备传来的数据, js 原生数据类型
   // 完整示例见开发文档
   //
-  on_data : function(time, data) {
+  on_data : function(dev, data, time) {
     // 默认直接返回原始值
     return data;
   },
@@ -105,12 +108,6 @@ func dev_sc_update(h *Ht) interface{} {
 }
 
 
-type ScriptRuntime struct {
-  core.ScriptRuntime
-  on_data   goja.Callable
-}
-
-
 func BuildDevScript(name, code string) (*ScriptRuntime, error) {
   sr := ScriptRuntime{}
   if err := sr.Compile(name, code); err != nil {
@@ -124,18 +121,91 @@ func BuildDevScript(name, code string) (*ScriptRuntime, error) {
     return nil, err
   }
   sr.on_data = on_data
+  sr.Name = name
   return &sr, nil
+}
+
+
+//
+// 设备通过该类型导出的方法, 将数据转换后保存到 DB
+// 线程不安全
+//
+type ScriptRuntime struct {
+  core.ScriptRuntime
+  on_data   goja.Callable
+  Name      string
+}
+
+
+//
+// 调用脚本导出的 on_data(dev, time, data) 函数
+//
+func (s *ScriptRuntime) OnData(slot *core.BusSlot, 
+    t *time.Time, d bus.DataWrap) (bus.DataWrap, error) {
+  jsdev  := JSDevData{slot, s}
+  jstime := s.Value(t.UnixNano() / 1e6)
+  jsdata := s.Value(d.Src())
+  // js: Function(dev, timeMS, data)
+  ret, err := s.on_data(s.This(), s.Value(&jsdev), jstime, jsdata)
+  if err != nil {
+    return d, err
+  }
+  return bus.NewDataWrap(ret.Export())
+}
+
+
+//
+// 该对象导出到 js 环境中, 作为 on_data 方法的参数
+//
+type JSDevData struct {
+  data    *core.BusSlot
+  sr      *ScriptRuntime
+}
+
+
+//
+// 返回数据名
+// js: String GetName()
+//
+func (d *JSDevData) GetName(fc goja.FunctionCall) goja.Value {
+  return d.sr.Value(d.data.Name)
+}
+
+
+//
+// 返回数据槽 id 地址, 这个 id 在不同的协议上使用不同的格式
+// js: String GetSlot()
+//
+func (d *JSDevData) GetSlot(fc goja.FunctionCall) goja.Value {
+  return d.sr.Value(d.data.SlotID)
+}
+
+
+//
+// 返回设备 id
+// js: String GetDev()
+//
+func (d *JSDevData) GetDev(fc goja.FunctionCall) goja.Value {
+  return d.sr.Value(d.data.Dev)
+}
+
+
+//
+// 返回数据类型
+// js: Int GetType()
+//
+func (d *JSDevData) GetType(fc goja.FunctionCall) goja.Value {
+  return d.sr.Value(d.data.Type)
 }
 
 
 //
 // 读取脚本
 //
-func GetDevScript(script_id string, ctx context.Context) (*core.DevScript, error) {
-  d := core.DevScript{}
-  err := mg.GetOne(core.TableDevScript, ctx, script_id, &d)
+func GetDevScript(ctx context.Context, script_id string, ret interface{}) (error) {
+  err := mg.GetOne(core.TableDevScript, ctx, script_id, ret)
   if err != nil {
-    return nil, err
+    return err
   }
-  return &d, nil
+  return nil
 }

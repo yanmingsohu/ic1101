@@ -1,6 +1,9 @@
 package bus
 
-import "strconv"
+import (
+	"errors"
+	"strconv"
+)
 
 
 type IntData struct {
@@ -35,6 +38,11 @@ func (r *IntData) String() string {
 
 func (r *IntData) Bool() bool {
   return r.D != 0
+}
+
+
+func (r *IntData) Src() interface{} {
+  return r.D
 }
 
 
@@ -73,6 +81,11 @@ func (r *Int64Data) Bool() bool {
 }
 
 
+func (r *Int64Data) Src() interface{} {
+  return r.D
+}
+
+
 type UInt64Data struct {
   D uint64
 }
@@ -105,6 +118,11 @@ func (r *UInt64Data) String() string {
 
 func (r *UInt64Data) Bool() bool {
   return r.D != 0
+}
+
+
+func (r *UInt64Data) Src() interface{} {
+  return r.D
 }
 
 
@@ -143,6 +161,11 @@ func (r *FloatData) Bool() bool {
 }
 
 
+func (r *FloatData) Src() interface{} {
+  return r.D
+}
+
+
 type Float64Data struct {
   D float64
 }
@@ -175,6 +198,11 @@ func (r *Float64Data) String() string {
 
 func (r *Float64Data) Bool() bool {
   return r.D != 0
+}
+
+
+func (r *Float64Data) Src() interface{} {
+  return r.D
 }
 
 
@@ -239,6 +267,11 @@ func (r *StringData) Bool() bool {
 }
 
 
+func (r *StringData) Src() interface{} {
+  return r.D
+}
+
+
 type BoolData struct {
   D bool
 }
@@ -286,4 +319,49 @@ func (r *BoolData) String() string {
 
 func (r *BoolData) Bool() bool {
   return r.D 
+}
+
+
+func (r *BoolData) Src() interface{} {
+  return r.D
+}
+
+
+//
+// 根据对象类型返回包装器
+// 如果无法包装该对象, 返回错误
+//
+func NewDataWrap(i interface{}) (DataWrap, error) {
+  switch i.(type) {
+  case string:
+    return &StringData{i.(string)}, nil
+
+  case int8:
+    return &IntData{i.(int)}, nil
+  case int16:
+    return &IntData{i.(int)}, nil
+  case int32:
+    return &IntData{i.(int)}, nil
+  case int64:
+    return &Int64Data{i.(int64)}, nil
+
+  
+  case uint8:
+    return &UInt64Data{i.(uint64)}, nil
+  case uint16:
+    return &UInt64Data{i.(uint64)}, nil
+  case uint32:
+    return &UInt64Data{i.(uint64)}, nil
+  case uint64:
+    return &UInt64Data{i.(uint64)}, nil
+
+  case float32:
+    return &FloatData{i.(float32)}, nil
+  case float64:
+    return &Float64Data{i.(float64)}, nil
+  
+  case bool:
+    return &BoolData{i.(bool)}, nil
+  }
+  return nil, errors.New("无法转换类型")
 }

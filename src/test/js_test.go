@@ -8,11 +8,11 @@ import (
 )
 
 const code = `
-({
+{
   hello : function(x) {
-    return tt(x) + 1;
+    return new Date() + x;
   }
-})
+}
 `
 
 func TestJS (t *testing.T) {
@@ -33,4 +33,9 @@ func TestJS (t *testing.T) {
   }
   ret, err := hello(nil, sr.VM().ToValue(1))
   t.Log(ret, err)
+
+  _, err = sr.GetFunc("noexist");
+  if err == nil {
+    t.Fatal()
+  }
 }

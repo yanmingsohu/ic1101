@@ -57,7 +57,6 @@ func dev_proto_list(h *Ht) interface{} {
 
 
 func dev_proto_create(h *Ht) interface{} {
-  //TODO: 验证脚本
   scriptName := checkstring("脚本", h.Get("script"), 0, 64)
 
   d := bson.D{
@@ -77,7 +76,7 @@ func dev_proto_create(h *Ht) interface{} {
 
 func dev_proto_update(h *Ht) interface{} {
   id := checkstring("原型ID", h.Get("id"), 2, 20)
-  //TODO: 验证脚本
+  // 脚本可能在之后删除, 不验证
   scriptName := checkstring("脚本", h.Get("script"), 0, 64)
 
   up := bson.M{

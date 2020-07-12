@@ -465,6 +465,7 @@ type bus_event struct {
   for_bus   *mongo.Collection
   ctx       context.Context
   info      *bus.BusInfo
+  devjs     map[string]*ScriptRuntime
 }
 
 
@@ -475,16 +476,46 @@ func (r *bus_event) init(id string, tk core.Tick, i *bus.BusInfo) {
   r.main_tk = tk
   r.ctx = context.Background()
   r.info = i
+  r.devjs = make(map[string]*ScriptRuntime)
 }
 
 
+// 插入一个数据槽
 func (r *bus_event) push_data(d core.BusSlot, s bus.Slot) {
   r.datas[d.SlotID] = &w_data_slot{d, s}
 }
 
 
+// 插入一个控制槽
 func (r *bus_event) push_ctrl(c core.BusCtrl, s bus.Slot, t core.Tick) {
   r.ctrls[c.SlotID] = &w_ctrl_slot{c, s, t}
+}
+
+
+// 初始化设备脚本
+func (r *bus_event) init_dev_script(devid string) error {
+  if _, has := r.devjs[devid]; has {
+    return nil
+  }
+
+  dev := core.Device{}
+  if err := GetDevice(r.ctx, devid, &dev); err != nil {
+    return err
+  }
+  devp := core.DevProto{}
+  if err := GetDevProto(r.ctx, dev.ProtoId, &devp); err != nil {
+    return err
+  }
+  js := core.DevScript{}
+  if err := GetDevScript(r.ctx, devp.Script, &js); err != nil {
+    return err
+  }
+  sr, err := BuildDevScript(js.Id, js.Js)
+  if err != nil {
+    return err
+  }
+  r.devjs[devid] = sr
+  return nil
 }
 
 
@@ -599,6 +630,19 @@ func (r *bus_event) OnCtrlExit(s bus.Slot) {
 
 
 func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
+  info, has := r.datas[s.String()]
+  if !has {
+    r.info.Log("系统错误, 在未配置的数据槽上发送数据 "+ s.String())
+  }
+  // 脚本过滤参数
+  if devjs, has := r.devjs[info.Dev]; has {
+    var err error
+    d, err = devjs.OnData(&info.BusSlot, t, d)
+    if err != nil {
+      r.info.Log("设备", info.Dev, "脚本", devjs.Name, "错误", err)
+    }
+  }
+
   // 发送数据到总线实时数据表
   key := "data."+ s.String()
   up := bson.M{
@@ -611,10 +655,6 @@ func (r *bus_event) OnData(s bus.Slot, t *time.Time, d bus.DataWrap) {
   update_bus_ldata(r.ctx, r.id, up)
   
   // 发送数据到设备数据表
-  info, has := r.datas[s.String()]
-  if !has {
-    r.info.Log("系统错误, 在未配置的数据槽上发送数据 "+ s.String())
-  }
   err := send_dev_data(r.ctx, &info.BusSlot, d, t)
   if err != nil {
     r.info.Log("保存数据错误, "+ err.Error())
