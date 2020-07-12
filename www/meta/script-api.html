@@ -1,3 +1,40 @@
 <div>
-  <h2>设备脚本开发指南</h2>
+<div id='api_document_content' data-plugin-header="line-numbers"></div>
+
+<script src='markdown.js/markdown-it.min.js'></script>
+<script src='prism.js/prism.js'></script>
+<link rel="stylesheet" href="prism.js/prism.css">
+<style>
+.language-javascript {
+  line-height: 1 !important; overflow: visible !important;
+}
+#api_document_content h2 {
+  margin-top: 100px;
+}
+#api_document_content h3 {
+  margin-top: 50px;
+}
+</style>
+
+<script>
+jQuery(function($) {
+  const content = $("#api_document_content");
+
+  let md = markdownit({
+    highlight: function (code, lang) {
+      let h = Prism.highlight(code, Prism.languages[lang], lang);
+      return [
+        "<pre class='language-javascript line-numbersX'>",
+        "<code class='language-javascript'>",
+        h, "</code></pre>"
+      ].join("");
+    }
+  });
+
+  $.get('meta/script-api.md', function(txt) {
+    let html = md.render(txt);
+    content.html(html);
+  });
+});
+</script>
 </div>

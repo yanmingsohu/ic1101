@@ -15,15 +15,8 @@ import (
 
 const NullScript = `
 {
-  //
-  // 在保存数据之前, 对数据进行转换
-  // dev: class Dev
-  // time: 数据时间
-  // data: 设备传来的数据, js 原生数据类型
-  // 完整示例见开发文档
-  //
-  on_data : function(dev, data, time) {
-    // 默认直接返回原始值
+  //TODO: 系统生成空脚本
+  on_data : function(dev, time, data) {
     return data;
   },
 }
