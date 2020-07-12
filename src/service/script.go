@@ -13,14 +13,11 @@ import (
 	"github.com/dop251/goja"
 )
 
-const NullScript = `
-{
-  //TODO: 系统生成空脚本
-  on_data : function(dev, time, data) {
-    return data;
-  },
-}
-`
+const NullScript = `//TODO: 系统生成空脚本
+function on_data(dev, time, data) {
+  return data;
+}`
+
 
 func installScriptService(b *brick.Brick) {
   mg.CreateIndex(core.TableDevScript, &bson.D{
@@ -106,7 +103,7 @@ func BuildDevScript(name, code string) (*ScriptRuntime, error) {
   if err := sr.Compile(name, code); err != nil {
     return nil, err
   }
-  if err := sr.InitObject(); err != nil {
+  if err := sr.InitVM(); err != nil {
     return nil, err
   }
   on_data, err := sr.GetFunc("on_data")

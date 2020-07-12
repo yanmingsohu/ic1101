@@ -414,7 +414,7 @@ func _bus_start(ctx context.Context, id string) error {
     }
     event.push_data(d, ds)
     if err := event.init_dev_script(d.Dev); err != nil {
-      return err
+      return &HttpRet{6, "加载设备脚本时出错", err.Error()}
     }
   }
 

@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/dop251/goja"
 )
@@ -14,7 +13,6 @@ import (
 type ScriptRuntime struct {
   vm        *goja.Runtime
   pj        *goja.Program
-  ext       *goja.Object
   on_data   goja.Callable
 }
 
@@ -23,7 +21,7 @@ type ScriptRuntime struct {
 // 编译脚本
 //
 func (s *ScriptRuntime) Compile(name, code string) error {
-  proj, err := goja.Compile(name, "("+ code +")", true)
+  proj, err := goja.Compile(name, code, true)
   if err != nil {
     return err
   }
@@ -35,20 +33,16 @@ func (s *ScriptRuntime) Compile(name, code string) error {
 //
 // 初始化脚本框架
 //
-func (s *ScriptRuntime) InitObject() error {
+func (s *ScriptRuntime) InitVM() error {
   if s.pj == nil {
     return errors.New("没有程序被编译")
   }
   if s.vm == nil {
     vm := goja.New()
-    res, err := vm.RunProgram(s.pj)
+    _, err := vm.RunProgram(s.pj)
     if err != nil {
       return err
     }
-    if res.ExportType().Kind() != reflect.Map {
-      return errors.New("脚本没有导出对象")
-    }
-    s.ext = res.ToObject(vm)
     s.vm = vm
   }
   return nil
@@ -59,10 +53,10 @@ func (s *ScriptRuntime) InitObject() error {
 // 找不到函数会返回错误
 //
 func (s *ScriptRuntime) GetFunc(name string) (goja.Callable, error) {
-  v := s.ext.Get(name)
+  v := s.vm.Get(name)
   af, is := goja.AssertFunction(v)
   if !is {
-    return nil, errors.New(name +" 不是函数")
+    return nil, errors.New("脚本没有定义 "+ name +" 函数")
   }
   return af, nil
 }
@@ -72,7 +66,7 @@ func (s *ScriptRuntime) GetFunc(name string) (goja.Callable, error) {
 // 返回脚本导出的对象
 //
 func (s *ScriptRuntime) This() *goja.Object {
-  return s.ext
+  return s.vm.GlobalObject()
 }
 
 
