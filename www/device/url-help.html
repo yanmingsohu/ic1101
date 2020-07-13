@@ -74,17 +74,16 @@
 
           <label>DTU 后置从机地址</label>
           <span id='fixsid'>
-            <input name='query.sid' value='1'/>
+            <input name='query.sid' value='1' disabled/>
           </span>
           <span id='autosid'>
-            <input name='query.sid' value='-1' type='hidden'/>
+            <input name='query.sid' value='-1' type='hidden' disabled/>
           </span>
           <label>
-            <input type="radio" name='sid'
-              for='#fixsid' checked/>固定从机地址
+            <input type="radio" name='sid' for='#fixsid' />固定从机地址
           </label>
           <label>
-            <input type="radio" name='sid' for='#autosid'/>与DTU从机地址相同
+            <input type="radio" name='sid' for='#autosid' />与DTU从机地址相同
           </label>
         </div>
 

@@ -127,7 +127,6 @@ jQuery(function($) {
   const store_key = 'dev_script_editor_theme';
   const nosave = root.find(".nosave");
 
-  const ENTER = 13, S = 83;
   let tip_state = 0;
   let editor = ace.edit(js_code[0]);
 
@@ -248,8 +247,12 @@ jQuery(function($) {
 
 
   function quick_key(on_save) {
+    const ENTER = 13, S = 83, ESC = 27;
     return function(e) {
       switch (e.keyCode) {
+      case ESC:
+        return;
+        
       case ENTER:
         // resize_code();
         break;

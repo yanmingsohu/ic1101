@@ -44,6 +44,7 @@
 * [JavaScript](https://github.com/dop251/goja)
 * [Markdown解析器](https://github.com/markdown-it/markdown-it)
 * [语法高亮](https://prismjs.com/)[git](https://github.com/PrismJS/prism)
+* [当成服务运行](http://nssm.cc/download)
 
 
 # 协议参考
