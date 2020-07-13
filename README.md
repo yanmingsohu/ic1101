@@ -18,6 +18,9 @@
 > 参数: `#cgo LDFLAGS: -lstdc++` 可以解决编译时异常
   `undefined reference to 'operator new[](unsigned long long)'`
   https://github.com/golang/go/issues/18460
+  
+> 依赖 mingW 动态库:
+  libgcc_s_seh-1.dll, libstdc++-6.dll, libwinpthread-1.dll
 
 
 # TODO
@@ -28,6 +31,7 @@
 * 设备版本落后于原型版本时, 在列表中提示
 * 权限列表分类/合并相同的操作, 完成字典
 * 设备脚本 HTTP api.
+* 做成windows服务?
 
 
 # 参考

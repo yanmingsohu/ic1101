@@ -1,7 +1,7 @@
 package bus_modbus
 
 import (
-	"fmt"
+	"errors"
 	"ic1101/src/bus"
 	"ic1101/src/dtu"
 	"net/url"
@@ -23,6 +23,7 @@ type tcp_server struct {
   dtu    dtu.Impl
   rel    bus.BusReal
   parm   UrlParam
+  errIsShow map[uint16]bool
 }
 
 
@@ -35,6 +36,7 @@ func (r *tcp_server) Start(i bus.BusReal) (error) {
   r.rel = i
   r.parm = UrlParam{}
   r.parm.Parse(i.URL())
+  r.errIsShow = make(map[uint16]bool)
   return nil
 }
 
@@ -63,14 +65,17 @@ func (r *tcp_server) SyncData(i bus.BusReal, t *time.Time) error {
     ms := s.(*modbus_slot)
     client, err := r.get_client(int(ms.c))
     if err != nil {
-      i.Log(fmt.Sprintf("错误 %s, 从机 %d, 地址 %d", err, ms.c, ms.a))
+      if !r.errIsShow[ms.a] {
+        i.Log(ms.ErrInfo(err))
+        r.errIsShow[ms.a] = true
+      }
       continue
     }
-
-    if r.parm.sid < 0 {
-      client.SetUnitId(ms.c)
-    } else {
+    
+    if r.parm.sid >= 0 {
       client.SetUnitId(uint8(r.parm.sid))
+    } else {
+      client.SetUnitId(ms.c)
     }
     client.setMode(ms.l)
 
@@ -81,6 +86,11 @@ func (r *tcp_server) SyncData(i bus.BusReal, t *time.Time) error {
     }
 
     i.Event().OnData(s, t, d)
+
+    if r.errIsShow[ms.a] {
+      i.Log(ms.ErrInfo("已恢复"))
+      r.errIsShow[ms.a] = false
+    }
   }
   return nil
 }
@@ -90,12 +100,12 @@ func (r *tcp_server) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
   s := _s.(*modbus_slot)
   client, err := r.get_client(int(s.c))
   if err != nil {
-    return err
+    return errors.New(s.ErrInfo(err))
   }
-  if r.parm.sid < 0 {
-    client.SetUnitId(s.c)
-  } else {
+  if r.parm.sid >= 0 {
     client.SetUnitId(uint8(r.parm.sid))
+  } else {
+    client.SetUnitId(s.c)
   }
   client.setMode(s.l)
   return client.send(s, d)
@@ -104,7 +114,7 @@ func (r *tcp_server) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
 
 func (r *tcp_server) NewContext(ctx dtu.Context, err error) {
   if err != nil {
-    r.rel.Log("远程连接失败"+ err.Error())
+    r.rel.Log("远程连接失败, "+ err.Error())
     return
   }
 
@@ -147,6 +157,8 @@ func (r *tcp_server) NewContext(ctx dtu.Context, err error) {
     r.rel.Log("绑定参数错误 "+ err.Error())
     return;
   }
+  
+  r.rel.Log("远程已经连接", conn.RemoteAddr(), "从机地址", ctx.Id())
 }
 
 

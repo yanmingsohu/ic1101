@@ -166,22 +166,41 @@ type Event interface {
 // Impl 接口辅助类, 提供基本功能, 该对象本身是一把锁
 //
 type ImplHelp struct {
-  sync.Mutex
-
+  sy      *sync.Mutex
   CtxMap  map[int]Context
   Run     bool
 }
 
 
-func (h *ImplHelp) InitHelp() {
-  h.CtxMap = make(map[int]Context)
-  h.Run = true
+func NewImplHelp() ImplHelp {
+  return ImplHelp{
+    sy      : new(sync.Mutex),
+    CtxMap  : make(map[int]Context),
+    Run     : true,
+  }
+}
+
+
+func (h *ImplHelp) SaveContext(c Context) error {
+  h.sy.Lock()
+  defer h.sy.Unlock()
+  
+  if !h.Run {
+    return errors.New("DTU 已经关闭")
+  }
+
+  old, has := h.CtxMap[c.Id()]
+  if has {
+    old.Close()
+  }
+  h.CtxMap[c.Id()] = c
+  return nil
 }
 
 
 func (h *ImplHelp) GetContext(id int) (Context, error) {
-  h.Lock()
-  defer h.Unlock()
+  h.sy.Lock()
+  defer h.sy.Unlock()
 
   if !h.Run {
     return nil, errors.New("DTU 已经关闭")
@@ -195,8 +214,8 @@ func (h *ImplHelp) GetContext(id int) (Context, error) {
 
 
 func (h *ImplHelp) CloseContext(id int) error {
-  h.Lock()
-  defer h.Unlock()
+  h.sy.Lock()
+  defer h.sy.Unlock()
 
   if !h.Run {
     return errors.New("DTU 已经关闭")

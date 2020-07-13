@@ -441,3 +441,11 @@ func (m *modbus_slot) Type() bus.SlotType {
   }
   return bus.SlotInvaild
 }
+
+
+//
+// 为错误提供更详尽的信息
+//
+func (m *modbus_slot) ErrInfo(err interface{}) string {
+  return fmt.Sprintf("%s, 从机 %d, 地址 %d", err, m.c, m.a)
+}

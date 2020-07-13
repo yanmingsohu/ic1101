@@ -8,6 +8,7 @@ import (
 	"errors"
 	"ic1101/src/dtu"
 	"io"
+	"log"
 	"net"
 	"net/url"
 	"time"
@@ -59,7 +60,7 @@ type dtu_impl struct {
 
 
 func (d *dtu_impl) init() error {
-  d.InitHelp()
+  d.ImplHelp = dtu.NewImplHelp()
   serv, err := net.Listen("tcp", d.url.Host)
   if err != nil {
     return err
@@ -86,14 +87,15 @@ func (d *dtu_impl) accept() {
 
 
 func (d *dtu_impl) new_context(conn net.Conn) {
-  d.Lock()
-  defer d.Unlock()
-  
   c := ctx{}
   if err := c.init(conn, d); err != nil {
     d.event.NewContext(nil, err)
   } else {
-    d.event.NewContext(&c, nil)
+    if err := d.SaveContext(&c); err != nil {
+      d.event.NewContext(nil, err)
+    } else {
+      d.event.NewContext(&c, nil)
+    }
   }
 }
 
@@ -104,8 +106,8 @@ func (d *dtu_impl) Stop() {
 
 
 func (d *dtu_impl) stop(err error) {
-  d.Lock()
-  defer d.Unlock()
+  // d.Lock()
+  // defer d.Unlock()
   if !d.Run {
     return 
   }
@@ -144,6 +146,7 @@ func (c *ctx) init(conn net.Conn, di *dtu_impl) (err error) {
     return
   }
 
+  log.Printf("接受握手帧 %s [% x]", conn.RemoteAddr(), b)
   if n != 5 {
     err = errors.New("连接已关闭, 无效的首帧长度")
   }
@@ -192,13 +195,19 @@ type conn_wrap struct {
 func (c *conn_wrap) Read(buf []byte) (int, error) {
   end, err := c.Conn.Read(buf)
   if err != nil {
+    if err == io.EOF {
+      c.Close()
+      return -1, errors.New("远程连接已关闭 "+ c.RemoteAddr().String())
+    }
     return -1, err
   }
   end = c.rd.Modify(buf[:end])
+  log.Printf("Read %s %d - [% x]", c.RemoteAddr().String(), end, buf[:end])
   return end, err
 }
 
 
 func (c *conn_wrap) Write(b []byte) (n int, err error) {
+  log.Printf("Write %s - [% x]", c.RemoteAddr().String(), b[:])
   return c.Conn.Write(b)
 }
