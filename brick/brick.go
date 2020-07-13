@@ -69,6 +69,8 @@ type Http struct {
   s  *sessions.Session
   c  []Shutdown
   q  *url.Values
+  // 在记录 http 日志时的附加条目
+  L  string
 }
 
 type StaticPage struct {
@@ -103,13 +105,13 @@ type TplFuncCtx struct {
 // 如果出错, 返回第二个参数, 此时错误会输出到客户端, 并终止模板渲染
 // HEAD 请求不会渲染模板.
 //
-type TemplateHandler func(Http)(interface{}, error)
+type TemplateHandler func(*Http)(interface{}, error)
 
 //
 // http 服务处理函数, 在可能返回 error 之前不要写出任何数据
 // 返回的 error 会设置输出为 500 http code
 //
-type HttpHandler func(Http) error
+type HttpHandler func(*Http) error
 
 //
 // 当发生 http 异常或 HttpHandler 返回错误, 对错误执行这个方法
@@ -203,7 +205,7 @@ func (b *Brick) Service(path string, h HttpHandler) {
   b.log.Debug("Service", path)
   b.serveMux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
     t1 := time.Now()
-    hd := Http{ r, w, b, nil, make([]Shutdown, 0, 3), nil }
+    hd := Http{ r, w, b, nil, make([]Shutdown, 0, 3), nil, "" }
 
     defer func() {
       if err := recover(); err != nil {
@@ -217,12 +219,12 @@ func (b *Brick) Service(path string, h HttpHandler) {
       }
     }()
     
-    if err := h(hd); err != nil {
+    if err := h(&hd); err != nil {
       b.errorHandle(&hd, err)
     }
     hd.shutdown()
 
-    serviceLog(b.log, t1, r);
+    serviceLog(b.log, t1, r, hd.L);
   })
 }
 
@@ -295,7 +297,7 @@ func (b *Brick) TemplatePage(
   b.log.Debug("Template", templateFile)
   dir := filepath.Dir(templateFile)
 
-  return func(hd Http) error {
+  return func(hd *Http) error {
     hd.W.Header().Set("Content-Type", "text/html; charset=utf-8")
     ct, err := b.GetCachedTemplate(templateFile)
     if err != nil {
@@ -564,10 +566,11 @@ func (h *Http) Ctx() context.Context {
 
 func (p *StaticPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
   fileName := r.URL.Path[len(p.BaseUrl):]
-  content  := file_mapping[fileName]
   begin    := time.Now()  
+  content, has := file_mapping[fileName]
 
-  if content != nil {
+  if has {
+    // log.Println("Prog Resource", fileName)
     w.Header().Set("Content-Type", getMimeType(fileName))
     w.WriteHeader(200)
     w.Write(content)
@@ -575,7 +578,7 @@ func (p *StaticPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
   } else {
     p.localFS.ServeHTTP(w, r)
   }
-  serviceLog(p.log, begin, r);
+  serviceLog(p.log, begin, r, "");
 }
 
 
@@ -621,9 +624,12 @@ func LastSlice(str string, maxLen int, prefix string) string {
 }
 
 
-func serviceLog(log Logger, begin time.Time, r *http.Request) {
-  log.Info(fmt.Sprintf("%4s|%12s|%s", 
-        LastSlice(r.Method, 4, ""), time.Since(begin).String(), r.URL.Path))
+func serviceLog(log Logger, begin time.Time, r *http.Request, extLog string) {
+  log.Info(fmt.Sprintf("%4s|%12s|%s %s", 
+        LastSlice(r.Method, 4, ""), 
+        time.Since(begin).String(), 
+        r.URL.Path,
+        extLog))
 }
 
 

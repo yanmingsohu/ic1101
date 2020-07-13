@@ -101,7 +101,7 @@ func Install(conf *core.Config, m *core.Mongo) {
 }
 
 
-func notfound(h brick.Http) error {
+func notfound(h *brick.Http) error {
   h.W.WriteHeader(404)
   h.Json(HttpRet{404, "Api Not found", h.R.URL.Path})
   return nil
@@ -114,8 +114,8 @@ func notfound(h brick.Http) error {
 func dserv(b *brick.Brick, ctx *ServiceGroupContext, 
            name string, service ServiceHandler) {
   // name := funcName(h)
-  b.Service("/ic/"+ name, func(h brick.Http) error {
-    ht := Ht{&h, ctx}
+  b.Service("/ic/"+ name, func(h *brick.Http) error {
+    ht := Ht{h, ctx}
     ret := service(&ht)
     
     if ret != nil {
@@ -159,13 +159,13 @@ func aserv(b *brick.Brick, ctx *ServiceGroupContext,
 
     user := v.(*core.LoginUser)
     if !user.IsRoot {
-      log.Print("[", user.Name, ":", name, "] No auth")
+      h.L = fmt.Sprint(user.Name, ">", h.Get("id"), "No auth")
       if !user.Auths[name] {
         h.Json(HttpRet{101, "用户无权限操作", nil})
         return nil
       }
     } else {
-      log.Print("[", user.Name, ":", name, "] ", h.Get("id"))
+      h.L = fmt.Sprint(user.Name, ">", h.Get("id"))
     }
 
     return handler(h)
