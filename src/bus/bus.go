@@ -150,6 +150,8 @@ func (b *bus_real_impl) Datas() []Slot {
 // 该接口是面向总线使用者的, 尽可能少的暴露方法和属性
 //
 type BusInfo struct {
+  log *Log
+
   // 总线id
   id string
   uri *url.URL
@@ -159,6 +161,7 @@ type BusInfo struct {
   tk core.Tick
   // 消息接收器
   event BusEvent
+  sync  *sync.Mutex
 
   st BusState
   bs Bus
@@ -167,10 +170,6 @@ type BusInfo struct {
   // 数据插槽配置, {插槽: 数据名}
   datas []Slot
   ctrls []ctrl_slot
-  logs  []string
-
-  sync  sync.Mutex
-  logsy sync.RWMutex
 }
 
 
@@ -212,17 +211,19 @@ func NewInfo(uri, id, typ string, tk core.Tick, ev BusEvent) (*BusInfo, error) {
     return nil, err
   }
   return &BusInfo{
-    id : id, 
-    uri : u, 
-    typeName : typ, 
-    tk : tk, 
-    event : ev, 
-    st : BusStateStartup, 
-    bs : nil, 
-    ps : sp, 
-    datas : make([]Slot, 0, 10), 
-    ctrls : make([]ctrl_slot, 0, 10), 
-    logs : make([]string, 0, MaxLogCount) } , nil
+    log       : NewLog(MaxLogCount, id),
+    id        : id, 
+    uri       : u, 
+    typeName  : typ, 
+    tk        : tk, 
+    event     : ev, 
+    st        : BusStateStartup, 
+    bs        : nil, 
+    ps        : sp, 
+    datas     : make([]Slot, 0, 10), 
+    ctrls     : make([]ctrl_slot, 0, 10), 
+    sync      : new(sync.Mutex),
+  } , nil
 }
 
 
@@ -348,15 +349,42 @@ func (i *BusInfo) State() BusState {
 }
 
 
+func (i *BusInfo) Log(msg ...interface{}) {
+  i.log.Log(msg...)
+}
+
+
 func (i *BusInfo) GetLog() []string {
+  return i.log.GetLog()
+}
+
+
+type Log struct {
+  logs  []string
+  logsy *sync.RWMutex
+  id    string
+}
+
+
+func NewLog(max int, id string) *Log {
+  l := Log{
+    logs  : make([]string, 0, max),
+    logsy : new(sync.RWMutex),
+    id    : id,
+  }
+  return &l
+}
+
+
+func (i *Log) GetLog() []string {
   i.logsy.RLock()
   defer i.logsy.RUnlock()
-  return i.logs
+  return i.logs[:]
 }
 
 
 // 插入新的日志, 删除超过 MaxLogCount 的部分
-func (i *BusInfo) Log(msg ...interface{}) {
+func (i *Log) Log(msg ...interface{}) {
   i.logsy.Lock()
   defer i.logsy.Unlock()
 
