@@ -45,25 +45,40 @@ func _uz(input []byte) []byte {
 var fullpath = pt.join(__dirname, cf.outDir, cf.fileName);
 var outfile = makeSource(fullpath, cf.varName);
 outfile.setPackage(cf.packageName);
-buildDir(pt.join(__dirname, cf.wwwDir), outfile);
+
+outfile.beginInit();
+buildDir([], pt.join(__dirname, cf.wwwDir), outfile, function() {
+  outfile.endInit();
+  console.log("\nDone", outfile.fileName);
+});
 
 
-function buildDir(dir, outfile) {
+function buildDir(webbase, dir, outfile, on_end) {
   var dirs = fs.readdirSync(dir);
   var i = -1;
 
-  outfile.beginInit();
   _next();
 
   function _next() {
     if (++i < dirs.length) {
       var d = dirs[i];
       var file = pt.join(dir, d);
-      outfile.localfile(file, d, _next);
-      console.log('Local Resource:', file);
+      var st = fs.statSync(file)
+
+      if (st.isFile()) {
+        var web_path = pt.posix.join(webbase.join('/'), d);
+        outfile.localfile(file, web_path, _next);
+        console.log('Local Resource:', file);
+      } 
+      else if (st.isDirectory()) {
+        webbase.push(d);
+        buildDir(webbase, file, outfile, function() {
+          webbase.pop();
+          _next();
+        });
+      }
     } else {
-      outfile.endInit();
-      console.log("\nDone", outfile.fileName);
+      on_end();
     }
   }
 }
@@ -96,7 +111,8 @@ function makeSource(outFile, varName) {
   }
 
   function localfile(path, name, over) {
-    fs.writeSync(file, ['\n\n', varName, '["', name, '"]=_uz([]byte{'].join(''));
+    fs.writeSync(file, ['\n\n', varName, 
+        '["', name, '"]=_uz([]byte{'].join(''));
     
     var wstream = fs.createWriteStream(null, {
       fd : file, 
