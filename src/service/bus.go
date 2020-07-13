@@ -609,14 +609,20 @@ func update_bus_ldata(c context.Context, id string, up bson.M) {
 
 
 func update_state(ctx context.Context, id string, s bus.BusState) {
-  update_bus_ldata(ctx, id, bson.M{"status": s.String()})
+  up := bson.M{
+    "$set": bson.M{ "status": s.String() },
+  }
+  update_bus_ldata(ctx, id, up)
   update_bus(ctx, id, s)
 }
 
 
 func (r *bus_event) OnStopped() {
   update_bus(r.ctx, r.id, bus.BusStateStop)
-  update_bus_ldata(r.ctx, r.id, bson.M{ "status": bus.BusStateStop.String() })
+  up := bson.M{
+    "$set": bson.M{ "status": bus.BusStateStop.String() },
+  }
+  update_bus_ldata(r.ctx, r.id, up)
 
   for _, d := range r.datas {
     device_ref.Free(d.Dev)
