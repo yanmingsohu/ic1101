@@ -6,6 +6,7 @@ import (
 	"ic1101/src/core"
 	"log"
 	"net/url"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -260,6 +261,7 @@ func (i *BusInfo) AddCtrl(s Slot, tk core.Tick, value DataWrap) error {
 func (i *BusInfo) SendCtrl(s Slot, value DataWrap, t *time.Time) error {
   i.sync.Lock()
   defer i.sync.Unlock()
+  defer i.relife("总线发送控制")
 
   if i.st < BusStateStartup {
     return errors.New("总线没有运行, 不能发送控制指令")
@@ -296,6 +298,7 @@ func (i *BusInfo) start(b Bus) error {
   i.tk.Start(func() {
     i.sync.Lock()
     defer i.sync.Unlock()
+    defer i.relife("总线同步数据")
 
     i.st = BusStateTask
     t := time.Now()
@@ -341,6 +344,20 @@ func (i *BusInfo) _ctrl_thread(c ctrl_slot) {
   }, func() {
     i.event.OnCtrlExit(c.slot)
   })
+}
+
+
+//
+// 在 panic 中恢复, 在 defer 中调用
+//
+func (i *BusInfo) relife(action string) {
+  if err := recover(); err != nil {
+    i.Log(action, "发生了异常", err)
+
+    var buf [4096]byte
+    n := runtime.Stack(buf[:], false)
+    log.Println("PANIC ==>", err, string(buf[:n]))
+  }
 }
 
 

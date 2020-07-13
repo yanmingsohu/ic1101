@@ -513,6 +513,11 @@ func (r *bus_event) init_dev_script(devid string,
   if err := GetDevProto(r.ctx, dev.ProtoId, &devp); err != nil {
     return err
   }
+  // 可以没有脚本
+  if devp.Script == "" {
+    return nil
+  }
+
   js := core.DevScript{}
   if err := GetDevScript(r.ctx, devp.Script, &js); err != nil {
     return err
@@ -522,6 +527,7 @@ func (r *bus_event) init_dev_script(devid string,
   if err != nil {
     return err
   }
+  
   sr, err := BuildDevScript(js.Id, js.Js, cs)
   if err != nil {
     return err
