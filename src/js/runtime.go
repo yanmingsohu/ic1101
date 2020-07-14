@@ -1,27 +1,14 @@
-package core
+package js
 
 import (
 	"errors"
-	"io"
-	"log"
-	"net/http"
 
 	"github.com/dop251/goja"
 )
 
-const (
-  MB = 1024*1024
-)
-
-
-type JSValue interface {
-  Value(i interface{}) goja.Value
-  NewObject() *goja.Object
-}
-
-
 //
 // 已经编译的脚本, 线程不安全, 可以创建一个全空的对象.
+// 实现 JSValue
 //
 type ScriptRuntime struct {
   vm        *goja.Runtime
@@ -113,56 +100,7 @@ func (s *ScriptRuntime) Stop(cause string) {
 
 
 func (s *ScriptRuntime) installGlobalFunc() {
-  s.vm.Set("http", &JSHttp{s})
-}
-
-
-type JSHttp struct {
-  JSValue
-}
-
-
-func (h *JSHttp) Send(f goja.FunctionCall) goja.Value {
-  url := f.Argument(0).String()
-  if url == "" {
-    panic(errors.New("URL 参数不能为空"))
-  }
-  go (func() {
-    _, err := http.Get(url)
-    if err != nil {
-      log.Println("http.send", err)
-      return
-    }
-  })()
-  return h.Value(nil)
-}
-
-
-func (h *JSHttp) Get(f goja.FunctionCall) goja.Value {
-  url := f.Argument(0).String()
-  if url == "" {
-    panic(errors.New("URL 参数不能为空"))
-  }
-  res, err := http.Get(url)
-  if err != nil {
-    panic(err)
-  }
-  len := res.ContentLength
-  if len > 3*MB {
-    len = 3*MB
-  }
-
-  ret := h.NewObject()
-  buf := make([]byte, len)
-  io.ReadFull(res.Body, buf)
-
-  ret.Set("status", res.Status)
-  ret.Set("body",   buf)
-  ret.Set("header", res.Header)
-  return ret
-}
-
-
-func (h *JSHttp) Post(f goja.FunctionCall) goja.Value {
-  return h.Value(nil)
+  All(s, func(name string, lib interface{}) {
+    s.vm.Set(name, lib)
+  })
 }
