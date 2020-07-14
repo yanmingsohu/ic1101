@@ -30,8 +30,6 @@
 * 日志分类
 * 设备版本落后于原型版本时, 在列表中提示
 * 权限列表分类/合并相同的操作, 完成字典
-* 设备脚本 HTTP api.
-* 做成windows服务?
 
 
 # 参考
@@ -48,7 +46,8 @@
 * [JavaScript](https://github.com/dop251/goja)
 * [Markdown解析器](https://github.com/markdown-it/markdown-it)
 * [语法高亮](https://prismjs.com/)[git](https://github.com/PrismJS/prism)
-* [当成服务运行](http://nssm.cc/download)
+* [当成 win 服务运行](http://nssm.cc/download)
+* [cgo 静态链接](https://blog.madewithdrew.com/post/statically-linking-c-to-go/)
 
 
 # 协议参考
