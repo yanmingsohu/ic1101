@@ -6,6 +6,7 @@ import (
 	"ic1101/brick"
 	"ic1101/src/bus"
 	"ic1101/src/core"
+	"ic1101/src/js"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -79,9 +80,9 @@ func dev_sc_update(h *Ht) interface{} {
   qr := h.R.PostForm
   
   id := checkstring("脚本ID", qr.Get("id"), 2, 20)
-  js := checkstring("js脚本", qr.Get("js"), 1, 9999999)
-  sr := core.ScriptRuntime{}
-  if err := sr.Compile(id, js); err != nil {
+  code := checkstring("js脚本", qr.Get("js"), 1, 9999999)
+  sr := js.ScriptRuntime{}
+  if err := sr.Compile(id, code); err != nil {
     return HttpRet{1, "编译失败", err.Error()}
   }
 
@@ -90,8 +91,8 @@ func dev_sc_update(h *Ht) interface{} {
     "$set" : bson.M{
       "desc"   : qr.Get("desc"), 
       "md"     : time.Now(),
-      "js"     : js,
-      "size"   : len(js),
+      "js"     : code,
+      "size"   : len(code),
     },
   }
   return h.Crud().Update(id, up)
@@ -129,7 +130,7 @@ type CtrlSender interface {
 // 线程不安全
 //
 type ScriptRuntime struct {
-  core.ScriptRuntime
+  js.ScriptRuntime
   on_data   goja.Callable
   Name      string
   sender    CtrlSender
@@ -219,9 +220,10 @@ func (d *JSDevData) Send(fc goja.FunctionCall) goja.Value {
 func (d *JSDevData) Log(fc goja.FunctionCall) goja.Value {
   vs := fc.Arguments
   ln := len(vs)
-  ps := make([]interface{}, ln)
+  ps := make([]interface{}, ln<<1)
   for i := 0; i<ln; i++ {
-    ps[i] = vs[i].ToString()
+    ps[i<<1] = vs[i].ToString()
+    ps[(i<<1)+1] = " "
   }
   d.sr.sender.Log(ps...)
   return d.sr.Value(nil)

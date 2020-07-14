@@ -1,6 +1,9 @@
 package js
 
-import "errors"
+import (
+	"errors"
+	"log"
+)
 
 
 var _js_register = make(map[string]LibFact)
@@ -14,6 +17,7 @@ func Reg(name string, f LibFact) {
     panic(errors.New("类库名称冲突 "+ name))
   }
   _js_register[name] = f
+  log.Println("REG javascript lib", name)
 }
 
 

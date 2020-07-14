@@ -7,6 +7,9 @@ import (
 	_ "ic1101/src/bus/m-bus"
 	_ "ic1101/src/bus/modbus"
 	_ "ic1101/src/bus/random"
+
 	_ "ic1101/src/dtu"
 	_ "ic1101/src/dtu/kh-mt-m"
+
+	_ "ic1101/src/jsslib"
 )
