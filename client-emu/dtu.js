@@ -51,7 +51,7 @@ function hex(buf) {
   let str = [];
   for (let i=0; i<buf.length; ++i) {
     let a = buf[i];
-    if (a < 0xf) {
+    if (a < 0x10) {
       str.push('0'+ a.toString(16));
     } else {
       str.push(a.toString(16));

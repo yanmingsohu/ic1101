@@ -55,7 +55,7 @@ type NotRepeating struct {
 
 //
 // 记录日志, 并记录该日志的 id, 同样的 id 不会再打印
-// 返回 true 说明状态已经改变
+// 返回 true 说明状态已经改变 (打印了日志)
 //
 func (n *NotRepeating) Log(id uint64, msg ...interface{}) bool {
   n.s.Lock()
@@ -72,7 +72,7 @@ func (n *NotRepeating) Log(id uint64, msg ...interface{}) bool {
 
 //
 // 恢复日志的记录, 并记录当前日志
-// uint64
+// 返回 true 说明状态已经改变 (打印了日志)
 //
 func (n *NotRepeating) Recover(id uint64, msg ...interface{}) bool {
   n.s.Lock()

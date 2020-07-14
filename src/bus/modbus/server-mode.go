@@ -94,7 +94,10 @@ func (r *tcp_server) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
   s := _s.(*modbus_slot)
   client, err := r.get_client(int(s.c))
   if err != nil {
-    return errors.New(s.ErrInfo(err))
+    if r.nr.Log(s.LogicAddr(), s.ErrInfo("发送控制")) {
+      return errors.New(s.ErrInfo(err))
+    }
+    return nil
   }
   
   if r.parm.sid >= 0 {
@@ -103,6 +106,7 @@ func (r *tcp_server) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
     client.SetUnitId(s.c)
   }
   client.setMode(s.l)
+  r.nr.Recover(s.LogicAddr(), s.ErrInfo("已恢复"))
   return client.send(s, d)
 }
 
