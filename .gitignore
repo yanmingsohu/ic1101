@@ -6,6 +6,7 @@ build/*.o
 build/*.a
 www/ace/demo/**
 brick/resource_www.go
+build/*.d
 
 *.dll
 *.db

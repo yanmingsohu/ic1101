@@ -1,21 +1,54 @@
 
-OBJPATH1 = native
-OBJPATH2 = native/dmi
-OUTDIR = ./build
+EXT_PATH = native
+DMI_PATH = native/dmi
+OBJ_OUTDIR = ./build/
 INCLUDE = ./native
+CXXFLAGS = -static-libgcc -static-libstdc++ -Wl,-Bstatic\
+ -lstdc++ -lpthread -Wl,-Bdynamic
 
-# 添加 -static-libgcc -static-libstdc++ 可以解决 libgcc 等动态库的依赖, 但是在哪里加参数?
+T_DMI := $(shell ls $(DMI_PATH)/*.c)
+T_DMI := $(addprefix $(OBJ_OUTDIR), $(patsubst %.c, %.o, $(notdir $(T_DMI))))
 
-.PHONY: clean all
-all: c_static_lib go_executable
+T_EXT := $(shell ls $(EXT_PATH)/*.cpp)
+T_EXT := $(addprefix $(OBJ_OUTDIR), $(patsubst %.cpp, %.o, $(notdir $(T_EXT))))
 
-c_static_lib:
-	cd build &&  gcc -c ../native/dmi/*.c 
-	cd build &&  g++ -c ../native/*.cpp 
-	cd build &&  ar -rv libnative.a *.o
+# DEPS = $(T_DMI:.o=.d)
 
-go_executable:
-	go build -o ./build/ic1101.exe -ldflags "-w -s" .
+.PHONY: clean all c_static_lib go_executable www
+
+# "目标: 普通编译 "
+all: go_executable
+
+# "目标: 网页资源编译进 exe 中 "
+www: brick/resource_www.go go_executable
+
+-include $(DEPS)
+
+c_static_lib : build/libnative.a
+
+
+build/libnative.a: $(T_DMI) $(T_EXT)
+	ar -rv build/libnative.a build/*.o
+
+# "make 会寻找不存在的目标, 并尝试使表达式匹配目标 "
+$(OBJ_OUTDIR)%.o: $(EXT_PATH)/%.cpp
+	g++ -c -o $@ $< 
+
+$(OBJ_OUTDIR)%.o: $(DMI_PATH)/%.c
+	gcc -c -o $@ $< 
+	# gcc -MMD -MF $(patsubst %.o,%.d,$@) -MT $@ $<
+
+
+go_executable: c_static_lib
+	go build -o ./build/ic1101.exe -ldflags "-w -s -extldflags '-static'" .
+	ldd build/ic1101
+
+
+brick/resource_www.go:
+	cd brick && node build
 
 clean:
-	cd build && rm *.o
+	rm build/*.o
+	rm build/libnative.a
+	rm brick/resource_www.go
+	rm brick/ic1101.exe
