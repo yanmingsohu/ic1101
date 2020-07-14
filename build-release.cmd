@@ -1,4 +1,4 @@
-@echo
+@echo off
 echo Remove symbol table and debug information during compilation
 
 pushd brick

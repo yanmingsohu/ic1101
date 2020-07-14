@@ -15,6 +15,11 @@ import (
 import "C"
 
 
+func init() {
+  C.crypto_init()
+}
+
+
 //
 // 对某个对象的引用计数器
 //

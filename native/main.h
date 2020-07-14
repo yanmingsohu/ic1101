@@ -23,6 +23,11 @@ GOEXPORT BLEN crypto_encode(CHAR *i, BLEN ilen, UBYTE *out);
 //
 GOEXPORT BLEN crypto_length();
 
+//
+// 初始化模块
+//
+GOEXPORT void crypto_init();
+
 #ifdef __cplusplus
 }
 #endif

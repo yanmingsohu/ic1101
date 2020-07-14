@@ -25,7 +25,7 @@ GOEXPORT BLEN crypto_length() {
 }
   
 
-void buffer_init(unsigned char *buf, int len) {
+static void buffer_init(unsigned char *buf, int len) {
   // print_buf(buf, len);
   hd_len = len;
   hd_buf = new unsigned char[len];
@@ -34,7 +34,12 @@ void buffer_init(unsigned char *buf, int len) {
 }
 
 
-void free_buffer() {
+GOEXPORT void crypto_init() {
+  get_dev_info(buffer_init);
+}
+
+
+static void free_buffer() {
   memset(hd_buf, 0, hd_len);
   delete[] hd_buf;
   hd_len = 0;
@@ -45,7 +50,7 @@ void free_buffer() {
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
   switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-      get_dev_info(buffer_init);
+      crypto_init();
       break;
 
     case DLL_PROCESS_DETACH:

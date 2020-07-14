@@ -23,8 +23,8 @@
 #include <string.h>
 
 #include "types.h"
-#include "dmidecode.h"
-#include "dmioem.h"
+#include "dmidecode.h" 
+#include "dmioem.h" 
 
 /*
  * Globals for vendor-specific decodes
