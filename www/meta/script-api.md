@@ -105,3 +105,60 @@ function on_data(dev, time, data) {
 
 记录一行日志, 该日志会在 `总线实时状态` 和控制台上打印.
 参数可以任意.
+
+
+## class Http
+
+该对象的实例可以直接在脚本中引用, 名称是 `http`.
+
+### HttpRet Get(url)
+
+调用 http 接口并等待返回, 参数错误会抛出异常.
+
+```javascript
+function on_data(dev, time, data) {
+  var ret = http.Get("http://localhost:90/get?d="+ data);
+  // 如果不是返回成功码, 则记录日志
+  if (ret.status != 200) {
+    dev.Log("get api fail");
+  }
+  return data
+}
+```
+
+### HttpRet Post(url, data)
+
+用 POST 方法请求一个接口并等待返回, data 可以是任何类型, 最终被包装为 json.
+参数错误会会抛出异常.
+
+```javascript
+// 省略了 on_data 定义
+var ret = http.Post("http://localhost:90/post/", {});
+```
+
+### HttpRet Send(url)
+
+和 Get() 相同, 但是该方法立即返回 null, 无法得知调用结果, 但是速度很快.
+
+```javascript
+// 省略了 on_data 定义
+http.Send('http://localhost:90/send/');
+```
+
+
+## class HttpRet
+
+这是 Http 中接口的返回值
+
+### `status`  
+
+状态码, 200/404 等
+
+### `body`    
+
+接口返回数据保存在该数组中, 如果应答没有提示 Content-Length,
+则返回被截断为 1024 字节. 最大 3MB.
+
+### `header`  
+
+http 应答头 map

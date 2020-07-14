@@ -1,6 +1,8 @@
 package jsslib
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"ic1101/src/core"
 	"ic1101/src/js"
@@ -12,6 +14,7 @@ import (
 )
 
 const MAX_BODY_LEN = 3 * core.MB
+const BODY_TYPE = "application/octet-stream"
 
 
 func init() {
@@ -57,22 +60,48 @@ func (h *JSHttp) Get(f goja.FunctionCall) goja.Value {
   if err != nil {
     panic(err)
   }
-  len := res.ContentLength
-  if len > MAX_BODY_LEN {
-    len = MAX_BODY_LEN
-  }
-
-  ret := h.NewObject()
-  buf := make([]byte, len)
-  io.ReadFull(res.Body, buf)
-
-  ret.Set("status", res.Status)
-  ret.Set("body",   buf)
-  ret.Set("header", res.Header)
-  return ret
+  return h.response(res)
 }
 
 
 func (h *JSHttp) Post(f goja.FunctionCall) goja.Value {
-  return h.Value(nil)
+  url := f.Argument(0).String()
+  if url == "" {
+    panic(errors.New("URL 参数不能为空"))
+  }
+  body := f.Argument(1).Export()
+  if body == nil {
+    panic(errors.New("Body 参数不能为空"))
+  }
+
+  by, err := json.Marshal(body)
+  if err != nil {
+    panic(err)
+  }
+  reader := bytes.NewReader(by)
+
+  res, err := http.Post(url, BODY_TYPE, reader)
+  if err != nil {
+    panic(err)
+  }
+  return h.response(res)
+}
+
+
+func (h *JSHttp) response(res *http.Response) *goja.Object {
+  len := res.ContentLength
+  if len > MAX_BODY_LEN {
+    len = MAX_BODY_LEN
+  } else if len < 0 {
+    len = 1024
+  }
+
+  ret := h.NewObject()
+  buf := make([]byte, len)
+  n, _ := io.ReadFull(res.Body, buf[:])
+
+  ret.Set("status", res.StatusCode)
+  ret.Set("body",   buf[:n])
+  ret.Set("header", res.Header)
+  return ret
 }
