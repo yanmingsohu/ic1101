@@ -97,7 +97,10 @@ func Install(conf *core.Config, m *core.Mongo) {
 
   b.HttpJumpMapping("/", "/ic/ui/index.html")
   b.HttpJumpMapping("/favicon.ico", "/ic/ui/favicon.ico")
-  b.StartHttpServer()
+  err := b.StartHttpServer()
+  if err != nil {
+    panic(err)
+  }
 }
 
 

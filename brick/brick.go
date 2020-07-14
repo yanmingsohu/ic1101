@@ -180,10 +180,10 @@ func (b *Brick) setTplFunc(name string, fn interface{})(error) {
 //
 // 启动服务, 该方法会阻塞
 //
-func (b *Brick) StartHttpServer() {
+func (b *Brick) StartHttpServer() error {
   port := ":"+ strconv.Itoa(b.HttpPort);
   b.log.Info("Server on http://localhost"+ port)
-	http.ListenAndServe(port, b.serveMux)
+	return http.ListenAndServe(port, b.serveMux)
 }
 
 
