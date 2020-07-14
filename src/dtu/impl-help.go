@@ -2,7 +2,6 @@ package dtu
 
 import (
 	"errors"
-	"strconv"
 	"sync"
 )
 
@@ -52,7 +51,11 @@ func (h *ImplHelp) GetContext(id int) (Context, error) {
   }
   ctx, has := h.CtxMap[id]
   if !has {
-    return nil, errors.New("上下文不存在"+ strconv.Itoa(id))
+    return nil, errors.New("目标不存在")
+  }
+  if ctx.Closed() {
+    delete(h.CtxMap, id)
+    return nil, errors.New("目标已经关闭")
   }
   return ctx, nil
 }

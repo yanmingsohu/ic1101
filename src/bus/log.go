@@ -45,3 +45,48 @@ func (i *Log) Log(msg ...interface{}) {
   log.Println(i.id, s)
 }
 
+
+type NotRepeating struct {
+  L Logger
+  m map[uint64]bool
+  s *sync.Mutex
+}
+
+
+//
+// 记录日志, 并记录该日志的 id, 同样的 id 不会再打印
+// 返回 true 说明状态已经改变
+//
+func (n *NotRepeating) Log(id uint64, msg ...interface{}) bool {
+  n.s.Lock()
+  defer n.s.Unlock()
+
+  if no, has := n.m[id]; has == false || no == false {
+    n.m[id] = true
+    n.L.Log(msg...)
+    return true
+  }
+  return false
+}
+
+
+//
+// 恢复日志的记录, 并记录当前日志
+// uint64
+//
+func (n *NotRepeating) Recover(id uint64, msg ...interface{}) bool {
+  n.s.Lock()
+  defer n.s.Unlock()
+
+  if no, has := n.m[id]; has == true && no == true {
+    delete(n.m, id)
+    n.L.Log(msg...)
+    return true
+  }
+  return false
+}
+
+
+func NewNotRep(l Logger) NotRepeating {
+  return NotRepeating{l, make(map[uint64]bool), new(sync.Mutex)}
+}

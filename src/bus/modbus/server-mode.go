@@ -23,7 +23,7 @@ type tcp_server struct {
   dtu    dtu.Impl
   rel    bus.BusReal
   parm   UrlParam
-  errIsShow map[uint16]bool
+  nr     bus.NotRepeating
 }
 
 
@@ -36,7 +36,7 @@ func (r *tcp_server) Start(i bus.BusReal) (error) {
   r.rel = i
   r.parm = UrlParam{}
   r.parm.Parse(i.URL())
-  r.errIsShow = make(map[uint16]bool)
+  r.nr = bus.NewNotRep(i)
   return nil
 }
 
@@ -63,12 +63,10 @@ func (r *tcp_server) get_client(id int) (*MC, error) {
 func (r *tcp_server) SyncData(i bus.BusReal, t *time.Time) error {
   for _, s := range i.Datas() {
     ms := s.(*modbus_slot)
+    
     client, err := r.get_client(int(ms.c))
     if err != nil {
-      if !r.errIsShow[ms.a] {
-        i.Log(ms.ErrInfo(err))
-        r.errIsShow[ms.a] = true
-      }
+      r.nr.Log(ms.LogicAddr(), ms.ErrInfo(err))
       continue
     }
     
@@ -86,11 +84,7 @@ func (r *tcp_server) SyncData(i bus.BusReal, t *time.Time) error {
     }
 
     i.Event().OnData(s, t, d)
-
-    if r.errIsShow[ms.a] {
-      i.Log(ms.ErrInfo("已恢复"))
-      r.errIsShow[ms.a] = false
-    }
+    r.nr.Recover(ms.LogicAddr(), ms.ErrInfo("已恢复"))
   }
   return nil
 }
@@ -102,6 +96,7 @@ func (r *tcp_server) SendCtrl(_s bus.Slot, d bus.DataWrap, t *time.Time) error {
   if err != nil {
     return errors.New(s.ErrInfo(err))
   }
+  
   if r.parm.sid >= 0 {
     client.SetUnitId(uint8(r.parm.sid))
   } else {
@@ -134,27 +129,27 @@ func (r *tcp_server) NewContext(ctx dtu.Context, err error) {
   })
 
   if err != nil {
-    ctx.Close()
     r.rel.Log("创建 modbus 连接失败 "+ err.Error())
+    ctx.Close()
     return;
   }
 
   conn, err := ctx.GetConn()
   if err != nil {
-    ctx.Close()
     r.rel.Log("获取客户端连接失败 "+ err.Error())
+    ctx.Close()
     return;
   }
 
   if err = client.Bind(conn); err != nil {
-    ctx.Close()
     r.rel.Log("绑定 Socket 错误 "+ err.Error())
+    ctx.Close()
     return;
   }
 
   if err = ctx.Bind(MBCLIENT, &MC{client}); err != nil {
-    ctx.Close()
     r.rel.Log("绑定参数错误 "+ err.Error())
+    ctx.Close()
     return;
   }
   
@@ -190,6 +185,7 @@ func (p *UrlParam) Parse(u *url.URL) {
   } else {
     p.mode = MODE_TCP
   }
+
   // timeout = 1 ~ MAX
   t := vs.Get("timeout")
   p.timeout = 10 * time.Second 
@@ -199,6 +195,7 @@ func (p *UrlParam) Parse(u *url.URL) {
       p.timeout = time.Duration(i) * time.Second
     }
   }
+
   // sid < 0 使用动态从机地址, 否则固定从机地址
   s := vs.Get("sid")
   p.sid = -1

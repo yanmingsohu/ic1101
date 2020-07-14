@@ -1,6 +1,9 @@
 package dtu
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 
 //
@@ -10,7 +13,7 @@ type CtxHelp struct {
   bind   map[string]interface{}
   ID     int
   closed bool
-  impl   Impl
+  sy     *sync.Mutex
 }
 
 
@@ -23,11 +26,14 @@ func (c *CtxHelp) InitHelp(id int, di Impl) {
   c.ID = id
   c.bind = make(map[string]interface{})
   c.closed = false
-  c.impl = di
+  c.sy = new(sync.Mutex)
 }
 
 
 func (c *CtxHelp) Get(name string) (interface{}, error) {
+  c.sy.Lock()
+  defer c.sy.Unlock()
+
   if c.closed {
     return nil, errors.New("上下文已经关闭")
   }
@@ -40,6 +46,9 @@ func (c *CtxHelp) Get(name string) (interface{}, error) {
 
 
 func (c *CtxHelp) Bind(name string, data interface{}) error {
+  c.sy.Lock()
+  defer c.sy.Unlock()
+
   if c.closed {
     return errors.New("上下文已经关闭")
   }
@@ -53,11 +62,18 @@ func (c *CtxHelp) Bind(name string, data interface{}) error {
 // 如果关闭成功返回 true, 已经关闭返回 false
 //
 func (c *CtxHelp) CloseHelp() bool {
+  c.sy.Lock()
+  defer c.sy.Unlock()
+  
   if c.closed {
     return false
   }
   c.closed = true
   c.bind = nil
-  c.impl.CloseContext(c.ID)
   return true
+}
+
+
+func (c *CtxHelp) Closed() bool {
+  return c.closed
 }

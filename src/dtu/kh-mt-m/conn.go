@@ -5,6 +5,7 @@ import (
 	"ic1101/src/dtu"
 	"io"
 	"log"
+	"net"
 )
 
 
@@ -27,12 +28,18 @@ func (c *conn_wrap) Read(buf []byte) (int, error) {
     return -1, err
   }
   end = c.rd.Modify(buf[:end])
-  log.Printf("Read %s %d - [% x]", c.RemoteAddr().String(), end, buf[:end])
+  log.Printf("R %s %3d < % x", c.RemoteAddr().String(), end, buf[:end])
   return end, err
 }
 
 
 func (c *conn_wrap) Write(b []byte) (n int, err error) {
-  log.Printf("Write %s - [% x]", c.RemoteAddr().String(), b[:])
-  return c.Conn.Write(b)
+  log.Printf("W %s %3d > % x", c.RemoteAddr().String(), len(b), b[:])
+  n, err = c.Conn.Write(b)
+  if se, ok := err.(*net.OpError); ok && (se.Temporary()==false) {
+    log.Printf("%s %t", se.Unwrap().Error(), se.Unwrap())
+    c.Close()
+    log.Println("close on write")
+  }
+  return
 }

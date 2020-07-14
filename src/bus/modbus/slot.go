@@ -76,3 +76,11 @@ func (m *modbus_slot) Type() bus.SlotType {
 func (m *modbus_slot) ErrInfo(err interface{}) string {
   return fmt.Sprintf("%s, 从机 %d, 地址 %d", err, m.c, m.a)
 }
+
+
+//
+// 逻辑地址是 从机 + 寄存器地址
+//
+func (m *modbus_slot) LogicAddr() uint64 {
+  return (uint64(m.c) << 16) + uint64(m.a)
+}

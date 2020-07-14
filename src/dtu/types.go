@@ -68,6 +68,10 @@ type Context interface {
   //
   Close() error
   //
+  // 上下文已经关闭返回 true
+  //
+  Closed() bool
+  //
   // 对于该函数的使用方, DTU 中的数据转换是透明的, 
   // 用户只关心与设备之间的原始数据格式.
   // 如果 dtu 不支持该方法则总是返回错误,

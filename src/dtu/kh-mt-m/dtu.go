@@ -67,8 +67,6 @@ func (d *dtu_impl) Stop() {
 
 
 func (d *dtu_impl) stop(err error) {
-  // d.Lock()
-  // defer d.Unlock()
   if !d.Run {
     return 
   }

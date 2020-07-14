@@ -97,18 +97,23 @@ type Sender interface {
 }
 
 
+type Logger interface {
+  // 记录日志
+  Log(msg ...interface{})
+}
+
+
 //
 // 该对象是面向总线实现者的, 尽可能暴露方法
 //
 type BusReal interface {
+  Logger
   // 返回创建总线使用的 url
   URL() *url.URL
   // 返回事件对象
   Event() BusEvent
   // 返回数据槽的切片
   Datas() []Slot
-  // 记录日志
-  Log(msg ...interface{})
 }
 
 
