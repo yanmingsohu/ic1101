@@ -27,6 +27,7 @@ func installUserService(b *brick.Brick) {
 	aserv(b, ctx, "user_list",   	user_list)
 	aserv(b, ctx, "user_count",   user_count)
 	aserv(b, ctx, "user_update", 	user_update)
+	aserv(b, ctx, "user_delete", 	user_delete)
 
 	mg.CreateIndex(core.TableLoginUser, &bson.D{
 		{"_id", "text"}, {"weixin", "text"}, {"tel", "text"}, {"email", "text"}})
@@ -189,6 +190,12 @@ func user_update(h *Ht) interface{} {
 	}
 
 	return h.Crud().Update(id, bson.D{{"$set", d}})
+}
+
+
+func user_delete(h *Ht) interface{} {
+	id := checkstring("用户名", h.Get("id"), 4, 64)
+	return h.Crud().Delete(id)
 }
 
 
