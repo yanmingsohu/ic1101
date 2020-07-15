@@ -72,3 +72,28 @@
 S   符号位，1是负，0是正
 E   偏移127的幂，二进制阶码=(EEEEEEEE)-127
 M   24位的尾数保存在23位中，只存储23位，最高位固定为1
+
+
+# Linux
+
+编译时依赖
+
+```sh
+yum -y install compat-libstdc++-33.x86_64 libstdc++.x86_64 libstdc++-devel.x86_64\
+  libstdc++-static.x86_64  glibc-common.x86_64 glibc.x86_64 glibc-devel.x86_64\
+  glibc-static.x86_64 gcc-c++ gcc
+```
+
+配置 golang
+
+```sh
+wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
+tar -xzf go1.11.2.linux-amd64.tar.gz  -C /usr/local 
+```
+
+配置 nodejs
+
+```sh
+wget https://nodejs.org/dist/v12.18.2/node-v12.18.2-linux-x64.tar.xz
+tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs 
+```

@@ -28,7 +28,7 @@ require (
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/simonvetter/modbus v0.0.0-00010101000000-000000000000
+	github.com/simonvetter/modbus v1.0.0
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/valyala/fasthttp v1.14.0 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
