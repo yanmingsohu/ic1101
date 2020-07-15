@@ -2,7 +2,7 @@ module ic1101
 
 go 1.13
 
-replace github.com/simonvetter/modbus => github.com/yanmingsohu/modbus v1.0.0
+replace github.com/simonvetter/modbus => github.com/yanmingsohu/modbus v1.0.1
 
 require (
 	github.com/ajg/form v1.5.1 // indirect
