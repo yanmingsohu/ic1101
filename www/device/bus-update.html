@@ -429,8 +429,17 @@ jQuery(function($) {
           arr.push(ret.data[n]);
         }
         arr.sort(function(a, b) {
-          if (a > b) return 1;
-          if (a < b) return -1;
+          try {
+            let alen = a.slot_id.length, blen = b.slot_it.length;
+            if (alen < blen) {
+              return -1;
+            }
+            if (alen > beln) {
+              return 1;
+            }
+            if (a.slot_id < b.slot_it) return -1;
+            if (a.slot_id > b.slot_it) return 1;
+          } catch(_) {}
           return 0;
         });
         return arr;
