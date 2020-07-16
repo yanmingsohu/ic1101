@@ -347,6 +347,7 @@ jQuery(function($) {
     return data_types[d] || d;
   }
 
+
   function init_slot_config(slotroot) {
     const table = slotroot.find("table");
     const create = slotroot.find("form");
@@ -409,7 +410,7 @@ jQuery(function($) {
     }
 
 
-    function on_table_select(_, v) {
+    function on_table_select(_, v, tr) {
       if (isdata) v.isdata = true;
       del.data("id", id);
       del.data("parm", v);
@@ -419,6 +420,9 @@ jQuery(function($) {
       timer_list.trigger('change', v.timer);
       data_val.val(v.value);
       conf_funcs.setVal(conf_root, v.slot_id);
+
+      let top = tr.position().top;
+      create.stop().animate({"padding-top": top}, 150);
     }
 
 
@@ -428,22 +432,23 @@ jQuery(function($) {
         for (let n in ret.data) {
           arr.push(ret.data[n]);
         }
-        arr.sort(function(a, b) {
-          try {
-            let alen = a.slot_id.length, blen = b.slot_it.length;
-            if (alen < blen) {
-              return -1;
-            }
-            if (alen > beln) {
-              return 1;
-            }
-            if (a.slot_id < b.slot_it) return -1;
-            if (a.slot_id > b.slot_it) return 1;
-          } catch(_) {}
-          return 0;
-        });
+        arr.sort(slot_sortor);
         return arr;
       }
+    }
+
+
+    function slot_sortor(a, b) {
+      try {
+        let alen = a.slot_id.length, blen = b.slot_id.length;
+        if (alen < blen) return -1;
+        if (alen > beln) return 1;
+        if (a.slot_id < b.slot_id) return -1;
+        if (a.slot_id > b.slot_id) return 1;
+      } catch(e) {
+        console.error(e);
+      }
+      return 0;
     }
 
 

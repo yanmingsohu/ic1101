@@ -327,7 +327,7 @@ function smartTable(jdom, _convert) {
       tr.addClass("table_row_click");
       oldtr = tr;
       jdom.data('select_row', value);
-      jdom.trigger('select_row', value, tr);
+      jdom.trigger('select_row', [value, tr]);
     });
   }
 
