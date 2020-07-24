@@ -45,31 +45,29 @@
 
           <label>
             <input type="radio" name='scheme' value='dtu://'
-              for='#dtu, .hostport, #dtu_parm'/>DTU 模式
+              for='#modbus_dtu_type, .hostport'/>DTU 模式
           </label>
         </div>
 
-        <div class="hide pure-u-md-1-4 pure-u-1 " id='dtu'>
+        <div class="hide pure-u-md-1-4 pure-u-1 " id='modbus_dtu_type'>
           <legend>选择DTU种类</legend>
           <label>
             <input type="radio" name='path' value='/kh-mt-m'
-              for='#allover'/>KH-MT-M
+              for='#modbus_dtu_parm'/>KH-MT-M
           </label>
         </div>
 
-        <div class="hide pure-u-md-1-4 pure-u-1 " id='dtu_parm'>
+        <div class="hide pure-u-md-1-4 pure-u-1 " id='modbus_dtu_parm'>
           <legend>设置DTU参数</legend>
           <label>超时 (秒)</label>
           <input name='query.timeout' value='10'/>
 
           <label>
-            <input type="radio" name='query.mode' value='1'
-              for='#allover' checked/>TCP 模式
+            <input type="radio" name='query.mode' value='1' checked/>TCP 模式
           </label>
 
           <label>
-            <input type="radio" name='query.mode' value='2'
-              for='#allover'/>RTU 模式
+            <input type="radio" name='query.mode' value='2'/>RTU 模式
           </label>
 
           <label>DTU 后置从机地址</label>
@@ -80,10 +78,10 @@
             <input name='query.sid' value='-1' type='hidden' disabled/>
           </span>
           <label>
-            <input type="radio" name='sid' for='#fixsid' />固定从机地址
+            <input type="radio" name='sid' for='#fixsid, #allover' />固定从机地址
           </label>
           <label>
-            <input type="radio" name='sid' for='#autosid' />与DTU从机地址相同
+            <input type="radio" name='sid' for='#autosid, #allover' />与DTU从机地址相同
           </label>
         </div>
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const GVersion = "1.0.2"
+const GVersion = "1.0.3"
 const GAppName = "IOT-IC1101 物联网中台/组态/智能数据中心"
 
 var LOGO = `
