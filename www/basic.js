@@ -1,9 +1,11 @@
 jQuery(function($) {
 
+const SEC = 1e3;
 const API_ROOT = "/ic/";
 const body = $(document.body);
 const win  = $(window);
 const content_frame = $("#main_frame");
+const DICT_LIVE = 300 * SEC; // 字典有效时间
 
 const ic = window.ic = {
   get,
@@ -741,14 +743,20 @@ function getDict(dictId, cb) {
   const key = "ic1101.dict."+ dictId;
   let cache = JSON.parse(sessionStorage.getItem(key));
   if (cache) {
-    cb(null, cache);
-    return;
+    if (cache.time > Date.now()) {
+      cb(null, cache.data);
+      return;
+    }
+    sessionStorage.removeItem(key);
   }
 
   get('dict_read', {id: dictId}, function(err, ret) {
     if (err) return cb(err);
     let d = ret.data;
-    sessionStorage.setItem(key, JSON.stringify(d));
+    sessionStorage.setItem(key, JSON.stringify({
+      data: d,
+      time: Date.now() + DICT_LIVE,
+    }));
     cb(null, d);
   });
 }

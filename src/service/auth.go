@@ -71,9 +71,11 @@ func role_update(h *Ht) interface{} {
 
   rules := h.Gets("r")
   if len(rules) > 0 {
-    for _, id := range rules {
-      if !user.Auths[id] {
-        return errors.New("当前用户不能赋予权限: "+ id)
+    if !user.IsRoot {
+      for _, id := range rules {
+        if !user.Auths[id] {
+          return errors.New("当前用户不能赋予权限: "+ id)
+        }
       }
     }
     up["rules"] = rules

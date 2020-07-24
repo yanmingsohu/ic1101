@@ -22,34 +22,46 @@
           <div class="pure-button-group" role="group">
             <button type="submit" 
               class="pure-button button-primary">修改</button>
+            <button type="button" 
+              class="pure-button button-primary sall">全选</button>
           </div>
           <span class='ajax-message'></span>
         </div>
       </div>
     </fieldset>
-
+<!-- 
     <fieldset>
-      <legend>角色权限</legend>
+      <legend name='role_name'>角色权限</legend>
       <div class="pure-g" id='rule_list'>
       </div>
-      <label style='float:right; font-size: 8px;'>
-        * 角色名称中文显示依赖 auth 字典的正确设置</label>
-    </fieldset>
+    </fieldset> -->
   </form>
+
+  <label style='float:right; font-size: 8px;'>
+    * 角色名称中文显示依赖 auth 字典的正确设置</label>
 
   <label class="pure-u-1 pure-u-md-1-5 html_template" 
           id='rule_item_template'>
-    <input type="checkbox" name='r' value='x'/><span class='name'>权限1</span>
+    <input type="checkbox" name='r' value='x'/><span class='name'></span>
   </label>
+
+  <fieldset class='html_template' id='rule_group_template'>
+    <legend class='role_name'></legend>
+    <div class="pure-g rule_list">
+    </div>
+  </fieldset>
 
 <script>
 jQuery(function($) {
-  let root = $("#role_edit_frame");
-  let update = root.find("#role_update");
-  let setrule = root.find("#role_set_rule");
-  let rule_list = root.find('#rule_list');
-  let id = root.find("[name=id]");
-  let all_rule_inputs = {};
+  const root = $("#role_edit_frame");
+  const update = root.find("#role_update");
+  const setrule = root.find("#role_set_rule");
+  const rule_list = root.find('#rule_list');
+  const id = root.find("[name=id]");
+  const all = root.find(".sall");
+  const group = {};
+  const marge = {};
+  let all_checked = true;
 
   ic.ajaxform(update);
   ic.ajaxform(setrule);
@@ -62,21 +74,61 @@ jQuery(function($) {
     });
   });
 
+  all.click(function() {
+    root.find(":checkbox").prop('checked', all_checked);
+    all_checked = !all_checked;
+  });
+
+
   function init_rule_list(data, dict) {
     data.forEach(function(_id) {
-      let t = ic.getTemplate('#rule_item_template');
-      t.find("[name=r]").val(_id);
-      t.find(".name").text((dict && dict[_id]) || _id);
-      rule_list.append(t);
-      all_rule_inputs[_id] = t.find("input");
+      let tmp = (dict && dict[_id]) || _id;
+      tmp = tmp.split(",");
+      let name = tmp[0];
+      let gname = tmp[1];
+
+      let rule = put_rule(_id, name);
+      get_group(gname).append(rule);
     });
 
     ic.get("role_read_rule", {id: id.val()}, function(err, ret) {
       if (err) return ic.popo(err);
       ret.data.rules.forEach(function(_id) {
-        all_rule_inputs[_id].prop("checked", true);
+        root.find("[value='"+ _id +"']").prop("checked", true);
       });
     });
+  }
+
+
+  function put_rule(id, name) {
+    let m = marge[name];
+    if (m) {
+      let i = $('<input type="checkbox" name="r"/>');
+      i.val(id).hide().appendTo(m);
+    } else {
+      marge[name] = m = ic.getTemplate('#rule_item_template');
+      let i = m.find("[name=r]").val(id);
+      m.find(".name").text(name);
+
+      i.on("change", function() {
+        m.find(":checkbox").prop('checked', i.prop('checked'));
+      });
+    }
+    return m;
+  }
+
+
+  function get_group(name) {
+    if (!name) name = '(未分组)';
+    let g = group[name];
+    if (g) return g;
+
+    let t = ic.getTemplate("#rule_group_template");
+    t.find(".role_name").html(name);
+    t.appendTo(update);
+    let list = t.find('.rule_list');
+    group[name] = list;
+    return list;
   }
 });
 </script>
