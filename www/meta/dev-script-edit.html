@@ -178,6 +178,10 @@ jQuery(function($) {
   }
 
   function open_full_editor() {
+    if (body.width() < 1000) {
+      return ic.popo(new Error("屏幕太小无法启动"));
+    }
+
     let pos = editor.getCursorPosition();
     let full = ic.getTemplate("#full_screen_editor");
     let console = full.find(".console");

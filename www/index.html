@@ -33,17 +33,27 @@
 .login label {
   display: inline-block; width: 80px; overflow: auto;
 }
+.app_name {
+  font-size: 90px; margin-top: 30px;
+  font-family: fantasy; margin-bottom: 10px;
+}
 
 @media (max-width: 1000px) {
+  .app_name {
+    font-size: 41px;
+  }
   #frame {
     flex-direction: column-reverse;
   }
   .icons {
-    z-index: 99;  position: fixed; top:0; left: 0px;
-    opacity: 0.06;
+    z-index: 99; position: fixed; top:0; left: 0px;
+    opacity: 0.06; padding: 10px; width: 100%;
   }
   .logo {
-    z-index: 100; padding-left: 80px;
+    z-index: 100; padding-left: 10%; padding-top: 50px;
+  }
+  .login {
+    padding-top: 30px;
   }
 }
 </style>
@@ -91,8 +101,7 @@
   </div>
 
   <div class='logo'>
-    <h1 style='font-size: 90px; margin-top: 30px;
-        font-family: fantasy; margin-bottom: 10px;'>IOT-IC 1101</h1>
+    <h1 class='app_name'>IOT-IC 1101</h1>
     <legend>高度可定制的物联网服务中心平台</legend>
     <legend>现场实施/服务开发/商业逻辑/数据分析/数据互联互通的全面解决方案</legend>
 
