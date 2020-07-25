@@ -2,7 +2,8 @@ html {
   font-size: 10px;
 }
 
-#main_menu, form, h2, hr, .popo_message, .closeframe {
+#main_menu, form, h2, hr, .popo_message, .closeframe,
+#menu_bar_ctrl {
   display: none;
 }
 

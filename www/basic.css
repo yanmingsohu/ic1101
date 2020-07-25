@@ -128,6 +128,10 @@ select, input[type=datetime-local] {
     background-color: #333; box-shadow: 0px 3px 2px #333;
     cursor: pointer;
   }
+  th, td {
+    padding: 1px !important; font-size: 8px; word-break: keep-all;
+    white-space: nowrap;
+  }
 }
 
 table {

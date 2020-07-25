@@ -113,7 +113,11 @@ $("#menu_bar_ctrl").click(function() {
   main_menu.slideToggle();
 });
 
-win.resize(function() {
+check_size();
+win.resize(check_size);
+
+
+function check_size() {
   if (win.width() < 1000) {
     main_menu.slideUp();
     main_frame.on('click', hide_menu);
@@ -121,8 +125,7 @@ win.resize(function() {
     main_menu.fadeIn();
     main_frame.off('click', hide_menu);
   }
-});
-
+}
 
 function hide_menu() {
   main_menu.slideUp();
