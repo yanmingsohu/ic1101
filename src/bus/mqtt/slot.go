@@ -10,6 +10,7 @@ import (
 
 //
 // slot 格式: [D|C]#{主题} {数据类型}/{偏移}/{QOS}
+// * scanf 必须用空格分隔字符串
 //
 const slot_fmt = "%c#%s %x/%x/%d"
 

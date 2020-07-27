@@ -10,11 +10,30 @@
 //    变量类型是 map[string][]byte.
 //    不支持深层目录中的文件.
 //
-const zb = require('zlib')
-const fs = require('fs');
-const pt = require('path');
-const cf = require("./build.json");
-const st = require("stream");
+const zb        = require('zlib')
+const fs        = require('fs');
+const pt        = require('path');
+const cf        = require("./build.json");
+const st        = require("stream");
+const CleanCSS  = require('clean-css');
+const htmlmin   = require('html-minifier');
+const colors    = require('colors');
+const babel     = require("babel-core");
+
+const html_min_opt = {
+  minifyCSS: true, 
+  minifyJS: js_min_for_html, 
+  removeComments: true,
+  collapseWhitespace: true,
+};
+
+const css_min_opt = {};
+
+const js_babel_opt = {
+  minified: true, 
+  comments: false,
+  // plugins: ['babel-minify'],
+};
 
 const go_code = `
 //
@@ -68,7 +87,6 @@ function buildDir(webbase, dir, outfile, on_end) {
       if (st.isFile()) {
         var web_path = pt.posix.join(webbase.join('/'), d);
         outfile.localfile(file, web_path, _next);
-        console.log('Local Resource:', file);
       } 
       else if (st.isDirectory()) {
         webbase.push(d);
@@ -120,6 +138,27 @@ function makeSource(outFile, varName) {
     });
 
     var r = fs.createReadStream(path);
+    switch (pt.extname(path)) {
+      case ".html":
+        console.log(path.green);
+        r = r.pipe(min_html());
+        break;
+
+      case ".js":
+        console.log(path.yellow);
+        r = r.pipe(min_js());
+        break;
+
+      case ".css":
+        console.log(path.cyan);
+        r = r.pipe(min_css());
+        break;
+
+      default:
+        console.log(path.white);
+        break;
+    }
+
     r.pipe(zb.createGzip())
       .pipe(byteArrEncode(end))
       .pipe(wstream);
@@ -149,4 +188,81 @@ function byteArrEncode() {
     callback();
   };
   return enc;
+}
+
+
+function min_html() {
+  let enc = create_collect_string(function(str, end) {
+    console.time("\tHTML min");
+    let result = htmlmin.minify(str, html_min_opt);
+    this.push(result, 'utf8');
+    console.timeLog("\tHTML min", percent(result.length, str.length));
+    end();
+  });
+  return enc;
+}
+
+
+function min_js() {
+  let enc = create_collect_string(function(str, end) {
+    console.time("\tJS min");
+    let result;
+    try {
+      result = babel.transform(str, js_babel_opt).code;
+    } catch(err) {
+      console.error(err.stack);
+      result = str;
+    }
+    this.push(result, 'utf8');
+    console.timeLog("\tJS min", percent(result.length, str.length));
+    end();
+  });
+  return enc;
+}
+
+
+function min_css() {
+  let enc = create_collect_string(function(str, end) {
+    console.time("\tCSS min")
+    var result = new CleanCSS(css_min_opt).minify(str);
+    this.push(result.styles, 'utf8');
+    console.timeLog("\tCSS min", percent(result.styles.length, str.length));
+    end();
+  });
+  return enc;
+}
+
+
+function create_collect_string(cb) {
+  let bufs = [];
+  let enc = new st.Transform();
+  enc._transform = function(chunk, encoding, callback) {
+    bufs.push(chunk);
+    callback();
+  };
+
+  enc._flush = function(end) {
+    let str = Buffer.concat(bufs).toString('utf8')
+    cb.call(this, str, end);
+  };
+  return enc;
+}
+
+
+function percent(a, b) {
+  return ((a / b)*100).toFixed(1) +'%';
+}
+
+
+function js_min_for_html(text, inline) {
+  var start = text.match(/^\s*<!--.*/);
+  var code = start ? text.slice(
+    start[0].length).replace(/\n\s*-->\s*$/, '') : text;
+  
+  try {
+    return babel.transform(code, js_babel_opt).code;
+  } catch(err) {
+    console.error(err.stack);
+    return text;
+  }
 }

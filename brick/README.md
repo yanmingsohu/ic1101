@@ -32,3 +32,8 @@ B.xhtml file:
 ```html
 <div>B File</div>
 ```
+
+
+## 编译页面静态资源
+
+`node build`
