@@ -12,8 +12,61 @@
           </label>
 
           <label>
-            <input type="radio" name='bus_type' for='#allover'/>随机数(测试)
+            <input type="radio" name='bus_type' for='#mqtt'/>MQTT 客户端
           </label>
+
+          <label>
+            <input type="radio" name='bus_type' for='#allover, #random'/>随机数(测试)
+          </label>
+        </div>
+
+        <div class="hide pure-u-md-1-4 pure-u-1 " id='random'>
+          <input type='hidden' name='scheme' value='mem'/>
+        </div>
+
+        <div class="hide pure-u-md-1-4 pure-u-1 " id='mqtt'>
+          <legend>选择连接器</legend>
+          <div class=''>
+            <label>域名/IP : 端口</label>
+            <input type='text' name='host' value='localhost:1883'>
+          </div>
+
+          <label>
+            <input type="radio" name='scheme' value='tcp'
+              for='#mqtt_param, #allover'/>TCP 模式
+          </label>
+
+          <label>
+            <input type="radio" name='scheme' value='ssl'
+              for='#mqtt_param, #allover'/>TCP 加密模式
+          </label>
+
+          <label>
+            <input type="radio" name='scheme' value='ws'
+              for='#mqtt_param, #allover'/>WebSocket 模式
+          </label>
+
+          <label>
+            <input type="radio" name='scheme' value='wss'
+              for='#mqtt_param, #allover'/>WebSocket 加密模式
+          </label>
+        </div>
+
+        <div class="hide pure-u-md-1-4 pure-u-1 " id='mqtt_param'>
+          <legend>设置 MQTT 参数</legend>
+          <label>超时 (秒)</label>
+          <input name='query.timeout' value='30'/>
+          <label>用户名</label>
+          <input name='username' value='' placeholder="可选"/>
+          <label>密码</label>
+          <input name='password' value='' placeholder="可选"/>
+          <label>客户端ID</label>
+          <input name='query.clientID' value='' placeholder="可选"/>
+          <label>清除事务</label>
+          <select name='query.cleanSession'>
+            <option value='t'>是</option>
+            <option value='f'>否</option>
+          </select>
         </div>
 
         <div class="hide pure-u-md-1-4 pure-u-1 " id='modbus'>
@@ -29,22 +82,22 @@
           </div>
 
           <label>
-            <input type="radio" name='scheme' value='rtuovertcp://'
+            <input type="radio" name='scheme' value='rtuovertcp'
               for='#allover, .hostport'/>TCP-RTU 模式
           </label>
 
           <label>
-            <input type="radio" name='scheme' value='tcp://'
+            <input type="radio" name='scheme' value='tcp'
               for='#allover, .hostport'/>TCP 模式
           </label>
 
           <label>
-            <input type="radio" name='scheme' value='rtu://'
+            <input type="radio" name='scheme' value='rtu'
               for='#allover, .serport'/>RTU 模式
           </label>
 
           <label>
-            <input type="radio" name='scheme' value='dtu://'
+            <input type="radio" name='scheme' value='dtu'
               for='#modbus_dtu_type, .hostport'/>DTU 模式
           </label>
         </div>
@@ -158,10 +211,12 @@ jQuery(function($) {
     let arr = form.serializeArray();
     // 关键 url 参数组件, 表单中必须有 name 对应的表单项.
     let part = {
-      scheme : "",
-      host   : 'localhost',
-      path   : '',
-      query  : '',
+      scheme   : "",
+      host     : 'localhost',
+      path     : '',
+      query    : '',
+      username : '',
+      password : '',
     };
 
     arr.forEach(function(p) {
@@ -170,14 +225,23 @@ jQuery(function($) {
         let name = p.name.substr(6);
         if (part.query == '') part.query = "?";
         else part.query += '&';
-        part.query += (name +'='+ p.value);
+        part.query += (name +'='+ encodeURIComponent(p.value));
       } 
       else if (p.value) {
-        part[ p.name ] = p.value;
+        if (p.name == 'host') {
+          part[ p.name ] = p.value;
+        } else {
+          part[ p.name ] = encodeURIComponent(p.value);
+        }
       }
     });
 
-    let url = [part.scheme, part.host, part.path, part.query];
+    let url = [part.scheme, '://'];
+    if (part.username || part.password) {
+      url.push(part.username, ':', part.password, "@")
+    }
+
+    url.push(part.host, part.path, part.query);
     return url.join("");
   }
 });

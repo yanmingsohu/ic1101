@@ -1,0 +1,84 @@
+<div class='html_template pure-u-1' type='mqtt'>
+  <input name='slot_id' type='hidden'/>
+  <div class="pure-g">
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>主题</label>
+      <input class="pure-u-23-24 topic" placeholder="订阅/发布主题"/>
+    </div>
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>数据质量</label>
+      <select class='q pure-u-23-24'>
+        <option value='0'>最多分发一次</option>
+        <option value='1'>至少分发一次</option>
+        <option value='2'>只分发一次</option>
+      </select>
+    </div>
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>数据类型</label>
+      <select class='data_type pure-u-23-24'>
+        <option value='1'>1字节整数</option>
+        <option value='2'>1字节无符号整数</option>
+        <option value='3'>2字节整数</option>
+        <option value='4'>2字节无符号整数</option>
+        <option value='5'>4字节整数</option>
+        <option value='6'>4字节无符号整数</option>
+        <option value='7'>8字节整数</option>
+        <option value='8'>8字节无符号整数</option>
+        <option value='9'>4字节浮点</option>
+        <option value='10'>8字节浮点</option>
+        <option value='11'>字符串</option>
+      </select>
+    </div>
+    <div class="pure-u-1 pure-u-md-1-2">
+      <label>字节偏移</label>
+      <input class="pure-u-23-24 offset" value='0'/>
+    </div>
+  </div>
+<script>
+busConf['mqtt'] = {
+  init(jroot, p) {
+    let fmt = this.fmt = "%c#%s %x/%x/%d";
+    let f = this.getFrom(jroot);
+    let sid = this.sid = jroot.find('[name=slot_id]');
+    p = p.charCodeAt(0);
+
+    jroot.find(":input").change(update_value);
+    update_value();
+
+    function update_value() {
+      let id = sprintf(fmt, 
+        p, f.t.val(), f.d.val(), f.o.val(), f.q.val());
+      sid.val(id);
+    }
+  },
+
+  initData(jroot) {
+    this.init(jroot, 'D');
+  },
+
+  initCtrl(jroot) {
+    this.init(jroot, 'C');
+  },
+
+  setVal(jroot, v) {
+    this.sid.val(v);
+    let parm = sscanf(v, this.fmt);
+    let f = this.getFrom(jroot);
+    console.log(parm)
+    f.t.val(parm[1]+'');
+    f.d.val(parm[2]+'');
+    f.o.val(parm[3]+'');
+    f.q.val(parm[4]+'');
+  },
+
+  getFrom(jroot) {
+    return {
+      t : jroot.find(".topic"),
+      d : jroot.find(".data_type"),
+      o : jroot.find(".offset"),
+      q : jroot.find(".q"),
+    }
+  }
+};
+</script>
+</div>

@@ -78,6 +78,7 @@ type BusCreator interface {
 //
 type Bus interface {
   // 启动总线, 用于初始化数据, 失败返回 error
+  // 在该方法中失败, 不会调用 Stop
   Start(BusReal) error
   // 传送一次数据
   SyncData(BusReal, *time.Time) error

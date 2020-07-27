@@ -55,9 +55,8 @@
 
 * [Modbus](github.com/yanmingsohu/modbus)
 * [MBus](https://github.com/karl-gustav/ams-han)
-* [MQTT1](https://github.com/eclipse/paho.mqtt.golang)
-* [MQTT2](https://github.com/VolantMQ/volantmq)
-* [MQTT3](https://godoc.org/github.com/jeffallen/mqtt)
+* [MQTT client](https://github.com/eclipse/paho.mqtt.golang)
+* [MQTT server](https://github.com/VolantMQ/volantmq)
 
 
 # DTU

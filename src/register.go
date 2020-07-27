@@ -6,6 +6,7 @@ package register
 import (
 	_ "ic1101/src/bus/m-bus"
 	_ "ic1101/src/bus/modbus"
+	_ "ic1101/src/bus/mqtt"
 	_ "ic1101/src/bus/random"
 
 	_ "ic1101/src/dtu"
