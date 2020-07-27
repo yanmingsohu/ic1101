@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const RealRegNum = 5;
+const RealRegNum = 0x0F;
 
 
 type random_bus struct {

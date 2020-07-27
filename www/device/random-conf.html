@@ -1,0 +1,35 @@
+<div class='html_template pure-u-1 pure-u-md-2-3' type='random'>
+  <select class="pure-u-23-24" name='slot_id'></select>
+
+<script>
+busConf['random'] = {
+
+  build(jroot, vp, tp) {
+    let sel = jroot.find("select");
+    for (let i=0; i<=0xf; ++i) {
+      let name;
+      if (i<0x0f) {
+        name = tp +"寄存器"+ i;
+      } else {
+        name = '虚拟'+ tp + i;
+      }
+      let opt = $("<option>").val(vp + i).text(name);
+      sel.append(opt);
+    }
+  },
+
+  initData(jroot) {
+    this.build(jroot, "D#", "数据");
+  },
+
+  initCtrl(jroot) {
+    this.build(jroot, "C#", "控制");
+  },
+
+  // 页面初始化时调用
+  setVal(jroot, v) {
+    jroot.find('select').val(v);
+  },
+};
+</script>
+</div>
