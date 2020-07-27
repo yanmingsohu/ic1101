@@ -1,4 +1,9 @@
 <div id='url_helper_frame'>
+<style>
+.pem {
+  height: 8em;
+}
+</style>
   <h2>总线 URL 生成器</h2>
   
   <form class="pure-form pure-form-stacked">
@@ -31,7 +36,7 @@
           <legend>选择连接器</legend>
           <div class=''>
             <label>域名/IP : 端口</label>
-            <input type='text' name='host' value='localhost:1883'>
+            <input type='text' name='host' value='localhost:1883' class='pure-u-23-24'>
           </div>
 
           <label>
@@ -41,7 +46,7 @@
 
           <label>
             <input type="radio" name='scheme' value='ssl'
-              for='#mqtt_param, #allover'/>TCP 加密模式
+              for='#mqtt_param, #allover, #mqtt_param_tls'/>TCP 加密模式
           </label>
 
           <label>
@@ -51,37 +56,45 @@
 
           <label>
             <input type="radio" name='scheme' value='wss'
-              for='#mqtt_param, #allover'/>WebSocket 加密模式
+              for='#mqtt_param, #allover, #mqtt_param_tls'/>WebSocket 加密模式
           </label>
         </div>
 
         <div class="hide pure-u-md-1-4 pure-u-1 " id='mqtt_param'>
           <legend>设置 MQTT 参数</legend>
           <label>超时 (秒)</label>
-          <input name='query.timeout' value='30'/>
+          <input name='query.timeout' value='30' class='pure-u-23-24'/>
           <label>用户名</label>
-          <input name='username' value='' placeholder="可选"/>
+          <input name='username' value='' placeholder="可选" class='pure-u-23-24'/>
           <label>密码</label>
-          <input name='password' value='' placeholder="可选"/>
+          <input name='password' value='' placeholder="可选" class='pure-u-23-24'/>
           <label>客户端ID</label>
-          <input name='query.clientID' value='' placeholder="可选"/>
+          <input name='query.clientID' value='' placeholder="可选" class='pure-u-23-24'/>
           <label>清除事务</label>
-          <select name='query.cleanSession'>
+          <select name='query.cleanSession' class='pure-u-23-24'>
             <option value='t'>是</option>
             <option value='f'>否</option>
           </select>
+        </div>
+
+        <div class="hide pure-u-md-1-4 pure-u-1 " id='mqtt_param_tls'>
+          <legend>设置 MQTT 加密参数</legend>
+          <label>证书(公钥) PEM</label>
+          <textarea name='query.certPEM' class='pure-u-23-24 pem'></textarea>
+          <label>密钥 PEM</label>
+          <textarea name='query.keyPEM' class='pure-u-23-24 pem'></textarea>
         </div>
 
         <div class="hide pure-u-md-1-4 pure-u-1 " id='modbus'>
           <legend>选择连接器</legend>
           <div class='hostport hide'>
             <label>域名/IP : 端口</label>
-            <input type='text' name='host' value='localhost:502'>
+            <input type='text' name='host' value='localhost:502' class='pure-u-23-24'>
           </div>
 
           <div class='serport hide'>
             <label>串口</label>
-            <input type='text' name='host' value='/dev/ttyUSB0'>
+            <input type='text' name='host' value='/dev/ttyUSB0' class='pure-u-23-24'>
           </div>
 
           <label>
@@ -116,28 +129,32 @@
         <div class="hide pure-u-md-1-4 pure-u-1 " id='modbus_dtu_parm'>
           <legend>设置DTU参数</legend>
           <label>超时 (秒)</label>
-          <input name='query.timeout' value='10'/>
+          <input name='query.timeout' value='10' class='pure-u-23-24'/>
 
           <label>
-            <input type="radio" name='query.mode' value='1' checked/>TCP 模式
+            <input type="radio" name='query.mode' value='1' checked/>
+            TCP 模式
           </label>
 
           <label>
-            <input type="radio" name='query.mode' value='2'/>RTU 模式
+            <input type="radio" name='query.mode' value='2'/>
+            RTU 模式
           </label>
 
           <label>DTU 后置从机地址</label>
           <span id='fixsid'>
-            <input name='query.sid' value='1' disabled/>
+            <input name='query.sid' value='1' class='pure-u-23-24' disabled/>
           </span>
           <span id='autosid'>
             <input name='query.sid' value='-1' type='hidden' disabled/>
           </span>
           <label>
-            <input type="radio" name='sid' for='#fixsid, #allover' />固定从机地址
+            <input type="radio" name='sid' for='#fixsid, #allover' />
+            固定从机地址
           </label>
           <label>
-            <input type="radio" name='sid' for='#autosid, #allover' />与DTU从机地址相同
+            <input type="radio" name='sid' for='#autosid, #allover' />
+            与DTU从机地址相同
           </label>
         </div>
 

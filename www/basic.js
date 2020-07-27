@@ -138,6 +138,7 @@ function loadpage(page, cb) {
 function ajaxform(jdom) {
   let api = jdom.attr('action');
   let msg = jdom.find('.ajax-message');
+  let method = jdom.attr("method") || 'GET';
 
   msg.text("");
 
@@ -160,7 +161,7 @@ function ajaxform(jdom) {
   });
 
   jdom.on('param', function(event, param) {
-    get(api, param, function(err, ret) {
+    ajax(method, api, param, function(err, ret) {
       if (err) {
         gotError(err);
         return;

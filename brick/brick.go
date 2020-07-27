@@ -384,8 +384,14 @@ func (h *Http) Json(m interface{}) {
 
 func (h* Http) init_query() {
   if h.q == nil {
-    q := h.R.URL.Query()
-    h.q = &q
+    ct := h.R.Header.Get("Content-Type")
+    if strings.Index(ct, "application/x-www-form-urlencoded") >= 0 {
+      h.R.ParseForm()
+      h.q = &h.R.PostForm
+    } else {
+      q := h.R.URL.Query()
+      h.q = &q
+    }
   }
 }
 

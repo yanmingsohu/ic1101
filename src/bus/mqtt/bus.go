@@ -1,6 +1,7 @@
 package bus_mqtt
 
 import (
+	"crypto/tls"
 	"ic1101/src/bus"
 	"strconv"
 	"time"
@@ -49,6 +50,19 @@ func new_opt(r bus.BusReal) *mq.ClientOptions {
     opt.SetConnectTimeout(to)
     opt.SetPingTimeout(to * 2)
     opt.SetWriteTimeout(to)
+  }
+
+  cert_pem := q.Get("certPEM");
+  key_pem := q.Get("keyPEM");
+  
+  if cert_pem != "" || key_pem != "" {
+    cert, err := tls.X509KeyPair([]byte(cert_pem), []byte(key_pem))
+    if err != nil {
+      r.Log("设置 TLS 失败", err)
+    } else {
+      tlsCfg := tls.Config{Certificates: []tls.Certificate{cert}}
+      opt.SetTLSConfig(&tlsCfg)
+    }
   }
   return opt
 }
