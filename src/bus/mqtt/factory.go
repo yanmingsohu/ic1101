@@ -17,7 +17,7 @@ type mqtt_ct struct {
 
 
 func (*mqtt_ct) Name() string {
-  return "MQTT-客户端"
+  return "MQTT 客户端"
 }
 
 

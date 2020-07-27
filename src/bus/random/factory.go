@@ -16,7 +16,7 @@ type bus_random_ct struct {
 
 
 func (*bus_random_ct) Name() string {
-  return "随机数(测试)"
+  return "虚拟总线"
 }
 
 
