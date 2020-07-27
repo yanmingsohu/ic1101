@@ -13,7 +13,7 @@
 
         <div class="pure-u-1 pure-u-md-1-3">
           <label>设备原型</label>
-          <select api='dev_proto_list' type="text" name='tid'class="pure-u-23-24">
+          <select api='dev_proto_list' type="text" name='tid' class="pure-u-23-24">
           </select>
         </div>
 
@@ -79,6 +79,8 @@
     </thead>
     <tbody></tbody>
   </table>
+
+<div id='echart_lazy_js_load'></div>
 
 <script>
 jQuery(function($) {
@@ -158,6 +160,15 @@ jQuery(function($) {
       target.find("[name=desc]").val(data.desc);
     },
   });
+
+  setTimeout(function() {
+    let to = $("#echart_lazy_js_load");
+    [ "echarts/echarts.min.js",
+      "echarts/roma.js",
+    ].forEach(function(js) {
+      $("<script>").attr("src", js).appendTo(to);
+    });
+  }, 1);
 });
 </script>
 </div>
