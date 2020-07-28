@@ -26,10 +26,8 @@
 # TODO
 
 * 设备属性表单支持宽度和顺序定义
-* 字典可导入/导出
 * 日志分类
 * 设备版本落后于原型版本时, 在列表中提示
-* 权限列表分类/合并相同的操作, 完成字典
 
 
 # 参考
@@ -39,8 +37,6 @@
 * [air](https://github.com/cosmtrek/air)
 * [MongoDB](https://docs.mongodb.com/manual/reference/method/db.collection.insertOne/)
 * [Select2](https://select2.org/data-sources/ajax)
-* [modbus从站模拟器](https://www.modbusdriver.com/diagslave.html)
-* [modbus开发资料](http://www.dalescott.net/modbus-development/)
 * [Logger](https://godoc.org/go.uber.org/zap)
 * [chart](https://github.com/apache/incubator-echarts)
 * [JavaScript](https://github.com/dop251/goja)
@@ -48,30 +44,7 @@
 * [语法高亮](https://prismjs.com/)[git](https://github.com/PrismJS/prism)
 * [当成 win 服务运行](http://nssm.cc/download)
 * [cgo 静态链接](https://blog.madewithdrew.com/post/statically-linking-c-to-go/)
-* [MQTT文档](https://mcxiaoke.gitbooks.io/mqtt-cn/content/mqtt/01-Introduction.html)
-
-
-# 协议实现
-
-* [Modbus](github.com/yanmingsohu/modbus)
-* [MBus](https://github.com/karl-gustav/ams-han)
-* [MQTT client](https://github.com/eclipse/paho.mqtt.golang)
-* [MQTT server](https://github.com/VolantMQ/volantmq)
-
-
-# DTU
-
-* [北京科慧铭远自控](http://www.msi-automation.com/jishuzhichi.html)
-
-
-# Modbus 浮点数
-
-地址    +0          +1           +2           +3
-内容    SEEE EEEE   EMMM MMMM    MMMM MMMM    MMMM MMMM
- 
-S   符号位，1是负，0是正
-E   偏移127的幂，二进制阶码=(EEEEEEEE)-127
-M   24位的尾数保存在23位中，只存储23位，最高位固定为1
+* [cgo 调用示例](https://github.com/draffensperger/go-interlang)
 
 
 # Linux
@@ -97,3 +70,104 @@ tar -xzf go1.11.2.linux-amd64.tar.gz  -C /usr/local
 wget https://nodejs.org/dist/v12.18.2/node-v12.18.2-linux-x64.tar.xz
 tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs 
 ```
+
+
+# 自动化通讯协议
+
+## 程序自动化
+* BSAP
+* CC-Link
+* CIP
+* CANopen
+* ControlNet
+* DeviceNet
+* DF-1
+* DirectNET
+* EtherCAT
+* Ethernet Global Data (EGD)
+* Ethernet Powerlink
+* EtherNet/IP
+* FINS
+* FOUNDATION fieldbus
+* GE SRTP
+* HART Protocol
+* Honeywell SDS
+* HostLink
+* INTERBUS
+* MECHATROLINK
+* MelsecNet
+* Optomux
+* PieP
+* PROFINET IO
+* SERCOS interface
+* SERCOS III
+* Sinec H1
+* SynqNet
+* TTEthernet
+* RAPIEnet
+
+## 工业控制系统
+* Modbus
+  * [实现](github.com/yanmingsohu/modbus)
+  * [modbus从站模拟器](https://www.modbusdriver.com/diagslave.html)
+  * [modbus开发资料](http://www.dalescott.net/modbus-development/)
+* OPC DA
+* OPC HDA
+* OPC UA
+* MTConnect
+
+## 智能建筑
+* BACnet
+* 1-Wire
+* C-Bus
+* DALI
+* DSI
+* KNX
+* LonTalk
+* oBIX
+* VSCP
+* X10
+* xAP
+* ZigBee
+
+## 输配电通讯协定
+* IEC 60870-5
+* DNP3
+* IEC 60870-6
+* IEC 61850
+* IEC 62351
+* Profibus
+
+## 智能电表
+* M-Bus 
+  * [实现](https://github.com/rscada/libmbus) 
+  * [文档](https://m-bus.com/documentation-wired/01-introduction)
+* ZigBee Smart Energy 2.0
+* ANSI C12.18
+* IEC 61107
+* DLMS/IEC 62056
+
+## 车用通讯
+* CAN
+  * [待验证*实现](https://github.com/brutella/can)
+* FMS
+* FlexRay
+* IEBus
+* J1587
+* J1708
+* J1939
+* Keyword Protocol 2000
+* LIN
+* MOST
+* NMEA 2000
+* VAN
+
+## 其他
+* MQTT
+  * [client 实现](https://github.com/eclipse/paho.mqtt.golang)
+  * [server](https://github.com/VolantMQ/volantmq)
+  * [文档](https://mcxiaoke.gitbooks.io/mqtt-cn/content/mqtt/01-Introduction.html)
+
+
+## DTU
+* [北京科慧铭远自控](http://www.msi-automation.com/jishuzhichi.html)
