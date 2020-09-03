@@ -112,8 +112,12 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
   * [modbus从站模拟器](https://www.modbusdriver.com/diagslave.html)
   * [modbus开发资料](http://www.dalescott.net/modbus-development/)
 * OPC DA
+  * [基于DCOM, 待验证*实现](https://github.com/konimarti/opc)
+  * [服务端c++](https://github.com/technosoftware-gmbh/opc-daae-server-sdk)
+  * [服务端, 古旧代码, 参考](https://github.com/gmist/frl)
 * OPC HDA
 * OPC UA
+  * [基于TCP, 待验证*实现](https://github.com/gopcua/opcua)
 * MTConnect
 
 ## 智能建筑

@@ -8,6 +8,7 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/dlclark/regexp2 v1.2.0 // indirect
 	github.com/dop251/goja v0.0.0-20200629185240-bfd59704b500
+	github.com/draffensperger/go-interlang v0.0.0-20170414011313-8f58ebad5235
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect

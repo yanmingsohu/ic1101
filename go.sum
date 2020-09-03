@@ -14,6 +14,8 @@ github.com/dlclark/regexp2 v1.2.0 h1:8sAhBGEM0dRWogWqWyQeIJnxjWO6oIjl8FKqREDsGfk
 github.com/dlclark/regexp2 v1.2.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
 github.com/dop251/goja v0.0.0-20200629185240-bfd59704b500 h1:QthjkRYZQj+FcH5GZXltnlBiyW19WLb+l7R0TrZChNw=
 github.com/dop251/goja v0.0.0-20200629185240-bfd59704b500/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
+github.com/draffensperger/go-interlang v0.0.0-20170414011313-8f58ebad5235 h1:5eXm/mimSW+Rfm9L7ydxpCWt76XVN4CsNsK7DL3wQtc=
+github.com/draffensperger/go-interlang v0.0.0-20170414011313-8f58ebad5235/go.mod h1:oVWxTmraS4wDwnpp+d1N2FKoik6V/6c2zc1lNYm+mvY=
 github.com/eclipse/paho.mqtt.golang v1.2.0 h1:1F8mhG9+aO5/xpdtFkW4SxOJB67ukuDC3t2y2qayIX0=
 github.com/eclipse/paho.mqtt.golang v1.2.0/go.mod h1:H9keYFcgq3Qr5OUJm/JZI/i6U7joQ8SYLhZwfeOo6Ts=
 github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
