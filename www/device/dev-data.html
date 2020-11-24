@@ -175,13 +175,12 @@ jQuery(function($) {
       let dt = data_down.date;
       if (data_down.func == 'Month') --v;
       dt[fname](v);
-      range.val(data_down.range); //.change();
+      range.val(data_down.range).change();
 
       for (let i=0; i<data_down.range; ++i) {
         let l = form.find('[t='+i+'] select').trigger("sync_date", dt);
       }
-      //form.submit();
-      range.change();
+      form.submit();
     });
 
     form.find("[quick]").each(function() {
@@ -201,10 +200,10 @@ jQuery(function($) {
 
     function data_to_chart() {
       get_date(function(err, r) {
-        form.one('submit', data_to_chart);
         if (r) {
           update_chart(r.data);
         }
+        form.one('submit', data_to_chart);
       });
       return false;
     }
@@ -287,7 +286,7 @@ jQuery(function($) {
       });
     }
 
-    function update_show() {
+    function update_show(e) {
       let v = parseInt( range.val() );
       let new_unit = item.find('[t='+ v +']').find("label").text();
       if (unit != new_unit) {
@@ -307,7 +306,9 @@ jQuery(function($) {
           s.trigger('hidden');
         }
       });
-      // form.trigger("submit");
+      if (! e.isTrigger) {
+        form.submit();
+      }
     }
   }
 
