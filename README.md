@@ -1,11 +1,18 @@
 # IC1101
 
-IC1101 是一个基于 web 的组态软件, 可在线配置数据逻辑总线, 如 Modbus 逻辑总线, 总线配置完毕可立即接受数据,  
+IC1101 是一个基于 web 的高性能组态软件, 可在线配置数据逻辑总线, 如 Modbus 逻辑总线, 总线配置完毕可立即接受数据,  
 IC1101 可以将全部资源编译到一个单独的 exe 中, 部署时直接启动这个可执行文件即可.  
 IC1101 允许开发者用 js 来编写数据处理逻辑, 接受设备发来的数据通过这个 js 脚本进行前置数据处理, 然后持久化.  
 带有基本的数据显示和图表.  
 总线框架和 DTU 框架, 方便扩展新的总线类型和 DTU 类型.  
-带有一个基本的授权模块.  
+带有一个基本的授权模块.
+
+在线演示, 打开网站 https://xboson.net/ 选择菜单 '开放平台', '物联网平台', 用户名:root 密码:11118888
+
+
+## 依赖
+
+一个 mongodb 3.6 或更高版本的数据库, nodejs 12 或更高版本的脚本.
 
 
 ## 测试/开发
@@ -28,6 +35,32 @@ IC1101 允许开发者用 js 来编写数据处理逻辑, 接受设备发来的�
   
 > 依赖 mingW 动态库:
   libgcc_s_seh-1.dll, libstdc++-6.dll, libwinpthread-1.dll
+  
+  
+## 配置文件
+
+在主程序目录建立文件 `ic1101.yaml`:
+
+```
+# 服务器监听端口
+httpPort : 7700
+
+# mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
+mongoURL : mongodb://localhost:27017/
+
+# 数据库名称
+mongoDBname : ic1101
+
+# 密钥加密公钥
+salt : fiownvcxz,.iwo
+```
+
+在主程序目录建立文件 `root-user.yaml`:
+
+```
+username: root
+password: xxxxxxxx
+```
 
 
 # TODO
@@ -35,6 +68,7 @@ IC1101 允许开发者用 js 来编写数据处理逻辑, 接受设备发来的�
 * 设备属性表单支持宽度和顺序定义
 * 日志分类
 * 设备版本落后于原型版本时, 在列表中提示
+* 可自定义数据持久化, 支持更多 DB 类型
 
 
 # 参考
