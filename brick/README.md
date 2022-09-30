@@ -1,18 +1,26 @@
 # Brick
 
+A web application development framework with basic functions
+
+
 ## Basic use
 
 ```go
 // HTTP post 7077
 b := brick.NewBrick(7077)
+
 // Redirect '/' to "/brick/ui"
 b.HttpJumpMapping("/", "/brick/ui")
+
 // static page service
 b.StaticPage("/brick/ui", "www", "index.html")
+
 // start http server
 b.StartHttpServer();
+
 // http service
 b.Service("/url/", func(h brick.Http) {})
+
 // Template with HTML
 b.Service("/url/", b.TemplatePage("www/index.xhtml", 
   func(h brick.Http) (interface{}, error) { return nil, nil })
@@ -34,6 +42,8 @@ B.xhtml file:
 ```
 
 
-## 编译页面静态资源
+## build static resource
+
+Package static resources as go source code.
 
 `node build`
