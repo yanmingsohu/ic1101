@@ -11,10 +11,13 @@ IC1101 允许开发者用 javascript 来编写数据处理逻辑, 接受设备�
 
 该项目由 [上海竹呗信息技术有限公司](https://xboson.net/) 提供技术支持.
 
+![screen1](./screenshot/xboson.net_ic_ui_index.html.png)
+![screen1](./screenshot/xboson.net_ic_ui_app.html.png)
+
 
 ## 依赖
 
-一个 mongodb 3.6 或更高版本的数据库, nodejs 12 或更高版本的脚本.
+mongodb 3.6 或更高版本, nodejs 12 或更高版本.
 
 
 ## 测试/开发
@@ -54,7 +57,7 @@ mongoURL : mongodb://localhost:27017/
 mongoDBname : ic1101
 
 # 密钥加密公钥
-salt : fiownvcxz,.iwo
+salt : 12345678
 ```
 
 在主程序目录建立文件 `root-user.yaml`:
@@ -116,6 +119,8 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 
 
 # 自动化通讯协议
+
+有待实现的协议
 
 ## 程序自动化
 * BSAP
