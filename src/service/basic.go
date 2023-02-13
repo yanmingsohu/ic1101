@@ -142,17 +142,18 @@ func dserv(b *brick.Brick, ctx *ServiceGroupContext,
 
 
 //
-// 检查登录/权限/软件授权
+// 检查登录/权限/*软件授权
 //
 func aserv(b *brick.Brick, ctx *ServiceGroupContext, 
            name string, handler ServiceHandler) {
   auth_arr = append(auth_arr, name)
 
   dserv(b, ctx, name, func(h *Ht) interface{} {
-    if __x <= __i {
-      h.Json(HttpRet{400, core.C_cpu_mre_3, __e.Error()})
-      return nil
-    }
+    // 软件授权检测代码
+    // if msg, err := __check_license(); err != nil {
+    //   h.Json(HttpRet{400, msg, err.Error()})
+    //   return nil
+    // }
 
     v := h.Session().Get("user")
     if v == nil {

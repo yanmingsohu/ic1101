@@ -32,6 +32,14 @@ func installLicenseService(b *brick.Brick) {
 }
 
 
+func __check_license() (string, error) {
+  if __x <= __i {
+    return core.C_cpu_mre_3, __e
+  }
+  return "", nil
+}
+
+
 func __start__license(ctx *ServiceGroupContext) {
   coll := mg.Collection(ctx.collectionName)
 
