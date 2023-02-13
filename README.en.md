@@ -1,66 +1,66 @@
 # IC1101
 
-IC1101 是一个基于 web 的高性能组态软件, 可在线配置数据逻辑总线, 如 Modbus 逻辑总线, 总线配置完毕可立即接受数据,  
-IC1101 可以将全部资源编译到一个单独的 exe 中, 部署时直接启动这个可执行文件即可.  
-IC1101 允许开发者用 javascript 来编写数据处理逻辑, 接受设备发来的数据通过这个 js 脚本进行前置数据处理, 然后持久化.  
-带有基本的数据显示和图表.  
-总线框架和 DTU 框架, 方便扩展新的总线类型和 DTU 类型.  
-带有一个基本的授权模块.
+IC1101 is a web-based high-performance configuration software, which can configure the data logic bus online, such as Modbus logic bus. After the bus is configured, it can accept data immediately.
+IC1101 can compile all resources into a single exe, and start this executable file directly when deploying.
+IC1101 allows developers to use javascript to write data processing logic, accept the data sent by the device, perform pre-data processing through this js script, and then persist it.
+Comes with basic data display and graphs.
+Bus frame and DTU frame, easy to expand new bus type and DTU type.
+Comes with a basic authorization module.
 
-在线演示, 打开网站 https://xboson.net/ 选择菜单 '开放平台', '物联网平台', 用户名:root 密码:11118888
+Online demo, open the website https://xboson.net/ select the menu 'Open Platform', 'IoT Platform', username: root password: 11118888
 
-该项目由 [上海竹呗信息技术有限公司](https://xboson.net/) 提供技术支持.
+This project is supported by [Shanghai Zhubei Information Technology Co., Ltd.](https://xboson.net/).
 
 ![screen1](./screenshot/xboson.net_ic_ui_index.html.png)
 ![screen1](./screenshot/xboson.net_ic_ui_app.html.png)
 
 
-## 依赖
+## Dependencies
 
-mongodb 3.6 或更高版本, nodejs 12 或更高版本.
+mongodb 3.6 or later, nodejs 12 or later.
 
 
-## 测试/开发
+## testing/development
 
 `air`
 
-## 运行测试用例
+## Run the test case
 
 `go test ic1101/src/test`
 
-## 发布
+## publish
 
 `make www`
 
-> make 会编译 c 加密库, 在测试前必须编译.
+> make will compile the c encryption library, which must be compiled before testing.
 
-> 参数: `#cgo LDFLAGS: -lstdc++` 可以解决编译时异常
+> Parameters: `#cgo LDFLAGS: -lstdc++` can resolve compile-time exceptions
   `undefined reference to 'operator new[](unsigned long long)'`
   https://github.com/golang/go/issues/18460
   
-> 依赖 mingW 动态库:
+> Rely on mingW dynamic library:
   libgcc_s_seh-1.dll, libstdc++-6.dll, libwinpthread-1.dll
   
   
-## 配置文件
+## Configuration file
 
-在主程序目录建立文件 `ic1101.yaml`:
+Create a file in the main program directory `ic1101.yaml`:
 
 ```
-# 服务器监听端口
+# server listening port
 httpPort : 7700
 
 # mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
 mongoURL : mongodb://localhost:27017/
 
-# 数据库名称
+# Name database
 mongoDBname : ic1101
 
-# 加密会话的密钥
+# Key to encrypt the session
 salt : 12345678
 ```
 
-在主程序目录建立文件 `root-user.yaml`:
+Create a file in the main program directory `root-user.yaml`:
 
 ```
 username: root
@@ -70,13 +70,13 @@ password: xxxxxxxx
 
 # TODO
 
-* 设备属性表单支持宽度和顺序定义
-* 日志分类
-* 设备版本落后于原型版本时, 在列表中提示
-* 可自定义数据持久化, 支持更多 DB 类型
+* The device property sheet supports width and order definition
+* Log classification
+* When the device version is behind the prototype version, it will be prompted in the list
+* Customize data persistence, support more DB types
 
 
-# 参考
+# Reference
 
 * [命名](ttps://www.universeguide.com/galaxy/ic1101)
 * [Web样式](https://purecss.io/layouts/)
@@ -118,11 +118,11 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 ```
 
 
-# 自动化通讯协议
+# Automation communication protocol
 
-有待实现的协议
+Agreement to be implemented
 
-## 程序自动化
+## Program automation
 * BSAP
 * CC-Link
 * CIP
@@ -154,7 +154,7 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 * TTEthernet
 * RAPIEnet
 
-## 工业控制系统
+## industrial control system
 * Modbus
   * [实现](github.com/yanmingsohu/modbus)
   * [modbus从站模拟器](https://www.modbusdriver.com/diagslave.html)
@@ -168,7 +168,7 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
   * [基于TCP, 待验证*实现](https://github.com/gopcua/opcua)
 * MTConnect
 
-## 智能建筑
+## Intelligent Building
 * BACnet
 * 1-Wire
 * C-Bus
@@ -182,7 +182,7 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 * xAP
 * ZigBee
 
-## 输配电通讯协定
+## Transmission and Distribution Communication Protocol
 * IEC 60870-5
 * DNP3
 * IEC 60870-6
@@ -190,7 +190,7 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 * IEC 62351
 * Profibus
 
-## 智能电表
+## smart meter
 * M-Bus 
   * [实现](https://github.com/rscada/libmbus) 
   * [文档](https://m-bus.com/documentation-wired/01-introduction)
@@ -199,7 +199,7 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 * IEC 61107
 * DLMS/IEC 62056
 
-## 车用通讯
+## Vehicle communication
 * CAN
   * [待验证*实现](https://github.com/brutella/can)
 * FMS
@@ -214,7 +214,7 @@ tar -xJvf node-v12.18.2-linux-x64.tar.xz  -C /usr/local/lib/nodejs
 * NMEA 2000
 * VAN
 
-## 其他
+## Other
 * MQTT
   * [client 实现](https://github.com/eclipse/paho.mqtt.golang)
   * [server](https://github.com/VolantMQ/volantmq)
