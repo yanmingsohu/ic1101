@@ -1,6 +1,6 @@
 /**
  *  Copyright 2023 Jing Yanming
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -27,7 +27,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var __i uint8 = 0
+var __i uint8 = 1
 var __x uint8 = 0
 var __e error
 var __c = make(chan uint8)
